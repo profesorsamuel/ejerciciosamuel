@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>La Vitrina — Publicador de páginas web</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,500;0,600;0,700;1,500&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg: #F1F5EA;
+    --paper: #FBFCF8;
+    --ink: #1E2B18;
+    --muted: #64735A;
+    --green: #3E7A46;
+    --green-dark: #2C5A33;
+    --amber: #E2A13A;
+    --amber-dark: #B97F23;
+    --card-border: #D6E2C7;
+    --red: #BE4B36;
+    --tape: rgba(226,161,58,0.55);
+  }
+  *{ box-sizing: border-box; }
+  html,body{ margin:0; padding:0; }
+  body{
+    background:
+      radial-gradient(circle, rgba(62,122,70,0.10) 1px, transparent 1px) 0 0/22px 22px,
+      var(--bg);
+    color: var(--ink);
+    font-family: 'Inter', sans-serif;
+    min-height: 100vh;
+  }
+  .wrap{ max-width: 900px; margin: 0 auto; padding: 28px 20px 80px; }
+  header.top{ text-align:center; margin-bottom: 34px; }
+  .eyebrow{
+    display:inline-block; font-family:'IBM Plex Mono', monospace; font-size:12px;
+    letter-spacing:.12em; text-transform:uppercase; color: var(--green-dark);
+    background: #E4EEDA; border:1px solid var(--card-border); border-radius:999px;
+    padding:5px 14px; margin-bottom:14px;
+  }
+  h1{
+    font-family:'Fraunces', serif; font-weight:700; font-size: clamp(28px, 5vw, 42px);
+    margin: 0 0 10px; line-height:1.08;
+  }
+  h1 em{ color: var(--green); font-style: italic; }
+  .sub{ color: var(--muted); font-size:16px; max-width: 520px; margin: 0 auto; }
+
+  .card{
+    background: var(--paper); border:1px solid var(--card-border); border-radius: 14px;
+    padding: 26px; position: relative; box-shadow: 0 2px 0 rgba(30,43,24,0.03);
+  }
+  .card + .card{ margin-top: 22px; }
+  .tape{
+    position:absolute; top:-11px; left: 28px; width:64px; height:22px;
+    background: var(--tape); border:1px solid rgba(185,127,35,0.4);
+    transform: rotate(-3deg); border-radius:2px;
+  }
+
+  label{ display:block; font-family:'IBM Plex Mono', monospace; font-size:12.5px;
+    letter-spacing:.04em; color: var(--green-dark); margin: 0 0 6px; text-transform:uppercase; }
+  .field{ margin-bottom:18px; }
+  input[type=text], select, textarea{
+    width:100%; border:1.5px solid var(--card-border); background:#fff; border-radius:10px;
+    padding:11px 13px; font-family:'Inter', sans-serif; font-size:15px; color: var(--ink);
+  }
+  textarea{ font-family:'IBM Plex Mono', monospace; font-size:13.5px; min-height:180px; resize:vertical; line-height:1.5; }
+  input:focus, select:focus, textarea:focus{ outline: 2px solid var(--green); outline-offset:1px; border-color: var(--green); }
+  .row2{ display:grid; grid-template-columns: 1fr 1fr; gap:14px; }
+  @media (max-width:560px){ .row2{ grid-template-columns:1fr; } }
+
+  .hint{ font-size:12.5px; color: var(--muted); margin-top:6px; }
+
+  button{
+    font-family:'Inter', sans-serif; font-weight:600; font-size:15px; cursor:pointer;
+    border:none; border-radius:10px; padding:12px 22px;
+  }
+  .btn-primary{ background: var(--green); color:#fff; }
+  .btn-primary:hover{ background: var(--green-dark); }
+  .btn-ghost{ background:transparent; color: var(--green-dark); border:1.5px solid var(--card-border); }
+  .btn-ghost:hover{ border-color: var(--green); }
+  .btn-danger{ background:transparent; color: var(--red); border:1.5px solid #EBC9C0; font-size:13px; padding:7px 12px; }
+  .btn-danger:hover{ background:#FBEDE9; }
+  button:disabled{ opacity:.55; cursor:default; }
+
+  .error{ color: var(--red); font-size:14px; margin-top:10px; }
+  .success-box{ text-align:center; }
+  .success-box .stamp{ font-family:'IBM Plex Mono', monospace; font-size:12px; color:var(--green-dark);
+    letter-spacing:.1em; text-transform:uppercase; }
+  .link-row{ display:flex; gap:8px; margin: 16px 0; }
+  .link-row input{ flex:1; font-family:'IBM Plex Mono', monospace; font-size:13px; color: var(--green-dark); background:#F3F7ED; }
+
+  h2.section-title{
+    font-family:'Fraunces', serif; font-weight:600; font-size:22px; margin: 44px 0 16px;
+    display:flex; align-items:center; gap:10px;
+  }
+  .count-badge{ font-family:'IBM Plex Mono', monospace; font-size:12px; color: var(--muted); font-weight:500; }
+
+  .group-label{
+    font-family:'IBM Plex Mono', monospace; font-size:12px; letter-spacing:.1em; color:#fff;
+    background: var(--amber-dark); display:inline-block; padding:3px 10px; border-radius: 5px;
+    margin: 26px 0 10px;
+  }
+  .grid{ display:grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap:16px; }
+  .spec-card{
+    background: var(--paper); border:1px solid var(--card-border); border-radius:12px; padding:18px 16px 14px;
+    position:relative;
+  }
+  .spec-num{ position:absolute; top:10px; right:12px; font-family:'IBM Plex Mono', monospace; font-size:10.5px; color:#B7C4A6; }
+  .spec-name{ font-family:'Fraunces', serif; font-weight:600; font-size:17px; margin: 4px 0 2px; }
+  .spec-title{ font-size:13.5px; color: var(--muted); margin-bottom:12px; min-height:17px; }
+  .spec-actions{ display:flex; justify-content:space-between; align-items:center; gap:8px; }
+  .spec-open{ font-family:'Inter',sans-serif; font-size:13.5px; font-weight:600; color: var(--green-dark); background:#E4EEDA;
+    border:none; border-radius:7px; padding:7px 12px; cursor:pointer; }
+  .spec-open:hover{ background:#D8E7C9; }
+
+  .empty{ text-align:center; color: var(--muted); font-size:14.5px; padding: 30px 10px; }
+
+  /* page view */
+  #view-page{ display:none; flex-direction:column; height:100vh; }
+  .page-bar{
+    display:flex; align-items:center; justify-content:space-between; gap:12px;
+    padding: 10px 18px; background: var(--paper); border-bottom:1px solid var(--card-border);
+    font-family:'Inter',sans-serif;
+  }
+  .page-bar .who{ font-size:13.5px; color: var(--muted); }
+  .page-bar .who b{ color: var(--ink); font-family:'Fraunces',serif; }
+  #student-frame{ flex:1; border:none; width:100%; background:#fff; }
+  .loading{ text-align:center; padding: 60px 10px; color: var(--muted); font-family:'IBM Plex Mono', monospace; font-size:13px; }
+</style>
+</head>
+<body>
+
+<div id="view-home">
+  <div class="wrap">
+    <header class="top">
+      <span class="eyebrow">Feria de páginas web</span>
+      <h1>Publica <em>tu</em> página</h1>
+      <p class="sub">Pega tu código HTML, ponle tu nombre y sección, y te daremos un link para compartir tu página con la clase.</p>
+    </header>
+
+    <div class="card">
+      <div class="tape"></div>
+      <form id="publish-form">
+        <div class="row2">
+          <div class="field">
+            <label for="f-name">Tu nombre</label>
+            <input type="text" id="f-name" maxlength="40" placeholder="Ej: Ana Pérez" required />
+          </div>
+          <div class="field">
+            <label for="f-section">Sección</label>
+            <select id="f-section" required>
+              <option value="">Elige tu sección</option>
+              <option value="9A">9°A</option>
+              <option value="9B">9°B</option>
+              <option value="9C">9°C</option>
+              <option value="Otra">Otra</option>
+            </select>
+          </div>
+        </div>
+        <div class="field">
+          <label for="f-title">Título de tu página (opcional)</label>
+          <input type="text" id="f-title" maxlength="60" placeholder="Ej: Mi proyecto sobre el reciclaje" />
+        </div>
+        <div class="field">
+          <label for="f-html">Tu código HTML</label>
+          <textarea id="f-html" placeholder="&lt;h1&gt;Hola, soy Ana&lt;/h1&gt;&#10;&lt;p&gt;Esta es mi página...&lt;/p&gt;" required></textarea>
+          <div class="hint">Pega aquí todo tu código, empezando en <code>&lt;html&gt;</code> o solo con las etiquetas de tu contenido.</div>
+        </div>
+        <button type="submit" class="btn-primary" id="publish-btn">Publicar mi página</button>
+        <div class="error" id="form-error" hidden></div>
+      </form>
+
+      <div id="success" hidden class="success-box">
+        <div class="stamp">✓ Publicada</div>
+        <p style="margin:10px 0 0; font-family:'Fraunces',serif; font-size:19px;">¡Tu página ya está en la vitrina!</p>
+        <div class="link-row">
+          <input type="text" id="share-link" readonly />
+          <button class="btn-primary" id="copy-btn">Copiar</button>
+        </div>
+        <div style="display:flex; gap:10px; justify-content:center;">
+          <button class="btn-ghost" id="open-mine-btn">Ver mi página</button>
+          <button class="btn-ghost" id="publish-another-btn">Publicar otra</button>
+        </div>
+      </div>
+    </div>
+
+    <h2 class="section-title">La vitrina <span class="count-badge" id="total-count"></span></h2>
+    <div id="gallery"><div class="loading">Cargando páginas publicadas…</div></div>
+  </div>
+</div>
+
+<div id="view-page">
+  <div class="page-bar">
+    <button class="btn-ghost" id="back-btn">← Volver a la vitrina</button>
+    <div class="who">Por <b id="pv-name"></b> · <span id="pv-section"></span></div>
+  </div>
+  <iframe id="student-frame" sandbox="allow-scripts" title="Página del estudiante"></iframe>
+</div>
+
+<script>
+const homeEl = document.getElementById('view-home');
+const pageEl = document.getElementById('view-page');
+const form = document.getElementById('publish-form');
+const formError = document.getElementById('form-error');
+const successBox = document.getElementById('success');
+const publishBtn = document.getElementById('publish-btn');
+
+function slugify(str){
+  return str.toLowerCase()
+    .normalize('NFD').replace(/[\u0300-\u036f]/g,'')
+    .replace(/[^a-z0-9]+/g,'-').replace(/(^-|-$)/g,'') || 'estudiante';
+}
+function randomSuffix(len){
+  return Math.random().toString(36).slice(2, 2+len);
+}
+function baseUrl(){
+  return window.location.href.split('#')[0];
+}
+
+async function publishPage(data){
+  const id = slugify(data.name) + '-' + randomSuffix(5);
+  const result = await window.storage.set('page:' + id, JSON.stringify(data), true);
+  if(!result) throw new Error('No se pudo guardar');
+  return id;
+}
+
+form.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  formError.hidden = true;
+  const name = document.getElementById('f-name').value.trim();
+  const section = document.getElementById('f-section').value;
+  const title = document.getElementById('f-title').value.trim();
+  const html = document.getElementById('f-html').value;
+
+  if(!name || !section || !html.trim()){
+    formError.textContent = 'Completa tu nombre, sección y el código HTML.';
+    formError.hidden = false;
+    return;
+  }
+
+  publishBtn.disabled = true;
+  publishBtn.textContent = 'Publicando…';
+  try{
+    const id = await publishPage({ name, section, title, html, date: new Date().toISOString() });
+    const link = baseUrl() + '#' + id;
+    document.getElementById('share-link').value = link;
+    form.hidden = true;
+    successBox.hidden = false;
+    successBox.dataset.id = id;
+    loadGallery();
+  }catch(err){
+    formError.textContent = 'Algo salió mal al publicar. Intenta de nuevo.';
+    formError.hidden = false;
+  }finally{
+    publishBtn.disabled = false;
+    publishBtn.textContent = 'Publicar mi página';
+  }
+});
+
+document.getElementById('copy-btn').addEventListener('click', () => {
+  const input = document.getElementById('share-link');
+  input.select();
+  navigator.clipboard.writeText(input.value).then(()=>{
+    const btn = document.getElementById('copy-btn');
+    const old = btn.textContent;
+    btn.textContent = '¡Copiado!';
+    setTimeout(()=> btn.textContent = old, 1500);
+  }).catch(()=>{ /* selection still lets them copy manually */ });
+});
+
+document.getElementById('open-mine-btn').addEventListener('click', () => {
+  window.location.hash = successBox.dataset.id;
+});
+
+document.getElementById('publish-another-btn').addEventListener('click', () => {
+  form.reset();
+  form.hidden = false;
+  successBox.hidden = true;
+});
+
+document.getElementById('back-btn').addEventListener('click', () => {
+  window.location.hash = '';
+  showHome();
+  loadGallery();
+});
+
+async function loadGallery(){
+  const galleryEl = document.getElementById('gallery');
+  const totalEl = document.getElementById('total-count');
+  try{
+    const listResult = await window.storage.list('page:', true);
+    const keys = (listResult && listResult.keys) || [];
+    if(keys.length === 0){
+      galleryEl.innerHTML = '<div class="empty">Todavía no hay páginas publicadas. ¡Sé el primero!</div>';
+      totalEl.textContent = '';
+      return;
+    }
+    const pages = [];
+    for(const key of keys){
+      try{
+        const r = await window.storage.get(key, true);
+        if(r && r.value){
+          const data = JSON.parse(r.value);
+          pages.push({ id: key.replace(/^page:/, ''), ...data });
+        }
+      }catch(_e){ /* skip unreadable entry */ }
+    }
+    pages.sort((a,b) => (b.date || '').localeCompare(a.date || ''));
+    totalEl.textContent = '(' + pages.length + ')';
+
+    const groups = { '9A': [], '9B': [], '9C': [], 'Otra': [] };
+    pages.forEach(p => { (groups[p.section] || groups['Otra']).push(p); });
+
+    let html = '';
+    let num = pages.length;
+    Object.entries(groups).forEach(([sec, list]) => {
+      if(list.length === 0) return;
+      html += `<div class="group-label">Sección ${sec}</div><div class="grid">`;
+      list.forEach(p => {
+        html += `
+          <div class="spec-card">
+            <span class="spec-num">N°${String(num).padStart(3,'0')}</span>
+            <div class="spec-name">${escapeHtml(p.name)}</div>
+            <div class="spec-title">${escapeHtml(p.title || 'Sin título')}</div>
+            <div class="spec-actions">
+              <button class="spec-open" data-id="${p.id}">Abrir →</button>
+              <button class="btn-danger" data-del="${p.id}" title="Eliminar página">Eliminar</button>
+            </div>
+          </div>`;
+        num--;
+      });
+      html += `</div>`;
+    });
+    galleryEl.innerHTML = html;
+
+    galleryEl.querySelectorAll('[data-id]').forEach(btn => {
+      btn.addEventListener('click', () => { window.location.hash = btn.dataset.id; showPageFromHash(); });
+    });
+    galleryEl.querySelectorAll('[data-del]').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        if(confirm('¿Eliminar esta página de la vitrina? Esta acción no se puede deshacer.')){
+          try{
+            await window.storage.delete('page:' + btn.dataset.del, true);
+            loadGallery();
+          }catch(_e){ alert('No se pudo eliminar. Intenta de nuevo.'); }
+        }
+      });
+    });
+  }catch(err){
+    galleryEl.innerHTML = '<div class="empty">No se pudo cargar la vitrina. Recarga la página.</div>';
+  }
+}
+
+function escapeHtml(str){
+  const d = document.createElement('div');
+  d.textContent = str;
+  return d.innerHTML;
+}
+
+function showHome(){ homeEl.style.display = 'block'; pageEl.style.display = 'none'; }
+function showPageView(){ homeEl.style.display = 'none'; pageEl.style.display = 'flex'; }
+
+async function showPageFromHash(){
+  const id = window.location.hash.slice(1);
+  if(!id){ showHome(); return; }
+  showPageView();
+  document.getElementById('pv-name').textContent = '…';
+  document.getElementById('pv-section').textContent = '';
+  try{
+    const r = await window.storage.get('page:' + id, true);
+    if(!r || !r.value){
+      showHome();
+      window.location.hash = '';
+      alert('Esa página ya no existe.');
+      return;
+    }
+    const data = JSON.parse(r.value);
+    document.getElementById('pv-name').textContent = data.name;
+    document.getElementById('pv-section').textContent = 'Sección ' + data.section;
+    document.getElementById('student-frame').srcdoc = data.html;
+  }catch(err){
+    showHome();
+  }
+}
+
+window.addEventListener('hashchange', showPageFromHash);
+
+(async function init(){
+  if(window.location.hash){
+    await showPageFromHash();
+  } else {
+    showHome();
+  }
+  loadGallery();
+})();
+</script>
+</body>
+</html>
