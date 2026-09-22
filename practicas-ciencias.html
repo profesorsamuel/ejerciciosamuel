@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Prácticas de Ciencias | C.E.B.G. El Jiral</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: Arial, Helvetica, sans-serif;
+      background: #f4f7fb;
+      color: #1f2937;
+    }
+    header {
+      background: linear-gradient(135deg, #0f766e, #2563eb);
+      color: white;
+      text-align: center;
+      padding: 38px 18px;
+    }
+    header h1 { margin: 0 0 8px; font-size: clamp(28px, 5vw, 44px); }
+    header p { margin: 5px 0; font-size: 17px; }
+    main {
+      width: min(1000px, 92%);
+      margin: 30px auto;
+    }
+    .intro {
+      text-align: center;
+      margin-bottom: 26px;
+    }
+    .grados {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 24px;
+    }
+    .grado {
+      background: white;
+      border-radius: 18px;
+      padding: 25px;
+      box-shadow: 0 8px 24px rgba(0,0,0,.08);
+      border-top: 6px solid #2563eb;
+    }
+    .grado:nth-child(2) { border-top-color: #0f766e; }
+    .grado h2 {
+      margin-top: 0;
+      font-size: 28px;
+      text-align: center;
+    }
+    .clase {
+      background: #f8fafc;
+      border: 1px solid #e5e7eb;
+      border-radius: 14px;
+      padding: 18px;
+      margin-top: 15px;
+    }
+    .clase h3 { margin: 0 0 8px; }
+    .clase p { margin: 0 0 16px; color: #64748b; }
+    .btn {
+      display: block;
+      width: 100%;
+      text-align: center;
+      text-decoration: none;
+      background: #2563eb;
+      color: white;
+      font-weight: bold;
+      padding: 14px 18px;
+      border-radius: 10px;
+      transition: .2s;
+    }
+    .grado:nth-child(2) .btn { background: #0f766e; }
+    .btn:hover { transform: translateY(-2px); filter: brightness(.95); }
+    footer {
+      text-align: center;
+      padding: 25px 15px 35px;
+      color: #64748b;
+    }
+    @media (max-width: 700px) {
+      .grados { grid-template-columns: 1fr; }
+      header { padding: 30px 15px; }
+      .grado { padding: 18px; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>🔬 Prácticas de Ciencias</h1>
+    <p>C.E.B.G. El Jiral</p>
+    <p>Selecciona tu grado y la clase que deseas practicar.</p>
+  </header>
+
+  <main>
+    <div class="intro">
+      <h2>Prácticas disponibles</h2>
+      <p>Utiliza estas actividades para reforzar los contenidos trabajados en clase.</p>
+    </div>
+
+    <section class="grados">
+      <article class="grado">
+        <h2>9.º Grado</h2>
+        <div class="clase">
+          <h3>📘 Clase 1</h3>
+          <p>Práctica correspondiente a la Clase 1 de noveno grado.</p>
+          <a class="btn" href="ejercicio-universo-9no.html">Entrar a la práctica</a>
+        </div>
+      </article>
+
+      <article class="grado">
+        <h2>8.º Grado</h2>
+        <div class="clase">
+          <h3>📗 Clase 1</h3>
+          <p>Transformaciones químicas de la materia.</p>
+          <a class="btn" href="ejercicio-transformaciones-8vo.html">Entrar a la práctica</a>
+        </div>
+      </article>
+    </section>
+  </main>
+
+  <footer>
+    <strong>C.E.B.G. El Jiral</strong><br>
+    Ciencias Naturales
+  </footer>
+</body>
+</html>
