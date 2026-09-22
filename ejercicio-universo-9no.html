@@ -298,7 +298,7 @@ table.results th{color:var(--muted); font-weight:600; position:sticky; top:0; ba
 
   <!-- TABLA COMPARTIDA DE RESULTADOS -->
   <div class="card" id="historyCard">
-    <h2>📋 Notas de todos (mejor intento de cada estudiante)</h2>
+    <h2>📋 Notas por día (se conserva la nota más alta de cada fecha)</h2>
     <div class="leader-filters">
       <select id="filterSalon">
         <option value="">Todos los salones</option>
@@ -313,8 +313,8 @@ table.results th{color:var(--muted); font-weight:600; position:sticky; top:0; ba
     </div>
     <div class="table-scroll">
       <table class="results" id="historyTable">
-        <thead><tr><th>Estudiante</th><th>Salón</th><th>Clase</th><th>Aciertos</th><th>Errores</th><th>Nota</th><th>Fecha</th></tr></thead>
-        <tbody><tr><td colspan="7" style="color:var(--muted);">Cargando...</td></tr></tbody>
+        <thead id="historyHead"><tr><th>Estudiante</th><th>Salón</th><th>Clase</th><th>Fecha</th><th>Nota</th></tr></thead>
+        <tbody><tr><td colspan="5" style="color:var(--muted);">Cargando...</td></tr></tbody>
       </table>
     </div>
   </div>
@@ -347,6 +347,7 @@ const SALONES = {"9A": ["Arauz, Naomi", "Ayarza, Marielis", "Berrio, Raúl", "Ce
 const SUPABASE_URL = "https://luewrpzgetqslxqmdcxv.supabase.co";
 const SUPABASE_ANON_KEY = "sb_publishable_zJc68aiTxJs7HBgaqeHxrQ_JDcm91xG";
 const TABLE = "resultados_pareo";
+const DEFINITIONS = {"Universo": "Todo lo que existe: materia, energía, espacio y tiempo.", "Galaxia": "Gran conjunto de estrellas, gas y polvo unidos por gravedad.", "Vía Láctea": "Galaxia donde se encuentra nuestro sistema solar.", "Sistema solar": "El Sol y todos los cuerpos que orbitan a su alrededor.", "Sol": "Estrella central del sistema solar que proporciona luz y calor.", "Planeta": "Cuerpo celeste grande que gira alrededor de una estrella.", "Satélite natural": "Cuerpo celeste que gira alrededor de un planeta.", "Asteroide": "Cuerpo rocoso pequeño que orbita alrededor del Sol.", "Cometa": "Cuerpo de hielo, polvo y roca que forma cola al acercarse al Sol.", "Planetoide": "Cuerpo menor que un planeta que orbita alrededor del Sol.", "Nebulosa": "Gran nube de gas y polvo en el espacio.", "Nube interestelar": "Acumulación de gas y polvo situada entre las estrellas.", "Gravedad": "Fuerza de atracción entre cuerpos que tienen masa.", "Acreción": "Proceso por el que partículas se unen y forman cuerpos cada vez mayores.", "Protosol": "Etapa inicial del Sol antes de convertirse en una estrella estable.", "Protoestrella": "Estrella joven en formación dentro de una nube de gas y polvo.", "Planetesimal": "Pequeño cuerpo sólido que participa en la formación de planetas.", "Protoplaneta": "Cuerpo joven formado por planetesimales que puede convertirse en planeta.", "Disco protoplanetario": "Disco de gas y polvo alrededor de una estrella joven donde se forman planetas.", "Colapso gravitacional": "Contracción de una nube de materia causada por su propia gravedad.", "Big Bang": "Modelo que explica que el universo comenzó en un estado muy caliente y denso y se expandió.", "Singularidad": "Estado teórico de densidad extremadamente alta asociado al inicio del universo.", "Expansión del universo": "Aumento de las distancias entre galaxias a gran escala.", "Radiación cósmica de fondo": "Radiación antigua que quedó de las primeras etapas del universo.", "Fusión nuclear": "Unión de núcleos atómicos que libera gran cantidad de energía.", "Supernova": "Explosión muy energética que ocurre al final de la vida de ciertas estrellas.", "Onda de choque": "Perturbación que se propaga rápidamente y comprime el material a su paso.", "Órbita": "Trayectoria que sigue un cuerpo alrededor de otro por efecto de la gravedad.", "Gran impacto": "Hipótesis de una gran colisión relacionada con la formación de la Luna.", "Solidificación": "Cambio de un material desde estado líquido a sólido.", "Cosmos": "El universo considerado como un conjunto ordenado.", "Estrella": "Esfera de gas caliente que produce energía mediante fusión nuclear.", "Planeta rocoso": "Planeta compuesto principalmente por roca y metal.", "Gigante gaseoso": "Planeta muy grande formado principalmente por gases.", "Luna": "Satélite natural de la Tierra.", "Condensación": "Proceso en que materia gaseosa se concentra o pasa a un estado más denso.", "Rotación": "Movimiento de un cuerpo alrededor de su propio eje.", "Colisión": "Choque entre dos cuerpos.", "Anillos planetarios": "Bandas de partículas de hielo, roca y polvo que orbitan un planeta.", "Masa fundida": "Material rocoso en estado líquido debido a altas temperaturas.", "Hidrógeno": "Elemento químico más abundante del universo y combustible principal de muchas estrellas.", "Helio": "Elemento químico ligero producido en las estrellas por fusión del hidrógeno.", "Telescopio": "Instrumento que permite observar objetos lejanos del espacio.", "Nave espacial": "Vehículo diseñado para viajar o funcionar fuera de la atmósfera terrestre.", "Captura lunar": "Hipótesis según la cual la Luna fue atrapada por la gravedad terrestre.", "Fisión lunar": "Hipótesis que propone que la Luna se separó de material de la Tierra primitiva.", "Conformación lunar": "Proceso de formación y evolución inicial de la Luna.", "Tea": "Antigua idea que comparaba ciertos cuerpos luminosos del cielo con una antorcha o fuente de luz.", "Astronomía": "Ciencia que estudia los cuerpos celestes y el universo.", "Astrofísica": "Rama de la astronomía que aplica la física para explicar los astros y fenómenos del universo."};
 let supa = null;
 try{
   supa = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
@@ -354,6 +355,7 @@ try{
 
 let currentClassIdx = 0;
 let currentMode = 'individual'; // 'individual' | 'grupo'
+let currentTipo = 'imagen'; // 'imagen' | 'definicion'
 let currentStudents = []; // siempre un arreglo; individual = 1 elemento
 let currentSalon = null;
 let imgOrder = [];
@@ -403,6 +405,22 @@ defImg.src = CLASSES[currentClassIdx].defImg;
 CLASSES.forEach(c=>{
   const o=document.createElement('option'); o.value=c.title; o.textContent=c.title;
   filterClase.appendChild(o);
+});
+
+// ---- Tipo de pareo: imágenes o definiciones ----
+const tipoToggle = document.getElementById('tipoToggle');
+const tipoHint = document.getElementById('tipoHint');
+tipoToggle.querySelectorAll('.mode-btn').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    currentTipo = btn.dataset.tipo;
+    tipoToggle.querySelectorAll('.mode-btn').forEach(b=>b.classList.toggle('active', b===btn));
+    tipoHint.textContent = currentTipo === 'imagen'
+      ? 'Se unen las imágenes con la palabra que le corresponde.'
+      : 'Se unen las definiciones con la palabra que le corresponde.';
+    document.getElementById('gameTitle').textContent = currentTipo === 'imagen'
+      ? 'Une cada imagen con su palabra' : 'Une cada definición con su palabra';
+    document.getElementById('leftColTitle').textContent = currentTipo === 'imagen' ? 'Imágenes' : 'Definiciones';
+  });
 });
 
 // ---- Setup salón / estudiante(s) ----
@@ -511,6 +529,8 @@ function startGame(){
   document.getElementById('bannerName').textContent =
     nombreMostrado + ' · ' + currentSalon + ' · ' + CLASSES[currentClassIdx].title;
   document.getElementById('feedback').textContent='';
+  document.getElementById('gameTitle').textContent = currentTipo === 'imagen' ? 'Une cada imagen con su palabra' : 'Une cada definición con su palabra';
+  document.getElementById('leftColTitle').textContent = currentTipo === 'imagen' ? 'Imágenes' : 'Definiciones';
 
   let a = shuffle(words);
   let b = shuffle(words);
@@ -534,7 +554,11 @@ function renderTiles(){
     const div = document.createElement('div');
     div.className='img-tile';
     div.dataset.word = word;
-    div.innerHTML = `<img src="${IMAGES[word]}" alt="imagen">`;
+    if(currentTipo === 'definicion'){
+      div.innerHTML = `<div style="padding:14px;line-height:1.35;font-size:0.95rem;font-weight:600;text-align:center;">${DEFINITIONS[word] || 'Definición no disponible'}</div>`;
+    } else {
+      div.innerHTML = `<img src="${IMAGES[word]}" alt="imagen">`;
+    }
     div.addEventListener('click', ()=>onImgClick(div, word));
     imgWrap.appendChild(div);
   });
@@ -611,94 +635,116 @@ function finishGame(){
   guardarResultado(nota, matchedCount, totalWords, errorCount);
 }
 
+function fechaPanamaISO(){
+  // Fecha civil de Panamá (UTC-5), para que el cambio de día no dependa del celular.
+  const parts = new Intl.DateTimeFormat('en-CA', {
+    timeZone:'America/Panama', year:'numeric', month:'2-digit', day:'2-digit'
+  }).formatToParts(new Date());
+  const o = Object.fromEntries(parts.map(x=>[x.type,x.value]));
+  return `${o.year}-${o.month}-${o.day}`;
+}
+
 async function guardarUnEstudiante(estudiante, clase, nota, correctos, total, errores){
+  const fecha_practica = fechaPanamaISO();
   const { data: existing, error: selErr } = await supa
     .from(TABLE)
-    .select('id, nota')
+    .select('id, nota, fecha_practica')
     .eq('estudiante', estudiante)
     .eq('salon', currentSalon)
     .eq('clase', clase)
+    .eq('fecha_practica', fecha_practica)
     .maybeSingle();
   if(selErr) throw selErr;
 
   if(!existing){
     const { error: insErr } = await supa.from(TABLE).insert({
-      estudiante, salon: currentSalon, clase, correctos, total, errores, nota
+      estudiante, salon: currentSalon, clase, correctos, total, errores, nota,
+      fecha_practica, actualizado_en: new Date().toISOString()
     });
     if(insErr) throw insErr;
-    return {estudiante, status:'nueva', nota};
-  } else if(nota > existing.nota){
+    return {estudiante, status:'nueva', nota, fecha_practica};
+  } else if(Number(nota) > Number(existing.nota)){
     const { error: updErr } = await supa.from(TABLE)
       .update({ correctos, total, errores, nota, actualizado_en: new Date().toISOString() })
       .eq('id', existing.id);
     if(updErr) throw updErr;
-    return {estudiante, status:'mejora', nota, notaAnterior: Number(existing.nota)};
+    return {estudiante, status:'mejora', nota, notaAnterior:Number(existing.nota), fecha_practica};
   } else {
-    return {estudiante, status:'sin_mejora', nota, notaAnterior: Number(existing.nota)};
+    return {estudiante, status:'sin_mejora', nota, notaAnterior:Number(existing.nota), fecha_practica};
   }
 }
 
 async function guardarResultado(nota, correctos, total, errores){
   const statusEl = document.getElementById('saveStatus');
-  if(!supa){
-    statusEl.textContent = '⚠️ No se pudo conectar con la base de datos compartida.';
-    return;
-  }
-  statusEl.textContent = 'Guardando nota' + (currentStudents.length>1 ? ' del grupo...' : '...');
+  if(!supa){ statusEl.textContent='⚠️ No se pudo conectar con la base de datos compartida.'; return; }
+  statusEl.textContent='Guardando mejor nota del día' + (currentStudents.length>1 ? ' del grupo...' : '...');
   try{
-    const clase = CLASSES[currentClassIdx].title;
-    const resultados = [];
+    const clase=CLASSES[currentClassIdx].title;
+    const resultados=[];
     for(const estudiante of currentStudents){
-      const r = await guardarUnEstudiante(estudiante, clase, nota, correctos, total, errores);
-      resultados.push(r);
+      resultados.push(await guardarUnEstudiante(estudiante, clase, nota, correctos, total, errores));
     }
-
-    if(currentStudents.length === 1){
-      const r = resultados[0];
-      if(r.status === 'nueva') statusEl.textContent = '✅ Nota guardada: ' + r.nota.toFixed(2);
-      else if(r.status === 'mejora') statusEl.textContent = '🏆 ¡Nueva mejor nota! ' + r.nota.toFixed(2) + ' (antes ' + r.notaAnterior.toFixed(2) + ')';
-      else statusEl.textContent = 'Tu mejor nota sigue siendo ' + r.notaAnterior.toFixed(2) + ' (esta vez: ' + r.nota.toFixed(2) + ')';
-    } else {
-      const mejoraron = resultados.filter(r=>r.status!=='sin_mejora').length;
-      statusEl.textContent = `✅ Nota ${nota.toFixed(2)} guardada para ${currentStudents.length} estudiantes` +
-        (mejoraron < currentStudents.length ? ` (a ${currentStudents.length - mejoraron} ya les quedó una nota mejor de antes)` : '');
+    if(currentStudents.length===1){
+      const r=resultados[0];
+      if(r.status==='nueva') statusEl.textContent=`✅ Primera nota de hoy guardada: ${r.nota.toFixed(2)}`;
+      else if(r.status==='mejora') statusEl.textContent=`🏆 Mejor nota de hoy actualizada: ${r.nota.toFixed(2)} (antes ${r.notaAnterior.toFixed(2)})`;
+      else statusEl.textContent=`📅 La mejor nota de hoy sigue siendo ${r.notaAnterior.toFixed(2)} (este intento: ${r.nota.toFixed(2)})`;
+    }else{
+      const mejoraron=resultados.filter(r=>r.status!=='sin_mejora').length;
+      statusEl.textContent=`✅ Resultado procesado para ${currentStudents.length} estudiantes. ${mejoraron} registro(s) del día fueron creados o mejorados.`;
     }
     cargarResultados();
   }catch(e){
     console.error(e);
-    statusEl.textContent = '⚠️ No se pudo guardar en línea. Revisa tu conexión.';
+    statusEl.textContent='⚠️ No se pudo guardar. Verifica que hayas ejecutado ACTUALIZAR_SUPABASE_NOTAS_DIARIAS.sql en Supabase.';
   }
 }
 
+function fechaBonita(iso){
+  if(!iso) return '';
+  const [y,m,d]=iso.split('-');
+  return `${d}/${m}/${y}`;
+}
+
 async function cargarResultados(){
-  const tbody = document.querySelector('#historyTable tbody');
-  if(!supa){
-    tbody.innerHTML = '<tr><td colspan="7" style="color:var(--muted);">Base de datos no disponible.</td></tr>';
-    return;
-  }
+  const tbody=document.querySelector('#historyTable tbody');
+  const thead=document.getElementById('historyHead');
+  if(!supa){ tbody.innerHTML='<tr><td colspan="5" style="color:var(--muted);">Base de datos no disponible.</td></tr>'; return; }
   try{
-    let query = supa.from(TABLE).select('*').order('nota', {ascending:false});
-    const fSalon = document.getElementById('filterSalon').value;
-    const fClase = document.getElementById('filterClase').value;
-    if(fSalon) query = query.eq('salon', fSalon);
-    if(fClase) query = query.eq('clase', fClase);
-    const { data, error } = await query;
+    let query=supa.from(TABLE).select('*').order('fecha_practica',{ascending:true});
+    const fSalon=document.getElementById('filterSalon').value;
+    const fClase=document.getElementById('filterClase').value;
+    if(fSalon) query=query.eq('salon',fSalon);
+    if(fClase) query=query.eq('clase',fClase);
+    const {data,error}=await query;
     if(error) throw error;
     if(!data || data.length===0){
-      tbody.innerHTML = '<tr><td colspan="7" style="color:var(--muted);">Todavía no hay resultados.</td></tr>';
-      return;
+      thead.innerHTML='<tr><th>Estudiante</th><th>Salón</th><th>Clase</th><th>Sin fechas todavía</th></tr>';
+      tbody.innerHTML='<tr><td colspan="4" style="color:var(--muted);">Todavía no hay resultados.</td></tr>'; return;
     }
-    tbody.innerHTML = '';
+    const fechas=[...new Set(data.map(r=>r.fecha_practica).filter(Boolean))].sort();
+    thead.innerHTML='<tr><th>Estudiante</th><th>Salón</th><th>Clase</th>'+fechas.map(f=>`<th>${fechaBonita(f)}</th>`).join('')+'</tr>';
+    const grupos=new Map();
     data.forEach(r=>{
-      const tr = document.createElement('tr');
-      const fecha = r.actualizado_en ? new Date(r.actualizado_en).toLocaleString('es-PA', {dateStyle:'short', timeStyle:'short'}) : '';
-      const notaClass = Number(r.nota) >= 3 ? 'badge-approved' : 'badge-failed';
-      tr.innerHTML = `<td>${r.estudiante}</td><td>${r.salon}</td><td>${r.clase}</td><td>${r.correctos}/${r.total}</td><td>${r.errores}</td><td class="${notaClass}">${Number(r.nota).toFixed(2)}</td><td>${fecha}</td>`;
+      const key=`${r.estudiante}|||${r.salon}|||${r.clase}`;
+      if(!grupos.has(key)) grupos.set(key,{estudiante:r.estudiante,salon:r.salon,clase:r.clase,notas:{}});
+      const g=grupos.get(key);
+      if(!g.notas[r.fecha_practica] || Number(r.nota)>Number(g.notas[r.fecha_practica].nota)) g.notas[r.fecha_practica]=r;
+    });
+    tbody.innerHTML='';
+    [...grupos.values()].sort((a,b)=>a.salon.localeCompare(b.salon)||a.estudiante.localeCompare(b.estudiante)).forEach(g=>{
+      const tr=document.createElement('tr');
+      const celdas=fechas.map(f=>{
+        const r=g.notas[f]; if(!r) return '<td>—</td>';
+        const cls=Number(r.nota)>=3?'badge-approved':'badge-failed';
+        return `<td class="${cls}" title="Aciertos: ${r.correctos}/${r.total} · Errores: ${r.errores}">${Number(r.nota).toFixed(2)}</td>`;
+      }).join('');
+      tr.innerHTML=`<td>${g.estudiante}</td><td>${g.salon}</td><td>${g.clase}</td>${celdas}`;
       tbody.appendChild(tr);
     });
   }catch(e){
     console.error(e);
-    tbody.innerHTML = '<tr><td colspan="7" style="color:var(--muted);">Error al cargar resultados.</td></tr>';
+    tbody.innerHTML='<tr><td colspan="5" style="color:var(--muted);">Error al cargar. Ejecuta el archivo SQL incluido para activar las notas por fecha.</td></tr>';
   }
 }
 
