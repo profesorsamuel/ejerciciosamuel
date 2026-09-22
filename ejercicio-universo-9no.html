@@ -117,6 +117,7 @@ button.secondary{background:linear-gradient(90deg,#33395f,#454c7f); box-shadow:n
 @media(min-width:680px){.match-grid{grid-template-columns:1fr 1fr;}}
 .col-title{text-align:center; color:var(--muted); margin-bottom:10px; font-size:0.82rem; letter-spacing:1px; text-transform:uppercase;}
 .tiles{display:grid; grid-template-columns:1fr 1fr; gap:10px;}
+.tiles.def-mode{grid-template-columns:1fr;}
 .img-tile{
   border-radius:12px; overflow:hidden; cursor:pointer; border:3px solid transparent;
   background:#0e1436; aspect-ratio:1/1; position:relative; transition:border-color .15s, transform .15s;
@@ -125,6 +126,13 @@ button.secondary{background:linear-gradient(90deg,#33395f,#454c7f); box-shadow:n
 .img-tile.selected{border-color:var(--accent2); transform:scale(1.03);}
 .img-tile.correct{border-color:var(--ok); opacity:0.45; cursor:default; pointer-events:none;}
 .img-tile.wrong-flash{border-color:var(--bad); animation:shake .3s;}
+.img-tile.def-tile{
+  aspect-ratio:auto; display:flex; align-items:center; justify-content:center; text-align:center;
+  padding:14px; font-size:0.85rem; line-height:1.35; color:var(--txt); font-weight:500;
+  border:3px solid rgba(255,255,255,0.12); min-height:76px;
+}
+.img-tile.def-tile.selected{border-color:var(--accent2); background:#20265a;}
+.img-tile.def-tile.correct{border-color:var(--ok); background:#12331f;}
 @keyframes shake{25%{transform:translateX(-4px);}75%{transform:translateX(4px);}}
 .word-list{display:flex; flex-direction:column; gap:8px;}
 .word-tile{
@@ -204,9 +212,19 @@ table.results th{color:var(--muted); font-weight:600; position:sticky; top:0; ba
     <p class="hint">👆 Toca la imagen para verla en grande</p>
   </div>
 
-  <!-- PASO 2: CONFIGURACION -->
+  <!-- PASO 2: TIPO DE PAREO -->
+  <div class="card">
+    <h2><span class="step-badge">2</span> Elige el tipo de pareo</h2>
+    <div class="mode-toggle" id="tipoToggle">
+      <button type="button" class="mode-btn active" data-tipo="imagen">🖼️ Con imágenes</button>
+      <button type="button" class="mode-btn" data-tipo="definicion">📖 Con definiciones</button>
+    </div>
+    <p class="hint" style="text-align:left; margin-top:10px;" id="tipoHint">Se unen las imágenes con la palabra que le corresponde.</p>
+  </div>
+
+  <!-- PASO 3: CONFIGURACION -->
   <div class="card" id="setupCard">
-    <h2><span class="step-badge">2</span> Elige tu salón y tu nombre</h2>
+    <h2><span class="step-badge">3</span> Elige tu salón y tu nombre</h2>
 
     <div class="mode-toggle" id="modeToggle">
       <button type="button" class="mode-btn active" data-mode="individual">🧑 Individual</button>
@@ -244,9 +262,9 @@ table.results th{color:var(--muted); font-weight:600; position:sticky; top:0; ba
     </div>
   </div>
 
-  <!-- PASO 3: JUEGO -->
+  <!-- PASO 4: JUEGO -->
   <div class="card" id="gameArea">
-    <h2><span class="step-badge">3</span> Une cada imagen con su palabra</h2>
+    <h2><span class="step-badge">4</span> <span id="gameTitle">Une cada imagen con su palabra</span></h2>
     <div class="player-banner">
       <div class="name" id="bannerName">—</div>
       <div class="score">Aciertos: <span id="scoreCount">0</span> / <span id="totalCount">10</span> &nbsp;|&nbsp; Errores: <span id="errorCount">0</span></div>
@@ -254,7 +272,7 @@ table.results th{color:var(--muted); font-weight:600; position:sticky; top:0; ba
 
     <div class="match-grid">
       <div>
-        <div class="col-title">Imágenes</div>
+        <div class="col-title" id="leftColTitle">Imágenes</div>
         <div class="tiles" id="imgTiles"></div>
       </div>
       <div>
