@@ -44,16 +44,52 @@ h2{margin-top:0; color:#ffd48a; display:flex; align-items:center; gap:10px; font
 .def-img-wrap img{width:100%; display:block;}
 .hint{color:var(--muted); font-size:0.82rem; margin-top:8px; text-align:center;}
 .modal{
-  position:fixed; inset:0; background:rgba(0,0,0,0.85); display:none;
-  align-items:center; justify-content:center; z-index:999; padding:14px;
+  position:fixed; inset:0; background:#000; display:none;
+  align-items:center; justify-content:center; z-index:999;
+  touch-action:none; overscroll-behavior:contain;
 }
 .modal.open{display:flex;}
-.modal img{max-width:100%; max-height:90vh; border-radius:10px; box-shadow:0 0 60px rgba(0,0,0,0.6);}
-.modal .close-x{
-  position:fixed; top:calc(14px + env(safe-area-inset-top,0px)); right:18px; font-size:1.6rem; color:#fff; cursor:pointer;
-  background:rgba(255,255,255,0.15); width:40px; height:40px; border-radius:50%;
+.modal-viewport{
+  position:absolute; inset:0; overflow:hidden;
   display:flex; align-items:center; justify-content:center;
 }
+.modal img{
+  max-width:100vw; max-height:100vh; width:auto; height:auto;
+  touch-action:none; user-select:none; -webkit-user-drag:none;
+  transform-origin:center center; will-change:transform;
+}
+.modal .close-x{
+  position:fixed; top:calc(14px + env(safe-area-inset-top,0px)); right:14px; font-size:1.5rem; color:#fff; cursor:pointer;
+  background:rgba(255,255,255,0.15); width:42px; height:42px; border-radius:50%;
+  display:flex; align-items:center; justify-content:center; z-index:1002;
+}
+.nav-arrow{
+  position:fixed; top:50%; transform:translateY(-50%); z-index:1001;
+  width:48px; height:48px; border-radius:50%; background:rgba(255,255,255,0.15);
+  color:#fff; font-size:1.5rem; display:flex; align-items:center; justify-content:center;
+  cursor:pointer; border:none;
+}
+.nav-arrow:active{background:rgba(255,255,255,0.3);}
+.nav-arrow.prev{left:10px;}
+.nav-arrow.next{right:10px;}
+.zoom-controls{
+  position:fixed; bottom:calc(16px + env(safe-area-inset-bottom,0px)); left:50%; transform:translateX(-50%);
+  z-index:1001; display:flex; gap:8px; background:rgba(255,255,255,0.12); padding:6px; border-radius:30px;
+}
+.zoom-btn{
+  width:42px; height:42px; border-radius:50%; background:rgba(255,255,255,0.15); color:#fff;
+  font-size:1.3rem; display:flex; align-items:center; justify-content:center; border:none; cursor:pointer;
+}
+.zoom-btn:active{background:rgba(255,255,255,0.3);}
+.modal-counter{
+  position:fixed; top:calc(16px + env(safe-area-inset-top,0px)); left:50%; transform:translateX(-50%);
+  z-index:1001; color:#fff; font-size:0.85rem; background:rgba(255,255,255,0.12); padding:6px 14px; border-radius:20px;
+}
+.modal-hint{
+  position:fixed; bottom:calc(72px + env(safe-area-inset-bottom,0px)); left:50%; transform:translateX(-50%);
+  z-index:1001; color:rgba(255,255,255,0.65); font-size:0.75rem; text-align:center; white-space:nowrap;
+}
+@media(max-width:480px){ .nav-arrow{width:40px; height:40px; font-size:1.25rem;} }
 .setup-row{display:flex; flex-direction:column; gap:14px;}
 @media(min-width:640px){ .setup-row{flex-direction:row; flex-wrap:wrap; align-items:flex-end;} }
 .field{display:flex; flex-direction:column; gap:6px; flex:1; min-width:0;}
@@ -126,6 +162,22 @@ table.results th{color:var(--muted); font-weight:600; position:sticky; top:0; ba
   cursor:pointer; font-size:0.78rem; color:var(--muted); transition:all .15s;
 }
 .class-tab.active{background:var(--accent); color:#fff; border-color:var(--accent);}
+.mode-toggle{display:flex; gap:8px; margin-bottom:16px;}
+.mode-btn{
+  flex:1; background:#0e1436; color:var(--muted); border:1px solid rgba(255,255,255,0.15);
+  padding:10px 12px; border-radius:10px; font-weight:600; font-size:0.88rem; cursor:pointer; box-shadow:none;
+}
+.mode-btn.active{background:var(--accent); color:#fff; border-color:var(--accent);}
+.group-checkboxes{
+  display:grid; grid-template-columns:1fr; gap:2px; max-height:260px; overflow-y:auto;
+  background:#0e1436; border:1px solid rgba(255,255,255,0.15); border-radius:10px; padding:8px;
+}
+@media(min-width:560px){ .group-checkboxes{grid-template-columns:1fr 1fr;} }
+.group-check-item{
+  display:flex; align-items:center; gap:8px; padding:9px 8px; border-radius:8px; cursor:pointer; font-size:0.9rem;
+}
+.group-check-item:hover{background:#1a2050;}
+.group-check-item input{width:17px; height:17px; flex:none; accent-color:var(--accent);}
 .leader-filters{display:flex; gap:8px; flex-wrap:wrap; margin-bottom:10px;}
 .leader-filters select{width:auto; min-width:120px; padding:8px 10px; font-size:0.85rem;}
 .refresh-btn{background:transparent; border:1px solid rgba(255,255,255,0.2); box-shadow:none; padding:8px 12px; font-size:0.82rem;}
@@ -155,6 +207,12 @@ table.results th{color:var(--muted); font-weight:600; position:sticky; top:0; ba
   <!-- PASO 2: CONFIGURACION -->
   <div class="card" id="setupCard">
     <h2><span class="step-badge">2</span> Elige tu salón y tu nombre</h2>
+
+    <div class="mode-toggle" id="modeToggle">
+      <button type="button" class="mode-btn active" data-mode="individual">🧑 Individual</button>
+      <button type="button" class="mode-btn" data-mode="grupo">👥 Grupo</button>
+    </div>
+
     <div class="setup-row">
       <div class="field">
         <label for="salonSelect">Salón</label>
@@ -165,15 +223,24 @@ table.results th{color:var(--muted); font-weight:600; position:sticky; top:0; ba
           <option value="9C">9C</option>
         </select>
       </div>
-      <div class="field">
+      <div class="field" id="singleStudentField">
         <label for="studentSelect">Estudiante</label>
         <select id="studentSelect" disabled>
           <option value="">-- Primero elige el salón --</option>
         </select>
       </div>
-      <div class="field" style="flex:none;">
-        <button id="startBtn" disabled>Comenzar ejercicio ▶</button>
+    </div>
+
+    <div class="field" id="groupStudentField" style="display:none; margin-top:14px;">
+      <label>Estudiantes del grupo <span id="groupCount" style="color:var(--muted); font-weight:400;"></span></label>
+      <p class="hint" style="text-align:left; margin-top:0;">Marca a todos los que van a jugar juntos en este intento. A todos se les guardará la misma nota.</p>
+      <div id="groupCheckboxes" class="group-checkboxes">
+        <div style="color:var(--muted); font-size:0.85rem;">-- Primero elige el salón --</div>
       </div>
+    </div>
+
+    <div class="actions-row" style="justify-content:flex-start; margin-top:16px;">
+      <button id="startBtn" disabled>Comenzar ejercicio ▶</button>
     </div>
   </div>
 
@@ -238,7 +305,18 @@ table.results th{color:var(--muted); font-weight:600; position:sticky; top:0; ba
 
 <div class="modal" id="imgModal">
   <div class="close-x" id="modalClose">✕</div>
-  <img id="modalImg" src="" alt="Definiciones en grande">
+  <div class="modal-counter" id="modalCounter">1 / 5</div>
+  <button class="nav-arrow prev" id="modalPrev" aria-label="Anterior">‹</button>
+  <button class="nav-arrow next" id="modalNext" aria-label="Siguiente">›</button>
+  <div class="modal-viewport" id="modalViewport">
+    <img id="modalImg" src="" alt="Definiciones en grande">
+  </div>
+  <div class="modal-hint" id="modalHint">Pellizca o usa la rueda del mouse para hacer zoom</div>
+  <div class="zoom-controls">
+    <button class="zoom-btn" id="zoomOut">−</button>
+    <button class="zoom-btn" id="zoomReset">⤾</button>
+    <button class="zoom-btn" id="zoomIn">+</button>
+  </div>
 </div>
 
 <p class="footer-note">Ciencias · Noveno grado · Vocabulario del Universo</p>
@@ -257,7 +335,8 @@ try{
 }catch(e){ console.warn("No se pudo iniciar Supabase", e); }
 
 let currentClassIdx = 0;
-let currentStudent = null;
+let currentMode = 'individual'; // 'individual' | 'grupo'
+let currentStudents = []; // siempre un arreglo; individual = 1 elemento
 let currentSalon = null;
 let imgOrder = [];
 let wordOrder = [];
@@ -308,18 +387,35 @@ CLASSES.forEach(c=>{
   filterClase.appendChild(o);
 });
 
-// ---- Setup salón / estudiante ----
+// ---- Setup salón / estudiante(s) ----
 const salonSelect = document.getElementById('salonSelect');
 const studentSelect = document.getElementById('studentSelect');
 const startBtn = document.getElementById('startBtn');
+const modeToggle = document.getElementById('modeToggle');
+const singleStudentField = document.getElementById('singleStudentField');
+const groupStudentField = document.getElementById('groupStudentField');
+const groupCheckboxes = document.getElementById('groupCheckboxes');
+const groupCount = document.getElementById('groupCount');
+
+modeToggle.querySelectorAll('.mode-btn').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    currentMode = btn.dataset.mode;
+    modeToggle.querySelectorAll('.mode-btn').forEach(b=>b.classList.toggle('active', b===btn));
+    singleStudentField.style.display = currentMode==='individual' ? 'flex' : 'none';
+    groupStudentField.style.display = currentMode==='grupo' ? 'block' : 'none';
+    refreshStartButton();
+  });
+});
 
 salonSelect.addEventListener('change', () => {
   const salon = salonSelect.value;
   studentSelect.innerHTML = '';
+  groupCheckboxes.innerHTML = '';
   if(!salon){
     studentSelect.disabled = true;
     studentSelect.innerHTML = '<option value="">-- Primero elige el salón --</option>';
-    startBtn.disabled = true;
+    groupCheckboxes.innerHTML = '<div style="color:var(--muted); font-size:0.85rem;">-- Primero elige el salón --</div>';
+    refreshStartButton();
     return;
   }
   studentSelect.disabled = false;
@@ -330,17 +426,36 @@ salonSelect.addEventListener('change', () => {
     const o=document.createElement('option');
     o.value=name; o.textContent=name;
     studentSelect.appendChild(o);
+
+    const label = document.createElement('label');
+    label.className = 'group-check-item';
+    label.innerHTML = `<input type="checkbox" value="${name}"> <span>${name}</span>`;
+    label.querySelector('input').addEventListener('change', refreshStartButton);
+    groupCheckboxes.appendChild(label);
   });
-  startBtn.disabled = true;
+  refreshStartButton();
 });
 
-studentSelect.addEventListener('change', ()=>{
-  startBtn.disabled = !studentSelect.value;
-});
+studentSelect.addEventListener('change', refreshStartButton);
+
+function refreshStartButton(){
+  if(currentMode === 'individual'){
+    startBtn.disabled = !studentSelect.value;
+    groupCount.textContent = '';
+  } else {
+    const checked = groupCheckboxes.querySelectorAll('input:checked').length;
+    groupCount.textContent = checked > 0 ? `(${checked} seleccionados)` : '';
+    startBtn.disabled = checked === 0;
+  }
+}
 
 startBtn.addEventListener('click', ()=>{
   currentSalon = salonSelect.value;
-  currentStudent = studentSelect.value;
+  if(currentMode === 'individual'){
+    currentStudents = [studentSelect.value];
+  } else {
+    currentStudents = Array.from(groupCheckboxes.querySelectorAll('input:checked')).map(i=>i.value);
+  }
   document.getElementById('setupCard').style.display='none';
   document.getElementById('finishScreen').classList.remove('active');
   startGame();
@@ -357,9 +472,14 @@ document.getElementById('newStudentBtn').addEventListener('click', ()=>{
   salonSelect.value='';
   studentSelect.innerHTML = '<option value="">-- Primero elige el salón --</option>';
   studentSelect.disabled = true;
+  groupCheckboxes.innerHTML = '<div style="color:var(--muted); font-size:0.85rem;">-- Primero elige el salón --</div>';
+  groupCount.textContent='';
   startBtn.disabled = true;
   window.scrollTo({top:0, behavior:'smooth'});
 });
+
+// Botón "individual" activo al abrir la página
+document.querySelector('.mode-btn[data-mode="individual"]').classList.add('active');
 
 function startGame(){
   const words = CLASSES[currentClassIdx].words;
@@ -367,8 +487,11 @@ function startGame(){
   document.getElementById('scoreCount').textContent = '0';
   document.getElementById('totalCount').textContent = words.length;
   document.getElementById('errorCount').textContent = '0';
+  const nombreMostrado = currentStudents.length > 1
+    ? '👥 Grupo: ' + currentStudents.join(', ')
+    : currentStudents[0];
   document.getElementById('bannerName').textContent =
-    currentStudent + ' · ' + currentSalon + ' · ' + CLASSES[currentClassIdx].title;
+    nombreMostrado + ' · ' + currentSalon + ' · ' + CLASSES[currentClassIdx].title;
   document.getElementById('feedback').textContent='';
 
   let a = shuffle(words);
@@ -460,13 +583,41 @@ function finishGame(){
   const nota = calcularNota(matchedCount, totalWords, errorCount);
   document.getElementById('gameArea').classList.remove('active');
   document.getElementById('finishScreen').classList.add('active');
+  const nombresTxt = currentStudents.length > 1 ? currentStudents.join(', ') : currentStudents[0];
   document.getElementById('finishSub').textContent =
-    `${currentStudent} (${currentSalon}) — ${CLASSES[currentClassIdx].title} — Aciertos: ${matchedCount}/${totalWords}, Errores: ${errorCount}`;
+    `${nombresTxt} (${currentSalon}) — ${CLASSES[currentClassIdx].title} — Aciertos: ${matchedCount}/${totalWords}, Errores: ${errorCount}`;
   const badge = document.getElementById('gradeBadge');
   badge.textContent = nota.toFixed(2);
   badge.className = 'grade-badge ' + (nota >= 3 ? 'pass' : 'fail');
   document.getElementById('finishScreen').scrollIntoView({behavior:'smooth', block:'start'});
   guardarResultado(nota, matchedCount, totalWords, errorCount);
+}
+
+async function guardarUnEstudiante(estudiante, clase, nota, correctos, total, errores){
+  const { data: existing, error: selErr } = await supa
+    .from(TABLE)
+    .select('id, nota')
+    .eq('estudiante', estudiante)
+    .eq('salon', currentSalon)
+    .eq('clase', clase)
+    .maybeSingle();
+  if(selErr) throw selErr;
+
+  if(!existing){
+    const { error: insErr } = await supa.from(TABLE).insert({
+      estudiante, salon: currentSalon, clase, correctos, total, errores, nota
+    });
+    if(insErr) throw insErr;
+    return {estudiante, status:'nueva', nota};
+  } else if(nota > existing.nota){
+    const { error: updErr } = await supa.from(TABLE)
+      .update({ correctos, total, errores, nota, actualizado_en: new Date().toISOString() })
+      .eq('id', existing.id);
+    if(updErr) throw updErr;
+    return {estudiante, status:'mejora', nota, notaAnterior: Number(existing.nota)};
+  } else {
+    return {estudiante, status:'sin_mejora', nota, notaAnterior: Number(existing.nota)};
+  }
 }
 
 async function guardarResultado(nota, correctos, total, errores){
@@ -475,33 +626,24 @@ async function guardarResultado(nota, correctos, total, errores){
     statusEl.textContent = '⚠️ No se pudo conectar con la base de datos compartida.';
     return;
   }
-  statusEl.textContent = 'Guardando nota...';
+  statusEl.textContent = 'Guardando nota' + (currentStudents.length>1 ? ' del grupo...' : '...');
   try{
     const clase = CLASSES[currentClassIdx].title;
-    const { data: existing, error: selErr } = await supa
-      .from(TABLE)
-      .select('id, nota')
-      .eq('estudiante', currentStudent)
-      .eq('salon', currentSalon)
-      .eq('clase', clase)
-      .maybeSingle();
-    if(selErr) throw selErr;
+    const resultados = [];
+    for(const estudiante of currentStudents){
+      const r = await guardarUnEstudiante(estudiante, clase, nota, correctos, total, errores);
+      resultados.push(r);
+    }
 
-    if(!existing){
-      const { error: insErr } = await supa.from(TABLE).insert({
-        estudiante: currentStudent, salon: currentSalon, clase,
-        correctos, total, errores, nota
-      });
-      if(insErr) throw insErr;
-      statusEl.textContent = '✅ Nota guardada: ' + nota.toFixed(2);
-    } else if(nota > existing.nota){
-      const { error: updErr } = await supa.from(TABLE)
-        .update({ correctos, total, errores, nota, actualizado_en: new Date().toISOString() })
-        .eq('id', existing.id);
-      if(updErr) throw updErr;
-      statusEl.textContent = '🏆 ¡Nueva mejor nota! ' + nota.toFixed(2) + ' (antes ' + Number(existing.nota).toFixed(2) + ')';
+    if(currentStudents.length === 1){
+      const r = resultados[0];
+      if(r.status === 'nueva') statusEl.textContent = '✅ Nota guardada: ' + r.nota.toFixed(2);
+      else if(r.status === 'mejora') statusEl.textContent = '🏆 ¡Nueva mejor nota! ' + r.nota.toFixed(2) + ' (antes ' + r.notaAnterior.toFixed(2) + ')';
+      else statusEl.textContent = 'Tu mejor nota sigue siendo ' + r.notaAnterior.toFixed(2) + ' (esta vez: ' + r.nota.toFixed(2) + ')';
     } else {
-      statusEl.textContent = 'Tu mejor nota sigue siendo ' + Number(existing.nota).toFixed(2) + ' (esta vez: ' + nota.toFixed(2) + ')';
+      const mejoraron = resultados.filter(r=>r.status!=='sin_mejora').length;
+      statusEl.textContent = `✅ Nota ${nota.toFixed(2)} guardada para ${currentStudents.length} estudiantes` +
+        (mejoraron < currentStudents.length ? ` (a ${currentStudents.length - mejoraron} ya les quedó una nota mejor de antes)` : '');
     }
     cargarResultados();
   }catch(e){
@@ -548,15 +690,168 @@ document.getElementById('refreshBtn').addEventListener('click', cargarResultados
 
 cargarResultados();
 
-// ---- Modal para ver imagen de definiciones en grande ----
+// ---- Visor de imagen a pantalla completa: zoom + pan + siguiente/anterior ----
 const modal = document.getElementById('imgModal');
 const modalImg = document.getElementById('modalImg');
-document.getElementById('defImgWrap').addEventListener('click', ()=>{
-  modalImg.src = defImg.src;
+const modalViewport = document.getElementById('modalViewport');
+const modalCounter = document.getElementById('modalCounter');
+const modalHint = document.getElementById('modalHint');
+let modalIdx = 0;
+let zoom = 1, panX = 0, panY = 0;
+const ZOOM_MIN = 1, ZOOM_MAX = 5;
+
+function applyTransform(){
+  modalImg.style.transform = `translate(${panX}px, ${panY}px) scale(${zoom})`;
+}
+function resetZoom(){
+  zoom = 1; panX = 0; panY = 0;
+  applyTransform();
+}
+function clampPan(){
+  // Evita que la imagen se arrastre demasiado lejos fuera de vista
+  const maxPan = 600 * zoom;
+  panX = Math.max(-maxPan, Math.min(maxPan, panX));
+  panY = Math.max(-maxPan, Math.min(maxPan, panY));
+}
+function openModalAt(idx){
+  modalIdx = (idx + CLASSES.length) % CLASSES.length;
+  modalImg.src = CLASSES[modalIdx].defImg;
+  modalCounter.textContent = (modalIdx+1) + ' / ' + CLASSES.length;
+  resetZoom();
   modal.classList.add('open');
+  document.body.style.overflow = 'hidden';
+  modalHint.style.opacity = '1';
+  clearTimeout(window.__hintTimer);
+  window.__hintTimer = setTimeout(()=>{ modalHint.style.transition='opacity .6s'; modalHint.style.opacity='0'; }, 3000);
+}
+function closeModal(){
+  modal.classList.remove('open');
+  document.body.style.overflow = '';
+}
+function goNext(){ if(zoom>1) return; openModalAt(modalIdx+1); }
+function goPrev(){ if(zoom>1) return; openModalAt(modalIdx-1); }
+
+document.getElementById('defImgWrap').addEventListener('click', ()=> openModalAt(currentClassIdx));
+document.getElementById('modalClose').addEventListener('click', closeModal);
+document.getElementById('modalNext').addEventListener('click', (e)=>{ e.stopPropagation(); goNext(); });
+document.getElementById('modalPrev').addEventListener('click', (e)=>{ e.stopPropagation(); goPrev(); });
+document.getElementById('zoomIn').addEventListener('click', (e)=>{
+  e.stopPropagation(); zoom = Math.min(ZOOM_MAX, zoom + 0.5); applyTransform();
 });
-document.getElementById('modalClose').addEventListener('click', ()=> modal.classList.remove('open'));
-modal.addEventListener('click', (e)=>{ if(e.target===modal) modal.classList.remove('open'); });
+document.getElementById('zoomOut').addEventListener('click', (e)=>{
+  e.stopPropagation(); zoom = Math.max(ZOOM_MIN, zoom - 0.5);
+  if(zoom===1){ panX=0; panY=0; }
+  applyTransform();
+});
+document.getElementById('zoomReset').addEventListener('click', (e)=>{ e.stopPropagation(); resetZoom(); });
+
+// Cerrar tocando el fondo (fuera de la imagen), no al arrastrar/zoom
+modalViewport.addEventListener('click', (e)=>{ if(e.target===modalViewport) closeModal(); });
+
+// Rueda del mouse (PC) para zoom
+modalViewport.addEventListener('wheel', (e)=>{
+  e.preventDefault();
+  const delta = e.deltaY < 0 ? 0.25 : -0.25;
+  zoom = Math.max(ZOOM_MIN, Math.min(ZOOM_MAX, zoom + delta));
+  if(zoom===1){ panX=0; panY=0; }
+  applyTransform();
+}, {passive:false});
+
+// Doble clic / doble tap para alternar zoom
+let lastTap = 0;
+modalImg.addEventListener('dblclick', (e)=>{
+  e.stopPropagation();
+  if(zoom>1) resetZoom(); else { zoom = 2.5; applyTransform(); }
+});
+
+// ---- Touch: pinch-to-zoom, arrastrar, deslizar para cambiar imagen ----
+let touchState = null;
+
+modalImg.addEventListener('touchstart', (e)=>{
+  if(e.touches.length === 2){
+    const [t1,t2] = e.touches;
+    const dist = Math.hypot(t2.clientX-t1.clientX, t2.clientY-t1.clientY);
+    touchState = { mode:'pinch', startDist: dist, startZoom: zoom };
+  } else if(e.touches.length === 1){
+    const now = Date.now();
+    if(now - lastTap < 300){
+      // doble tap
+      if(zoom>1) resetZoom(); else { zoom = 2.5; applyTransform(); }
+      touchState = null;
+      lastTap = 0;
+      return;
+    }
+    lastTap = now;
+    touchState = {
+      mode: zoom>1 ? 'pan' : 'swipe',
+      startX: e.touches[0].clientX, startY: e.touches[0].clientY,
+      startPanX: panX, startPanY: panY
+    };
+  }
+}, {passive:true});
+
+modalImg.addEventListener('touchmove', (e)=>{
+  if(!touchState) return;
+  if(touchState.mode === 'pinch' && e.touches.length===2){
+    e.preventDefault();
+    const [t1,t2] = e.touches;
+    const dist = Math.hypot(t2.clientX-t1.clientX, t2.clientY-t1.clientY);
+    zoom = Math.max(ZOOM_MIN, Math.min(ZOOM_MAX, touchState.startZoom * (dist/touchState.startDist)));
+    applyTransform();
+  } else if(touchState.mode === 'pan' && e.touches.length===1){
+    e.preventDefault();
+    panX = touchState.startPanX + (e.touches[0].clientX - touchState.startX);
+    panY = touchState.startPanY + (e.touches[0].clientY - touchState.startY);
+    clampPan();
+    applyTransform();
+  } else if(touchState.mode === 'swipe' && e.touches.length===1){
+    // solo previsualizar deslizamiento horizontal cuando no hay zoom
+    const dx = e.touches[0].clientX - touchState.startX;
+    if(Math.abs(dx) > 10) e.preventDefault();
+  }
+}, {passive:false});
+
+modalImg.addEventListener('touchend', (e)=>{
+  if(touchState && touchState.mode === 'swipe'){
+    const dx = (e.changedTouches[0].clientX - touchState.startX);
+    if(dx < -60) goNext();
+    else if(dx > 60) goPrev();
+  }
+  if(zoom < 1.02){ zoom = 1; panX = 0; panY = 0; applyTransform(); }
+  touchState = null;
+}, {passive:true});
+
+// ---- Arrastrar con mouse cuando hay zoom (desktop) ----
+let mouseDragging = false, dragStartX=0, dragStartY=0, dragStartPanX=0, dragStartPanY=0;
+modalImg.addEventListener('mousedown', (e)=>{
+  if(zoom<=1) return;
+  mouseDragging = true;
+  dragStartX = e.clientX; dragStartY = e.clientY;
+  dragStartPanX = panX; dragStartPanY = panY;
+  modalImg.style.cursor = 'grabbing';
+});
+window.addEventListener('mousemove', (e)=>{
+  if(!mouseDragging) return;
+  panX = dragStartPanX + (e.clientX - dragStartX);
+  panY = dragStartPanY + (e.clientY - dragStartY);
+  clampPan();
+  applyTransform();
+});
+window.addEventListener('mouseup', ()=>{
+  mouseDragging = false;
+  modalImg.style.cursor = zoom>1 ? 'grab' : 'zoom-in';
+});
+
+// ---- Teclado (PC): flechas y Escape ----
+document.addEventListener('keydown', (e)=>{
+  if(!modal.classList.contains('open')) return;
+  if(e.key === 'Escape') closeModal();
+  else if(e.key === 'ArrowRight') goNext();
+  else if(e.key === 'ArrowLeft') goPrev();
+  else if(e.key === '+') { zoom = Math.min(ZOOM_MAX, zoom+0.5); applyTransform(); }
+  else if(e.key === '-') { zoom = Math.max(ZOOM_MIN, zoom-0.5); applyTransform(); }
+});
+
 </script>
 </body>
 </html>
