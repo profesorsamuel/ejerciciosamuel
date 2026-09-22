@@ -18,8 +18,14 @@
   display:flex;align-items:center;justify-content:center;min-width:0
 }
 .study-slide img{
-  display:block;width:auto;max-width:100%;height:auto;max-height:78vh;
-  object-fit:contain;border-radius:14px;box-shadow:0 8px 24px rgba(15,23,42,.12);
+  display:block;
+  width:100%;
+  max-width:900px;
+  height:auto;
+  max-height:none;
+  object-fit:contain;
+  border-radius:14px;
+  box-shadow:0 8px 24px rgba(15,23,42,.12);
   background:#fff
 }
 .study-controls{display:flex;align-items:center;justify-content:center;gap:10px;margin-top:8px}
@@ -28,7 +34,7 @@
 @media(max-width:700px){
   .study-card{padding:14px}
   .study-track{gap:10px}
-  .study-slide img{max-height:none;width:100%;border-radius:10px}
+  .study-slide img{width:100%;max-width:100%;height:auto;max-height:none;object-fit:contain;border-radius:10px}
 }
 
 </style><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script></head><body><main class="wrap"><header><h1>🧪 Ciencias 8.º</h1><p>Transformaciones químicas de la materia</p></header>
