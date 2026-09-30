@@ -1,80 +1,152 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="es">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Clase 2 - Ciencias Naturales</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Clase 2 · Ciencias Naturales</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <style>
-*{box-sizing:border-box}
-body{
-  margin:0;
-  min-height:100vh;
-  font-family:Arial,Helvetica,sans-serif;
-  background:linear-gradient(160deg,#0b2c5f,#1769e0);
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  padding:18px;
-  color:#17233a;
-}
-.card{
-  width:min(480px,100%);
-  background:#fff;
-  border-radius:26px;
-  padding:30px 20px;
-  box-shadow:0 18px 50px rgba(0,0,0,.25);
-  text-align:center;
-}
-.school{
-  font-weight:900;
-  color:#1769e0;
-  font-size:18px;
-  margin-bottom:10px;
-}
-.icon{font-size:52px;margin:5px 0 8px}
-h1{font-size:29px;line-height:1.12;margin:8px 0;color:#102a56}
-.subtitle{color:#607089;font-size:16px;margin:0 0 28px}
-.level{
-  display:block;
-  text-decoration:none;
-  border-radius:18px;
-  padding:21px 15px;
-  margin:14px 0;
-  font-size:25px;
-  font-weight:900;
-  transition:.15s;
-}
-.level:active{transform:scale(.98)}
-.nine{background:#1769e0;color:#fff}
-.eight{background:#eaf3ff;color:#124f9d;border:2px solid #1769e0}
-.level small{
-  display:block;
-  font-size:13px;
-  font-weight:600;
-  margin-top:6px;
-  opacity:.9;
-}
-.note{font-size:12px;color:#718096;margin-top:22px}
+*{box-sizing:border-box}body{margin:0;min-height:100vh;font-family:Arial,sans-serif;background:linear-gradient(150deg,#0d2c5d,#1769e0);color:#17233a;padding:18px;display:flex;justify-content:center;align-items:center}
+.card{width:min(520px,100%);background:#fff;border-radius:25px;padding:25px 20px;box-shadow:0 18px 55px #0005;text-align:center}
+h1{color:#102a56;margin:7px 0;font-size:30px}.school{color:#1769e0;font-weight:900;font-size:18px}.sub{color:#64748b;margin-bottom:22px}
+a.btn,button{display:block;width:100%;border:0;border-radius:16px;padding:18px 12px;margin:12px 0;font:800 21px Arial;text-decoration:none;cursor:pointer}
+.nine{background:#1769e0;color:#fff}.eight{background:#eaf3ff;color:#1456aa;border:2px solid #1769e0!important}.teacher{background:#eef2f7;color:#334155;font-size:15px!important;padding:13px!important;margin-top:25px!important}
+.lock{font-size:58px;margin:10px}.closed{background:#fff5df;border:2px solid #f2c35e;border-radius:17px;padding:18px;margin:20px 0}.closed h2{color:#9a5c00}.small{font-size:13px;color:#64748b}.hidden{display:none!important}
+.modal{position:fixed;inset:0;background:#07152dcc;display:flex;align-items:center;justify-content:center;padding:15px;z-index:20}.box{background:white;width:min(470px,100%);border-radius:22px;padding:20px;text-align:left;max-height:94vh;overflow:auto}.box h2{text-align:center;color:#102a56}
+label{font-weight:700;display:block;margin-top:12px}input{width:100%;min-height:48px;border:1px solid #cbd5e1;border-radius:11px;padding:10px;font:inherit}.row{display:grid;grid-template-columns:1fr 1fr;gap:8px}.primary{background:#1769e0;color:#fff;font-size:16px!important;padding:13px!important}.danger{background:#b42318;color:#fff;font-size:16px!important;padding:13px!important}.secondary{background:#e8eef8;color:#17315b;font-size:16px!important;padding:13px!important}.status{padding:12px;border-radius:12px;background:#eef6ff;margin:12px 0;font-size:14px}.next{font-weight:800;color:#1769e0}
+@media(max-width:390px){body{padding:9px}.card{padding:20px 14px}h1{font-size:25px}.row{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
 <main class="card">
-  <div class="school">C.E.B.G. EL JIRAL</div>
-  <div class="icon">🔬</div>
-  <h1>Clase 2<br>Ciencias Naturales</h1>
-  <p class="subtitle">Selecciona tu nivel para comenzar</p>
+<div class="school">C.E.B.G. EL JIRAL</div>
+<div style="font-size:48px">🔬</div>
+<h1>Clase 2<br>Ciencias Naturales</h1>
+<p class="sub">Prof. Samuel Ortega</p>
 
-  <a class="level nine" href="https://profesorsamuel.github.io/ejerciciosamuel/clase2-noveno.html">
-    NIVEL 9.º
-    <small>Entrar a la práctica de noveno</small>
-  </a>
+<div id="loading"><p>Consultando horario de prácticas…</p></div>
 
-  <a class="level eight" href="https://profesorsamuel.github.io/ejerciciosamuel/clase2-octavo.html">
-    NIVEL 8.º
-    <small>Entrar a la práctica de octavo</small>
-  </a>
+<div id="openArea" class="hidden">
+  <p id="openMessage" class="status">✅ Prácticas activadas</p>
+  <a class="btn nine" href="https://profesorsamuel.github.io/ejerciciosamuel/clase2-noveno.html">NIVEL 9.º<br><span style="font-size:13px">Entrar a la práctica</span></a>
+  <a class="btn eight" href="https://profesorsamuel.github.io/ejerciciosamuel/clase2-octavo.html">NIVEL 8.º<br><span style="font-size:13px">Entrar a la práctica</span></a>
+</div>
 
-  <p class="note">Ciencias Naturales · Clase 2</p>
+<div id="closedArea" class="hidden closed">
+  <div class="lock">🔒</div>
+  <h2>PRÁCTICAS CERRADAS</h2>
+  <p><b>Pronto el profesor Samuel Ortega activará las prácticas.</b></p>
+  <p id="nextSchedule" class="next"></p>
+  <p class="small">Esta página se actualizará automáticamente cuando llegue la hora programada.</p>
+</div>
+
+<button class="teacher" onclick="openTeacher()">🔐 Panel del profesor</button>
+<p id="conn" class="small"></p>
 </main>
-</body>
-</html>
+
+<div id="teacherModal" class="modal hidden"><div class="box">
+<h2>🔐 Panel del profesor</h2>
+<div id="loginArea">
+<label>Contraseña</label>
+<input id="password" type="password" placeholder="Contraseña del profesor">
+<button class="primary" onclick="loginTeacher()">ENTRAR</button>
+<button class="secondary" onclick="closeTeacher()">CANCELAR</button>
+<p id="loginMsg" class="small"></p>
+</div>
+<div id="adminArea" class="hidden">
+<p class="status" id="adminStatus"></p>
+<label>Día y hora de inicio</label>
+<input id="startAt" type="datetime-local">
+<label>Día y hora de cierre</label>
+<input id="endAt" type="datetime-local">
+<button class="primary" onclick="schedulePractice()">📅 GUARDAR Y ACTIVAR HORARIO</button>
+<div class="row">
+<button class="primary" onclick="openNow()">▶ ACTIVAR AHORA</button>
+<button class="danger" onclick="closeNow()">⛔ CERRAR AHORA</button>
+</div>
+<button class="secondary" onclick="closeTeacher()">SALIR</button>
+<p class="small">Horario de Panamá. La configuración se aplica a todos los estudiantes.</p>
+</div>
+</div></div>
+
+<script>
+const SUPABASE_URL='https://luewrpzgetqslxqmdcxv.supabase.co';
+const SUPABASE_KEY='sb_publishable_zJc68aiTxJs7HBgaqeHxrQ_JDcm91xG';
+const supa=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
+let config=null,teacherToken=null;
+const $=x=>document.getElementById(x);
+
+async function loadConfig(){
+ try{
+   const {data,error}=await supa.from('config_practicas').select('*').eq('clave','clase2-ciencias').maybeSingle();
+   if(error)throw error;
+   config=data;
+   $('conn').textContent='';
+   applyState();
+ }catch(e){
+   $('loading').classList.add('hidden');$('closedArea').classList.remove('hidden');
+   $('conn').textContent='⚠️ No se pudo consultar el horario: '+(e.message||e);
+ }
+}
+function panamaNow(){return new Date(new Date().toLocaleString('en-US',{timeZone:'America/Panama'}))}
+function localInputToDate(v){if(!v)return null;return new Date(v+':00-05:00')}
+function fmt(d){return new Intl.DateTimeFormat('es-PA',{timeZone:'America/Panama',dateStyle:'full',timeStyle:'short'}).format(d)}
+function applyState(){
+ $('loading').classList.add('hidden');$('openArea').classList.add('hidden');$('closedArea').classList.add('hidden');
+ const now=Date.now();
+ if(!config){$('closedArea').classList.remove('hidden');return}
+ const start=config.inicio?new Date(config.inicio).getTime():null,end=config.fin?new Date(config.fin).getTime():null;
+ const active=config.activo===true && (!start||now>=start) && (!end||now<=end);
+ if(active){
+   $('openArea').classList.remove('hidden');
+   $('openMessage').textContent=end?'✅ Prácticas activadas hasta '+fmt(new Date(config.fin)):'✅ Prácticas activadas';
+ }else{
+   $('closedArea').classList.remove('hidden');
+   $('nextSchedule').textContent=(config.activo&&start&&now<start)?'Próxima apertura: '+fmt(new Date(config.inicio)):'';
+ }
+}
+function openTeacher(){$('teacherModal').classList.remove('hidden');$('password').value='';$('loginArea').classList.remove('hidden');$('adminArea').classList.add('hidden')}
+function closeTeacher(){$('teacherModal').classList.add('hidden')}
+async function loginTeacher(){
+ const pass=$('password').value;
+ $('loginMsg').textContent='Verificando…';
+ try{
+   const {data,error}=await supa.rpc('verificar_clave_profesor',{p_clave:pass});
+   if(error)throw error;
+   if(!data){$('loginMsg').textContent='❌ Contraseña incorrecta.';return}
+   teacherToken=pass;
+   $('loginArea').classList.add('hidden');$('adminArea').classList.remove('hidden');
+   $('adminStatus').textContent=config?.activo?'Estado actual: programación activada.':'Estado actual: prácticas cerradas.';
+   if(config?.inicio)$('startAt').value=toInput(config.inicio);
+   if(config?.fin)$('endAt').value=toInput(config.fin);
+ }catch(e){$('loginMsg').textContent='⚠️ '+(e.message||e)}
+}
+function toInput(v){
+ const d=new Date(v),parts=new Intl.DateTimeFormat('en-CA',{timeZone:'America/Panama',year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',hourCycle:'h23'}).formatToParts(d);
+ const o=Object.fromEntries(parts.map(p=>[p.type,p.value]));return `${o.year}-${o.month}-${o.day}T${o.hour}:${o.minute}`;
+}
+async function setConfig(active,start,end){
+ try{
+   const {data,error}=await supa.rpc('administrar_practica',{
+     p_clave:teacherToken,p_activo:active,
+     p_inicio:start?start.toISOString():null,p_fin:end?end.toISOString():null
+   });
+   if(error)throw error;
+   if(!data)throw Error('No autorizado');
+   await loadConfig();$('adminStatus').textContent=active?'✅ Configuración guardada.':'🔒 Prácticas cerradas.';
+ }catch(e){$('adminStatus').textContent='⚠️ '+(e.message||e)}
+}
+function schedulePractice(){
+ const s=localInputToDate($('startAt').value),e=localInputToDate($('endAt').value);
+ if(!s||!e)return alert('Seleccione fecha y hora de inicio y cierre.');
+ if(e<=s)return alert('La hora de cierre debe ser posterior a la hora de inicio.');
+ setConfig(true,s,e);
+}
+function openNow(){
+ const e=localInputToDate($('endAt').value);
+ setConfig(true,new Date(),e);
+}
+function closeNow(){setConfig(false,null,null)}
+loadConfig();setInterval(loadConfig,30000);
+</script>
+</body></html>
