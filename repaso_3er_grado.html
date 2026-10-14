@@ -1,0 +1,506 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Repaso 3.er Grado · MEDUCA Panamá</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+  --bg:#fff6e5;--card:#ffffff;--ink:#2a2140;--muted:#6b6483;--line:#e8dfcf;--acc:#e8590c;--acc-ink:#ffffff;
+  --ok:#17803f;--okbg:#e2f7e9;--bad:#c93a3a;--badbg:#fde8e8;--soft:#f4efe4;
+  --mat:#2563eb;--esp:#d9600b;--cn:#178a47;--cs:#d1383d;--ing:#7c4ddb;--cv:#0e7490;
+  --fs:20px;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --bg:#17132a;--card:#241e3f;--ink:#f3effc;--muted:#b9b1d6;--line:#3a3260;--soft:#2d2650;
+    --okbg:#12361f;--badbg:#3d1a1d;--ok:#5fd48a;--bad:#ff8a8a;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#17132a;--card:#241e3f;--ink:#f3effc;--muted:#b9b1d6;--line:#3a3260;--soft:#2d2650;
+  --okbg:#12361f;--badbg:#3d1a1d;--ok:#5fd48a;--bad:#ff8a8a;
+}
+html{scroll-padding-top:env(safe-area-inset-top,0px);height:100%}
+*,*::before,*::after{box-sizing:border-box}
+body{margin:0;min-height:100%;background:var(--bg);color:var(--ink);font-family:'Nunito',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;font-size:17px;line-height:1.5}
+h1,h2,h3,.big{font-family:'Baloo 2','Nunito',system-ui,sans-serif;line-height:1.15;margin:0}
+button{font:inherit;color:inherit;cursor:pointer;border:0;background:none}
+.wrap{max-width:940px;margin:0 auto;padding:14px 14px 40px}
+.card{background:var(--card);border:2px solid var(--line);border-radius:20px;padding:18px}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:12px 22px;border-radius:999px;background:var(--acc);color:var(--acc-ink);font-weight:800;font-size:1.05rem;box-shadow:0 4px 0 rgba(0,0,0,.22);transition:transform .08s}
+.btn:active{transform:translateY(3px);box-shadow:0 1px 0 rgba(0,0,0,.22)}
+.btn[disabled]{opacity:.45;cursor:not-allowed}
+.btn.ghost{background:var(--soft);color:var(--ink);box-shadow:0 3px 0 var(--line)}
+.btn.sm{padding:7px 14px;font-size:.92rem}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.muted{color:var(--muted)}
+small{font-size:.82rem;color:var(--muted)}
+
+/* registro */
+.hero{text-align:center;padding:8px 0 14px}
+.hero .big{font-size:2.3rem;color:var(--acc)}
+.hero .badge{display:inline-block;background:var(--acc);color:var(--acc-ink);padding:4px 16px;border-radius:999px;font-weight:800;margin-bottom:8px}
+label.f{display:block;font-weight:800;margin:14px 0 6px}
+input.t{width:100%;padding:13px 16px;border-radius:14px;border:2px solid var(--line);background:var(--card);color:var(--ink);font:inherit;font-size:1.1rem}
+input.t:focus{outline:3px solid var(--acc);border-color:var(--acc)}
+.avs{display:grid;grid-template-columns:repeat(5,1fr);gap:8px}
+.avs button{font-size:2rem;padding:8px 0;border-radius:16px;background:var(--soft);border:3px solid transparent}
+.avs button.on{border-color:var(--acc);background:var(--card);transform:scale(1.07)}
+.kids{display:flex;flex-direction:column;gap:8px;margin-top:8px}
+.kid{display:flex;align-items:center;gap:12px;padding:10px 14px;border-radius:16px;background:var(--soft);text-align:left;font-weight:800;width:100%}
+.kid span.av{font-size:1.8rem}
+
+/* header */
+.top{display:flex;justify-content:space-between;align-items:center;gap:10px;background:var(--acc);color:var(--acc-ink);border-radius:22px;padding:12px 16px;margin-bottom:12px}
+.who{display:flex;align-items:center;gap:12px;min-width:0}
+.who .av{font-size:2.2rem;background:rgba(255,255,255,.25);border-radius:50%;width:54px;height:54px;display:grid;place-items:center;flex:none}
+.who b{font-family:'Baloo 2',sans-serif;font-size:1.25rem;display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.who small{color:inherit;opacity:.92}
+.pts{font-family:'Baloo 2',sans-serif;font-size:1.5rem;font-weight:800;text-align:right;white-space:nowrap}
+.pts small{color:inherit;opacity:.85;font-size:.9rem}
+.tabs{display:flex;gap:8px;margin-bottom:14px;overflow-x:auto}
+.tabs button{flex:1;min-width:110px;padding:11px 10px;border-radius:16px;background:var(--card);border:2px solid var(--line);font-weight:800}
+.tabs button.on{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+
+/* misiones */
+.area-h{display:flex;align-items:center;gap:10px;margin:20px 0 10px;font-size:1.4rem}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:12px}
+.mcard{display:flex;flex-direction:column;gap:4px;text-align:left;padding:16px;border-radius:20px;color:#fff;box-shadow:0 5px 0 rgba(0,0,0,.25);transition:transform .1s;min-height:150px}
+.mcard:hover{transform:translateY(-2px)}
+.mcard:active{transform:translateY(3px);box-shadow:0 1px 0 rgba(0,0,0,.25)}
+.mcard .mem{font-size:2.4rem}
+.mcard .mt{font-family:'Baloo 2',sans-serif;font-weight:700;font-size:1.2rem;line-height:1.15}
+.mcard .ms{letter-spacing:2px;font-size:1.2rem;margin-top:auto}
+.mcard .mp{font-weight:800;font-size:.9rem;opacity:.95}
+.a-mat{background:var(--mat)}.a-esp{background:var(--esp)}.a-cn{background:var(--cn)}.a-cs{background:var(--cs)}.a-ing{background:var(--ing)}.a-cv{background:var(--cv)}
+.tx-mat{color:var(--mat)}.tx-esp{color:var(--esp)}.tx-cn{color:var(--cn)}.tx-cs{color:var(--cs)}.tx-ing{color:var(--ing)}.tx-cv{color:var(--cv)}
+
+/* lectura */
+.crumb{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;gap:8px}
+.chip{display:inline-block;padding:4px 14px;border-radius:999px;color:#fff;font-weight:800;font-size:.9rem}
+.reading{font-size:var(--fs);line-height:1.7}
+.reading p{margin:0 0 .9em}
+.reading h2{font-size:2rem;margin-bottom:12px}
+.tools{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0 16px}
+
+/* quiz */
+.bar{height:16px;background:var(--soft);border-radius:999px;overflow:hidden;border:2px solid var(--line)}
+.bar>i{display:block;height:100%;background:var(--acc);border-radius:999px;transition:width .35s}
+.qhead{display:flex;justify-content:space-between;align-items:center;margin:10px 0 14px;font-weight:800}
+.streak{background:#ffedd5;color:#9a3412;border-radius:999px;padding:3px 12px}
+.q{font-size:calc(var(--fs) + 2px);font-weight:800;margin:6px 0 16px}
+.opts{display:grid;gap:10px}
+.opt{padding:14px 18px;border-radius:16px;background:var(--card);border:3px solid var(--line);text-align:left;font-weight:700;font-size:var(--fs);transition:transform .08s}
+.opt:hover:not([disabled]){border-color:var(--acc);transform:translateX(3px)}
+.opt.good{background:var(--okbg);border-color:var(--ok)}
+.opt.bad{background:var(--badbg);border-color:var(--bad)}
+.opt[disabled]{cursor:default}
+.numrow{display:flex;gap:10px;flex-wrap:wrap}
+.numrow input{flex:1;min-width:140px;font-size:1.5rem;font-weight:800;text-align:center}
+.fb{margin-top:16px;padding:14px 16px;border-radius:16px;font-weight:700;animation:pop .25s}
+.fb.good{background:var(--okbg);color:var(--ok)}
+.fb.bad{background:var(--badbg);color:var(--bad)}
+.fb p{margin:4px 0 0;color:var(--ink);font-weight:600}
+details.rd{margin-bottom:14px;border:2px dashed var(--line);border-radius:16px;padding:8px 14px;background:var(--card)}
+details.rd summary{cursor:pointer;font-weight:800}
+details.rd .reading{font-size:1rem;margin-top:8px}
+@keyframes pop{from{transform:scale(.94);opacity:0}to{transform:scale(1);opacity:1}}
+
+/* resultado */
+.res{text-align:center}
+.res .stars{font-size:3.4rem;letter-spacing:6px;color:#f5a623}
+.res .stars .off{color:var(--line)}
+.res .big{font-size:2.2rem}
+.res .score{font-family:'Baloo 2',sans-serif;font-size:3.5rem;font-weight:800;color:var(--acc)}
+.lvl{display:inline-block;padding:5px 18px;border-radius:999px;font-weight:800}
+.lvl.l3{background:var(--okbg);color:var(--ok)}
+.lvl.l2{background:#fff3cd;color:#8a6100}
+.lvl.l1{background:var(--badbg);color:var(--bad)}
+.conf{position:fixed;top:-40px;font-size:1.8rem;pointer-events:none;animation:fall 2.8s linear forwards;z-index:50}
+@keyframes fall{to{transform:translateY(115vh) rotate(360deg)}}
+@media (prefers-reduced-motion:reduce){.conf{display:none}*{animation:none!important;transition:none!important}}
+
+/* notas */
+.sum{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-bottom:14px}
+.sum div{background:var(--card);border:2px solid var(--line);border-radius:18px;padding:12px;text-align:center}
+.sum b{display:block;font-family:'Baloo 2',sans-serif;font-size:1.9rem;color:var(--acc)}
+.ablock{margin-bottom:12px}
+.ablock h3{display:flex;justify-content:space-between;gap:8px;font-size:1.2rem;margin-bottom:8px}
+.pbar{height:12px;background:var(--soft);border-radius:999px;overflow:hidden;margin-bottom:10px}
+.pbar i{display:block;height:100%;border-radius:999px}
+table{width:100%;border-collapse:collapse;font-size:.95rem}
+th,td{padding:7px 6px;text-align:left;border-bottom:1px solid var(--line)}
+th{font-size:.8rem;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
+.tw{overflow-x:auto}
+
+/* ranking */
+.chips{display:flex;gap:6px;overflow-x:auto;margin-bottom:12px;padding-bottom:4px}
+.chips button{white-space:nowrap;padding:7px 14px;border-radius:999px;background:var(--card);border:2px solid var(--line);font-weight:800;font-size:.9rem}
+.chips button.on{background:var(--acc);color:var(--acc-ink);border-color:var(--acc)}
+.status{padding:10px 14px;border-radius:14px;background:var(--soft);font-size:.92rem;margin-bottom:12px}
+.rk{display:flex;align-items:center;gap:12px;padding:10px 14px;border-radius:18px;background:var(--card);border:2px solid var(--line);margin-bottom:8px}
+.rk.me{border-color:var(--acc);background:var(--soft)}
+.rk .pos{font-family:'Baloo 2',sans-serif;font-size:1.5rem;min-width:44px;text-align:center}
+.rk .av{font-size:2rem}
+.rk .nm{flex:1;min-width:0}
+.rk .nm b{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.rk .sc{font-family:'Baloo 2',sans-serif;font-size:1.4rem;font-weight:800;color:var(--acc);text-align:right}
+.mini{display:flex;gap:4px;flex-wrap:wrap;margin-top:2px}
+.mini span{font-size:.72rem;font-weight:800;color:#fff;border-radius:999px;padding:1px 8px}
+.foot{margin-top:26px;text-align:center;font-size:.82rem;color:var(--muted)}
+.empty{text-align:center;padding:26px;color:var(--muted)}
+</style>
+</head>
+<body>
+<div class="wrap" id="app"></div>
+<script>
+(function(){
+"use strict";
+const D={"grade": 3, "label": "3.er grado", "heroTitle": "Súper Repaso de 3.er Grado", "heroEmoji": "🌟", "missions": [{"id": "m1", "area": "mat", "emoji": "🧺", "title": "El mercado de Marta", "reading": ["Marta vende frutas en el mercado de su pueblo. Esta mañana tenía 125 mangos y 240 naranjas para vender.", "Vendió 48 mangos y 130 naranjas. Para llevar las naranjas, las pone en bolsas: cada bolsa lleva 5 naranjas.", "Al terminar el día, Marta contó su dinero: ganó B/.45 por la mañana y B/.38 por la tarde."], "questions": [{"t": "num", "q": "¿Cuántas frutas tenía Marta al empezar (mangos y naranjas juntos)?", "a": 365, "e": "Sumamos: 125 + 240 = 365 frutas."}, {"t": "num", "q": "¿Cuántos mangos le quedaron después de vender 48?", "a": 77, "e": "Restamos: 125 − 48 = 77 mangos."}, {"t": "num", "q": "¿Cuántas naranjas le quedaron después de vender 130?", "a": 110, "e": "Restamos: 240 − 130 = 110 naranjas."}, {"t": "num", "q": "Si Marta llena 4 bolsas con 5 naranjas cada una, ¿cuántas naranjas lleva?", "a": 20, "e": "Multiplicamos: 4 × 5 = 20 naranjas."}, {"t": "num", "q": "¿Cuántos balboas ganó Marta en todo el día?", "a": 83, "e": "Sumamos: 45 + 38 = 83 balboas (B/.83)."}], "lang": "es"}, {"id": "m2", "area": "mat", "emoji": "🍕", "title": "La pizza de la fiesta", "reading": ["Luis cumplió años y su mamá compró una pizza. La pizza viene cortada en 8 pedazos iguales.", "Luis invitó a 3 amigos, así que en la mesa hay 4 niños. Cada niño comió 2 pedazos.", "La pizza costó B/.12 y los 4 niños la pagaron entre todos, en partes iguales."], "questions": [{"t": "num", "q": "¿En cuántos pedazos iguales venía cortada la pizza?", "a": 8, "e": "La lectura dice que viene cortada en 8 pedazos iguales."}, {"t": "mc", "q": "Luis comió 2 de los 8 pedazos. ¿Qué fracción de la pizza comió?", "o": ["2/8", "8/2", "2/4", "1/8"], "a": 0, "e": "Comió 2 partes de un total de 8: es 2/8 (dos octavos)."}, {"t": "num", "q": "¿Cuántos pedazos comieron los 4 niños en total?", "a": 8, "e": "Multiplicamos: 4 × 2 = 8 pedazos. ¡Se comieron toda la pizza!"}, {"t": "num", "q": "¿Cuántos balboas pagó cada niño por la pizza?", "a": 3, "e": "Dividimos: 12 ÷ 4 = 3 balboas cada uno."}, {"t": "mc", "q": "¿Cuántos pedazos son la mitad de la pizza?", "o": ["2", "4", "6", "8"], "a": 1, "e": "La mitad de 8 es 4, porque 4 + 4 = 8."}], "lang": "es"}, {"id": "m3", "area": "esp", "emoji": "🐒", "title": "Tito, el mono tití", "reading": ["Tito era un mono tití muy simpático. Vivía en un árbol grande, cerca del río Chagres. Todas las mañanas saltaba de rama en rama y saludaba a sus amigos.", "Un día llovió mucho y el río creció. Luna, la tortuga, quería llegar al otro lado, pero el agua corría fuerte y ella no podía cruzar. Estaba muy triste.", "Tito pensó rápido. Buscó una rama larga y la puso como un puente sobre las piedras. Luna caminó despacio y llegó a salvo. —¡Gracias, Tito! —dijo feliz la tortuga.", "Desde ese día, los dos fueron mejores amigos."], "questions": [{"t": "mc", "q": "¿Dónde vivía Tito?", "o": ["En un árbol grande cerca del río Chagres", "En una cueva en la montaña", "En una casa en la ciudad", "En el fondo del mar"], "a": 0, "e": "El cuento dice que vivía en un árbol grande, cerca del río Chagres."}, {"t": "mc", "q": "¿Por qué Luna no podía cruzar el río?", "o": ["Porque el río creció con la lluvia", "Porque tenía sueño", "Porque Tito no la dejaba", "Porque no quería mojarse"], "a": 0, "e": "Llovió mucho, el río creció y el agua corría fuerte."}, {"t": "mc", "q": "¿Cómo ayudó Tito a Luna?", "o": ["Puso una rama larga como puente", "La cargó en su espalda", "Le dio comida", "Se fue a dormir"], "a": 0, "e": "Tito buscó una rama larga y la usó como puente."}, {"t": "mc", "q": "¿Cuál es el antónimo (contrario) de la palabra «triste»?", "o": ["Feliz", "Lenta", "Grande", "Fuerte"], "a": 0, "e": "Triste y feliz significan lo contrario."}, {"t": "mc", "q": "¿Qué enseñanza nos deja este cuento?", "o": ["Debemos ayudar a nuestros amigos", "Hay que correr siempre rápido", "Nunca debemos salir cuando llueve", "Los monos son mejores que las tortugas"], "a": 0, "e": "Tito ayudó a su amiga cuando lo necesitaba: la solidaridad es un valor importante."}], "lang": "es"}, {"id": "m4", "area": "esp", "emoji": "✏️", "title": "Mi escuela y las palabras", "reading": ["Mi escuela queda en mi comunidad. Tiene un patio grande, un jardín con flores amarillas y una biblioteca pequeña.", "Mi maestra Ana nos enseña a leer y a escribir. En el recreo jugamos con nuestros compañeros. ¡Me gusta mucho mi escuela!"], "questions": [{"t": "mc", "q": "¿Qué hay en el jardín de la escuela?", "o": ["Flores amarillas", "Una piscina", "Una biblioteca", "Un columpio"], "a": 0, "e": "La lectura dice: «un jardín con flores amarillas»."}, {"t": "mc", "q": "¿Cómo se llama la maestra?", "o": ["Ana", "Rosa", "Marta", "Luisa"], "a": 0, "e": "La maestra se llama Ana."}, {"t": "mc", "q": "En la oración «Tiene un patio grande», ¿qué palabra dice cómo es el patio?", "o": ["Tiene", "patio", "grande", "un"], "a": 2, "e": "«Grande» es un adjetivo: dice cómo es el patio."}, {"t": "mc", "q": "¿Cuál es el plural de la palabra «flor»?", "o": ["flors", "flores", "floras", "flor"], "a": 1, "e": "Si la palabra termina en consonante, se agrega -es: flor → flores."}, {"t": "mc", "q": "¿Cuántas sílabas tiene la palabra «escuela»?", "o": ["2", "3", "4", "5"], "a": 1, "e": "Es-cue-la: tiene 3 sílabas."}], "lang": "es"}, {"id": "m5", "area": "cn", "emoji": "🌱", "title": "Las plantas, seres vivos", "reading": ["Las plantas son seres vivos: nacen, crecen, se alimentan y se reproducen. Para vivir necesitan agua, luz del sol y aire.", "La planta tiene varias partes. La raíz la sostiene en la tierra y absorbe el agua. El tallo la mantiene firme y lleva el agua hacia arriba. Las hojas usan la luz del sol para fabricar el alimento de la planta.", "Las flores producen frutos, y los frutos guardan las semillas. De cada semilla puede nacer una nueva planta."], "questions": [{"t": "mc", "q": "¿Qué parte de la planta absorbe el agua de la tierra?", "o": ["La raíz", "La hoja", "La flor", "El fruto"], "a": 0, "e": "La raíz absorbe el agua y sostiene la planta."}, {"t": "mc", "q": "¿Para qué sirven las hojas?", "o": ["Para fabricar el alimento usando la luz del sol", "Para sostener la planta en la tierra", "Para guardar el agua", "Para hacer ruido"], "a": 0, "e": "Las hojas usan la luz del sol para fabricar el alimento."}, {"t": "mc", "q": "¿Cuál de estos NO es un ser vivo?", "o": ["Perro", "Árbol", "Piedra", "Mariposa"], "a": 2, "e": "La piedra no nace, no crece ni se alimenta: no es un ser vivo."}, {"t": "mc", "q": "¿Qué guardan los frutos?", "o": ["Semillas", "Raíces", "Tierra", "Agua"], "a": 0, "e": "Los frutos guardan las semillas."}, {"t": "mc", "q": "¿Qué necesita una planta para vivir?", "o": ["Agua, luz del sol y aire", "Solo tierra", "Plástico y arena", "Dulces y refrescos"], "a": 0, "e": "Las plantas necesitan agua, luz del sol y aire."}], "lang": "es"}, {"id": "m6", "area": "cn", "emoji": "💧", "title": "El viaje del agua", "reading": ["El agua hace un viaje que nunca termina. El sol calienta el agua de los ríos y del mar, y una parte se convierte en vapor. Este cambio se llama evaporación.", "El vapor sube, se enfría y forma las nubes. Eso se llama condensación. Cuando las gotas de las nubes pesan mucho, caen en forma de lluvia.", "El agua puede estar en tres estados: sólido (el hielo), líquido (el agua que bebemos) y gaseoso (el vapor)."], "questions": [{"t": "mc", "q": "¿Cómo se llama el cambio del agua líquida a vapor?", "o": ["Evaporación", "Condensación", "Congelación", "Lluvia"], "a": 0, "e": "Cuando el agua se convierte en vapor ocurre la evaporación."}, {"t": "mc", "q": "¿Qué forma el vapor de agua cuando sube y se enfría?", "o": ["Las nubes", "Los ríos", "El hielo", "La arena"], "a": 0, "e": "El vapor se enfría y forma las nubes (condensación)."}, {"t": "mc", "q": "¿En qué estado está el hielo?", "o": ["Sólido", "Líquido", "Gaseoso", "Vapor"], "a": 0, "e": "El hielo es agua en estado sólido."}, {"t": "mc", "q": "¿Qué ocurre cuando las gotas de las nubes pesan mucho?", "o": ["Caen como lluvia", "Se hacen más pequeñas", "Suben al espacio", "Se vuelven arena"], "a": 0, "e": "Las gotas pesadas caen en forma de lluvia."}, {"t": "mc", "q": "¿Quién calienta el agua de los ríos y del mar para que se evapore?", "o": ["El sol", "La luna", "El viento", "Las nubes"], "a": 0, "e": "El calor del sol hace que el agua se evapore."}], "lang": "es"}, {"id": "m7", "area": "cs", "emoji": "🇵🇦", "title": "Mi país: Panamá", "reading": ["Vivo en Panamá, un país de América Central. Nuestra capital es la Ciudad de Panamá. Panamá está dividido en 10 provincias y también tiene comarcas indígenas.", "Nuestros símbolos patrios son la bandera, el escudo y el himno nacional. La bandera tiene los colores azul, blanco y rojo, y dos estrellas.", "El Canal de Panamá une el océano Atlántico con el océano Pacífico, y por él pasan barcos de todo el mundo. El ave nacional es el águila harpía."], "questions": [{"t": "mc", "q": "¿Cuál es la capital de Panamá?", "o": ["Ciudad de Panamá", "Colón", "David", "Santiago"], "a": 0, "e": "La capital de Panamá es la Ciudad de Panamá."}, {"t": "mc", "q": "¿Cuáles son los símbolos patrios de Panamá?", "o": ["La bandera, el escudo y el himno", "El canal, el puente y la playa", "La pollera, el sombrero y el tambor", "El mapa, el libro y el lápiz"], "a": 0, "e": "Los símbolos patrios son la bandera, el escudo y el himno nacional."}, {"t": "mc", "q": "¿Qué colores tiene la bandera de Panamá?", "o": ["Azul, blanco y rojo", "Verde, amarillo y negro", "Rojo, negro y naranja", "Celeste, blanco y verde"], "a": 0, "e": "La bandera de Panamá es azul, blanca y roja."}, {"t": "mc", "q": "¿Qué dos océanos une el Canal de Panamá?", "o": ["Atlántico y Pacífico", "Índico y Ártico", "Pacífico y Ártico", "Atlántico e Índico"], "a": 0, "e": "El Canal une el océano Atlántico con el Pacífico."}, {"t": "mc", "q": "¿Cuál es el ave nacional de Panamá?", "o": ["El águila harpía", "El loro", "El tucán", "La paloma"], "a": 0, "e": "El águila harpía es el ave nacional de Panamá."}], "lang": "es"}, {"id": "m8", "area": "cs", "emoji": "🏘️", "title": "Mi comunidad", "reading": ["En mi comunidad vivimos muchas personas y todos nos ayudamos. Los bomberos apagan los incendios. Los doctores y las enfermeras nos cuidan en el centro de salud. Los maestros nos enseñan en la escuela.", "Para vivir en paz seguimos normas: respetamos el turno, decimos la verdad y cuidamos el ambiente. Si cada persona deposita la basura en su lugar, nuestra comunidad se ve limpia y bonita."], "questions": [{"t": "mc", "q": "¿Quiénes apagan los incendios?", "o": ["Los bomberos", "Los maestros", "Los doctores", "Los vendedores"], "a": 0, "e": "Los bomberos apagan los incendios."}, {"t": "mc", "q": "¿A dónde vamos cuando estamos enfermos?", "o": ["Al centro de salud", "A la biblioteca", "Al parque", "A la panadería"], "a": 0, "e": "En el centro de salud nos cuidan doctores y enfermeras."}, {"t": "mc", "q": "¿Cuál es una buena norma de convivencia?", "o": ["Respetar el turno", "Gritar en clase", "Empujar a los demás", "Romper las plantas"], "a": 0, "e": "Respetar el turno ayuda a convivir en paz."}, {"t": "mc", "q": "¿Cómo mantenemos limpia nuestra comunidad?", "o": ["Depositando la basura en su lugar", "Tirando papeles en la calle", "Quemando plástico", "Dejando la basura en el río"], "a": 0, "e": "Depositar la basura en su lugar cuida el ambiente."}, {"t": "mc", "q": "¿Qué debemos hacer para vivir en paz en la comunidad?", "o": ["Seguir las normas", "Hacer lo que queramos", "Ignorar a los vecinos", "Decir mentiras"], "a": 0, "e": "Cumplir las normas nos ayuda a convivir en paz."}], "lang": "es"}, {"id": "m9", "area": "ing", "emoji": "🐶", "title": "My dog Max", "reading": ["I have a dog. His name is Max. Max is big and brown. He likes to run in the park.", "Every day he eats his food and drinks water. I love Max!"], "questions": [{"t": "mc", "q": "What is the dog's name?", "o": ["Max", "Tom", "Rex", "Bobby"], "a": 0, "e": "The text says: His name is Max."}, {"t": "mc", "q": "What color is Max?", "o": ["Brown", "Black", "White", "Red"], "a": 0, "e": "Max is big and brown (marrón)."}, {"t": "mc", "q": "Where does Max like to run?", "o": ["In the park", "At school", "In the sea", "In the house"], "a": 0, "e": "He likes to run in the park (parque)."}, {"t": "mc", "q": "How do you say «perro» in English?", "o": ["Dog", "Cat", "Bird", "Fish"], "a": 0, "e": "Perro en inglés es dog."}, {"t": "mc", "q": "Which word means «agua» in English?", "o": ["Water", "Food", "Milk", "Juice"], "a": 0, "e": "Agua en inglés es water."}], "lang": "en"}, {"id": "m10", "area": "mat", "emoji": "📐", "title": "Figuras en la escuela", "reading": ["La maestra Rosa dibuja figuras en el tablero. El cuadrado tiene 4 lados iguales. El rectángulo tiene 4 lados: 2 largos y 2 cortos. El triángulo tiene 3 lados.", "El perímetro es la suma de todos los lados de una figura. El cuaderno de Rosa es un rectángulo: mide 20 cm de largo y 10 cm de ancho."], "questions": [{"t": "num", "q": "¿Cuántos lados tiene un triángulo?", "a": 3, "e": "El triángulo tiene 3 lados."}, {"t": "num", "q": "¿Cuál es el perímetro de un cuadrado de 6 cm de lado?", "a": 24, "e": "6 + 6 + 6 + 6 = 24 cm."}, {"t": "num", "q": "¿Cuál es el perímetro del cuaderno de Rosa (20 cm de largo y 10 cm de ancho)?", "a": 60, "e": "20 + 10 + 20 + 10 = 60 cm."}, {"t": "num", "q": "Un triángulo tiene lados de 5 cm, 7 cm y 8 cm. ¿Cuál es su perímetro?", "a": 20, "e": "5 + 7 + 8 = 20 cm."}, {"t": "num", "q": "¿Cuántos lados hay en total en 3 cuadrados?", "a": 12, "e": "Cada cuadrado tiene 4 lados: 3 × 4 = 12."}]}, {"id": "m11", "area": "mat", "emoji": "🐔", "title": "La finca de Don Luis", "reading": ["Don Luis tiene 6 gallineros y en cada gallinero viven 8 gallinas. Se levanta a las 6:00 a. m. y trabaja hasta las 12:00 del mediodía.", "Para darles de comer, separa las 48 gallinas en 4 grupos iguales. Además, compró 3 sacos de arroz y cada saco costó B/.9."], "questions": [{"t": "num", "q": "¿Cuántas gallinas hay en los 6 gallineros?", "a": 48, "e": "6 × 8 = 48 gallinas."}, {"t": "num", "q": "Si cada gallina pone 1 huevo al día, ¿cuántos huevos ponen las gallinas de 2 gallineros?", "a": 16, "e": "2 × 8 = 16 huevos."}, {"t": "num", "q": "¿Cuánto pagó Don Luis por los 3 sacos de arroz (en balboas)?", "a": 27, "e": "3 × 9 = 27, o sea B/.27."}, {"t": "num", "q": "¿Cuántas horas trabaja Don Luis, de 6:00 a. m. a 12:00 del mediodía?", "a": 6, "e": "De 6 a 12 hay 6 horas."}, {"t": "num", "q": "Separa las 48 gallinas en 4 grupos iguales. ¿Cuántas gallinas hay en cada grupo?", "a": 12, "e": "48 ÷ 4 = 12 gallinas."}]}, {"id": "m12", "area": "esp", "emoji": "🔤", "title": "Las palabras y sus tipos", "reading": ["Los sustantivos nombran personas, animales, cosas y lugares: niño, loro, mesa, Panamá. Los adjetivos dicen cómo son: grande, rojo, amable. Los verbos indican acciones: correr, comer, jugar.", "Las oraciones empiezan con mayúscula. También usamos mayúscula en los nombres propios de personas y lugares. Ejemplo: El loro verde come frutas en Panamá."], "questions": [{"t": "mc", "q": "¿Cuál de estas palabras es un sustantivo?", "o": ["saltar", "verde", "rápido", "mesa"], "a": 3, "e": "«Mesa» nombra una cosa; es un sustantivo."}, {"t": "mc", "q": "En «La flor amarilla huele bien», ¿cuál es el adjetivo?", "o": ["flor", "huele", "amarilla", "bien"], "a": 2, "e": "«Amarilla» dice cómo es la flor."}, {"t": "mc", "q": "En «Los niños juegan en el patio», ¿cuál es el verbo?", "o": ["niños", "patio", "Los", "juegan"], "a": 3, "e": "«Juegan» es la acción."}, {"t": "mc", "q": "¿Qué oración está bien escrita?", "o": ["la ciudad de panamá es grande.", "La ciudad de Panamá es grande.", "la ciudad de Panamá es grande.", "La Ciudad de panamá es grande."], "a": 1, "e": "Empieza con mayúscula y «Panamá» lleva mayúscula por ser nombre propio."}, {"t": "mc", "q": "¿Cuál es un nombre propio?", "o": ["río", "pueblo", "montaña", "Chiriquí"], "a": 3, "e": "«Chiriquí» es el nombre de un lugar y se escribe con mayúscula."}]}, {"id": "m13", "area": "cv", "emoji": "🤝", "title": "Valores en mi escuela", "reading": ["Lucas encontró un lápiz nuevo en el piso del salón. Pensó: «Nadie me vio, puedo quedármelo». Pero recordó que ese lápiz era de otra persona y lo entregó a la maestra.", "Poco después, Marta lo buscaba muy preocupada. ¡Qué alegría cuando la maestra se lo devolvió! Lucas practicó la honestidad. Otros valores son el respeto, la solidaridad y la responsabilidad."], "questions": [{"t": "mc", "q": "¿Qué valor practicó Lucas al entregar el lápiz?", "o": ["La honestidad", "La pereza", "El egoísmo", "El miedo"], "a": 0, "e": "Ser honesto es decir la verdad y devolver lo que no es nuestro."}, {"t": "mc", "q": "¿Qué hizo Lucas con el lápiz?", "o": ["Se lo quedó", "Lo escondió", "Lo entregó a la maestra", "Lo rompió"], "a": 2, "e": "Lo entregó a la maestra."}, {"t": "mc", "q": "Ayudar a un compañero que se cayó es practicar…", "o": ["la solidaridad", "el desorden", "la burla", "la pereza"], "a": 0, "e": "Ayudar a los demás es ser solidario."}, {"t": "mc", "q": "Hacer las tareas a tiempo es ser…", "o": ["distraído", "responsable", "gritón", "desordenado"], "a": 1, "e": "La responsabilidad es cumplir con nuestros deberes."}, {"t": "mc", "q": "¿Qué acción muestra respeto?", "o": ["Interrumpir a quien habla", "Burlarse de otro", "Escuchar con atención a los demás", "Tirar basura al piso"], "a": 2, "e": "Escuchar con atención es una forma de respeto."}]}]};
+const AREAS={
+  mat:{n:'Matemática',e:'🔢'},
+  esp:{n:'Español',e:'📖'},
+  cn:{n:'Ciencias Naturales',e:'🌱'},
+  cs:{n:'Ciencias Sociales',e:'🗺️'},
+  ing:{n:'Inglés',e:'🔤'},
+  cv:{n:'Valores y Civismo',e:'🤝'}
+};
+const AVATARS=['🐒','🐢','🦜','🦥','🐸','🐆','🦋','🐬','🦩','🐙'];
+const KEY='meduca_repaso_g'+D.grade+'_v1';
+const MAXPTS=D.missions.length*100;
+
+/* ---------- estado ---------- */
+function load(){try{const r=localStorage.getItem(KEY);if(r){const o=JSON.parse(r);if(o&&o.students)return o;}}catch(e){}return{students:{},current:null};}
+let S=load();
+function save(){try{localStorage.setItem(KEY,JSON.stringify(S));}catch(e){}}
+const ui={screen:'home',tab:'missions',filter:'all'};
+let quiz=null,lastResult=null;
+let dbH=null,myId=null,sync='none',remote=[],remoteOk=false;
+const app=document.getElementById('app');
+const cur=()=>S.current?S.students[S.current]:null;
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const rid=()=>'k'+Math.random().toString(36).slice(2,9)+Date.now().toString(36).slice(-4);
+const mById=id=>D.missions.find(m=>m.id===id);
+
+function totalPts(st){return Object.values(st.progress||{}).reduce((a,p)=>a+(p.pts||0),0);}
+function doneCount(st){return Object.keys(st.progress||{}).length;}
+function areaAvg(st,a){
+  const ms=D.missions.filter(m=>m.area===a&&st.progress&&st.progress[m.id]);
+  if(!ms.length)return null;
+  return Math.round(ms.reduce((s,m)=>s+st.progress[m.id].pct,0)/ms.length);
+}
+function overallAvg(st){
+  const v=Object.values(st.progress||{});
+  return v.length?Math.round(v.reduce((s,p)=>s+p.pct,0)/v.length):null;
+}
+function levelOf(pct){return pct>=80?{k:3,t:'Logrado'}:pct>=60?{k:2,t:'En proceso'}:{k:1,t:'Por reforzar'};}
+function rankTitle(pts){const r=pts/MAXPTS;return r<.2?'Explorador 🧭':r<.5?'Aventurero 🎒':r<.8?'Campeón 🏅':'Gran Maestro 👑';}
+function starsOf(pct){return pct>=80?3:pct>=60?2:pct>=20?1:0;}
+function starStr(n){return '★'.repeat(n)+'<span style="opacity:.45">'+'★'.repeat(3-n)+'</span>';}
+
+/* ---------- sincronización (ranking compartido) ---------- */
+function entryOf(st){
+  const areas={};for(const a in AREAS){const v=areaAvg(st,a);if(v!==null)areas[a]=v;}
+  return{name:st.name,avatar:st.avatar,school:st.school||'',points:totalPts(st),done:doneCount(st),areas,updated:st.updated||st.created||Date.now()};
+}
+let pushing=false,pushAgain=false;
+async function push(){
+  if(!dbH||!myId)return;
+  if(pushing){pushAgain=true;return;}
+  pushing=true;
+  try{
+    do{
+      pushAgain=false;
+      const students={};
+      for(const id in S.students)students[id]=entryOf(S.students[id]);
+      await dbH.doc('ranking/'+myId).set({students,updated:Date.now()});
+      sync='ok';
+    }while(pushAgain);
+  }catch(e){sync='denied';}
+  pushing=false;
+  refreshIfRank();
+}
+function refreshIfRank(){if(cur()&&ui.screen==='home'&&ui.tab==='rank')render();}
+async function connect(){
+  try{
+    if(!window.claude||!window.claude.use)return;
+    const db=await window.claude.use('db');
+    if(!db)return;
+    dbH=db;
+    try{const u=await window.claude.use('user');if(u){myId=await u.id();}}catch(e){}
+    dbH.collection('ranking').limit(500).onSnapshot(snap=>{
+      remote=snap.docs.map(d=>({id:d.id,data:d.data()||{}}));
+      remoteOk=true;
+      refreshIfRank();
+    },()=>{remoteOk=false;refreshIfRank();});
+    if(cur())push();
+  }catch(e){}
+}
+function buildRank(){
+  const list=[];const seen=new Set();
+  for(const d of remote){
+    const st=d.data.students||{};
+    for(const pid in st){
+      const e=st[pid];if(!e||typeof e!=='object')continue;
+      const mine=(d.id===myId)&&!!S.students[pid];
+      const src=mine?entryOf(S.students[pid]):e;
+      list.push({key:d.id+':'+pid,me:mine&&S.current===pid,mine,...src});
+      if(mine)seen.add(pid);
+    }
+  }
+  for(const pid in S.students){
+    if(seen.has(pid))continue;
+    list.push({key:'local:'+pid,me:S.current===pid,mine:true,local:true,...entryOf(S.students[pid])});
+  }
+  const f=ui.filter;
+  const val=e=>f==='all'?e.points:(e.areas&&e.areas[f]!=null?e.areas[f]:-1);
+  const arr=f==='all'?list:list.filter(e=>val(e)>=0);
+  arr.sort((a,b)=>val(b)-val(a)||b.points-a.points||a.updated-b.updated);
+  return{arr,val};
+}
+
+/* ---------- audio de lectura ---------- */
+function stopSpeak(){try{if(window.speechSynthesis)speechSynthesis.cancel();}catch(e){}}
+function speak(m){
+  if(!('speechSynthesis' in window)){alert('Tu dispositivo no tiene lectura en voz alta.');return;}
+  if(speechSynthesis.speaking){speechSynthesis.cancel();return;}
+  const u=new SpeechSynthesisUtterance(m.title+'. '+m.reading.join(' '));
+  u.lang=m.area==='ing'?'en-US':'es-MX';u.rate=.9;
+  speechSynthesis.speak(u);
+}
+
+/* ---------- pantallas ---------- */
+let reg={name:'',school:'',avatar:AVATARS[0]};
+function renderRegister(){
+  const kids=Object.values(S.students);
+  app.innerHTML=`
+  <div class="hero"><span class="badge">${esc(D.label)}</span>
+    <div class="big">${D.heroEmoji} ${esc(D.heroTitle)}</div>
+    <p class="muted" style="margin:6px 0 0">Repaso divertido basado en los contenidos de MEDUCA Panamá. ¡Lee, juega y aprende!</p></div>
+  ${kids.length?`<div class="card" style="margin-bottom:14px"><h3>👋 ¿Ya jugaste antes?</h3><div class="kids">${
+    kids.map(k=>`<button class="kid" data-act="pick" data-id="${esc(k.id)}"><span class="av">${k.avatar}</span><span>${esc(k.name)}<br><small>${totalPts(k)} puntos</small></span></button>`).join('')}</div></div>`:''}
+  <div class="card">
+    <h2 style="font-size:1.6rem">${kids.length?'✨ Registrar a otro estudiante':'✍️ Primero regístrate'}</h2>
+    <p class="muted" style="margin:4px 0 0">Para empezar necesitas registrarte: sin nombre no se abre ninguna misión. Así guardamos tus notas y apareces en el ranking.</p>
+    <label class="f" for="rn">Tu nombre y la inicial de tu apellido</label>
+    <input class="t" id="rn" maxlength="24" placeholder="Ejemplo: Ana P." autocomplete="off" value="${esc(reg.name)}">
+    <label class="f" for="rs">Tu escuela (opcional)</label>
+    <input class="t" id="rs" maxlength="40" placeholder="Ejemplo: Escuela Nueva Esperanza" autocomplete="off" value="${esc(reg.school)}">
+    <label class="f">Elige tu personaje</label>
+    <div class="avs">${AVATARS.map(a=>`<button data-act="av" data-v="${a}" class="${a===reg.avatar?'on':''}" aria-label="Personaje ${a}">${a}</button>`).join('')}</div>
+    <p style="margin:16px 0 0"><small>🔒 Por tu seguridad no escribas tu apellido completo, teléfono ni dirección. Tu nombre y puntaje podrán ser vistos por otras personas en el ranking.</small></p>
+    <div style="margin-top:16px;text-align:center"><button class="btn" id="go" data-act="register" ${reg.name.trim().length<2?'disabled':''}>🚀 ¡Empezar a jugar!</button></div>
+  </div>
+  <div class="foot">Material de repaso educativo. No es un producto oficial del MEDUCA.</div>`;
+}
+function header(){
+  const st=cur(),pts=totalPts(st);
+  return`<header class="top"><div class="who"><span class="av">${st.avatar}</span><div><b>${esc(st.name)}</b><small>${esc(D.label)} · ${rankTitle(pts)}</small></div></div>
+  <div class="pts">⭐ ${pts}<small> / ${MAXPTS}</small></div></header>
+  <nav class="tabs">
+    <button data-act="tab" data-v="missions" class="${ui.tab==='missions'?'on':''}">🎮 Misiones</button>
+    <button data-act="tab" data-v="notes" class="${ui.tab==='notes'?'on':''}">📒 Mis notas</button>
+    <button data-act="tab" data-v="rank" class="${ui.tab==='rank'?'on':''}">🏆 Ranking</button>
+  </nav>`;
+}
+function renderHome(){
+  const st=cur();
+  let body='';
+  if(ui.tab==='missions'){
+    const order=Object.keys(AREAS).filter(a=>D.missions.some(m=>m.area===a));
+    body=`<p class="muted" style="margin:0 0 4px">Cada misión tiene una <b>lectura</b> y <b>5 preguntas</b>. ¡Consigue 3 estrellas ⭐ en todas!</p>`+
+    order.map(a=>`<h2 class="area-h tx-${a}"><span>${AREAS[a].e}</span>${AREAS[a].n}</h2><div class="grid">`+
+      D.missions.filter(m=>m.area===a).map(m=>{
+        const p=st.progress[m.id];
+        return`<button class="mcard a-${a}" data-act="open" data-id="${m.id}"><span class="mem">${m.emoji}</span><span class="mt">${esc(m.title)}</span><span class="mp">${p?'Mejor nota: '+p.pct+'%':'¡Nueva misión!'}</span><span class="ms">${starStr(p?starsOf(p.pct):0)}</span></button>`;
+      }).join('')+`</div>`).join('');
+  }else if(ui.tab==='notes'){
+    body=renderNotes(st);
+  }else{
+    body=renderRank();
+  }
+  app.innerHTML=header()+body+`<div class="row" style="justify-content:center;margin-top:24px"><button class="btn ghost sm" data-act="switch">🔄 Cambiar de estudiante</button></div><div class="foot">Material de repaso educativo basado en los contenidos de MEDUCA Panamá.</div>`;
+}
+function renderNotes(st){
+  const ov=overallAvg(st);
+  let h=`<div class="sum"><div><b>${totalPts(st)}</b>puntos</div><div><b>${doneCount(st)}/${D.missions.length}</b>misiones</div><div><b>${ov===null?'—':ov+'%'}</b>promedio</div></div>`;
+  if(!doneCount(st))h+=`<div class="card empty">Aún no tienes notas. ¡Completa tu primera misión! 🚀</div>`;
+  for(const a of Object.keys(AREAS)){
+    const ms=D.missions.filter(m=>m.area===a);if(!ms.length)continue;
+    const av=areaAvg(st,a);const lv=av===null?null:levelOf(av);
+    h+=`<div class="card ablock"><h3 class="tx-${a}"><span>${AREAS[a].e} ${AREAS[a].n}</span><span>${av===null?'—':av+'%'}</span></h3>
+    <div class="pbar"><i class="a-${a}" style="width:${av||0}%"></i></div>
+    ${lv?`<p style="margin:0 0 8px"><span class="lvl l${lv.k}">Nivel de logro: ${lv.t}</span></p>`:''}
+    <div class="tw"><table><thead><tr><th>Misión</th><th>Nota</th><th>Estrellas</th><th>Intentos</th></tr></thead><tbody>${
+      ms.map(m=>{const p=st.progress[m.id];return`<tr><td>${m.emoji} ${esc(m.title)}</td><td><b>${p?p.pct+'%':'—'}</b></td><td style="color:#f5a623">${p?starStr(starsOf(p.pct)):'—'}</td><td>${p?p.tries:0}</td></tr>`;}).join('')
+    }</tbody></table></div></div>`;
+  }
+  h+=`<p class="muted" style="font-size:.88rem">Niveles: Logrado (80%–100%), En proceso (60%–79%), Por reforzar (menos de 60%). Se guarda tu mejor nota de cada misión.</p>`;
+  return h;
+}
+function renderRank(){
+  const {arr,val}=buildRank();
+  let st;
+  if(!dbH)st='📴 Modo sin conexión: tus notas se guardan solo en este dispositivo.';
+  else if(!myId)st='👀 Puedes ver el ranking. Para que tu puntaje aparezca, abre el enlace con tu cuenta.';
+  else if(sync==='denied')st='👀 Puedes ver el ranking, pero tu cuenta no tiene permiso para publicar puntajes. Pide acceso de colaborador.';
+  else st='🟢 Ranking compartido en vivo';
+  const chips=`<div class="chips"><button data-act="filter" data-v="all" class="${ui.filter==='all'?'on':''}">🏆 General</button>${
+    Object.keys(AREAS).filter(a=>D.missions.some(m=>m.area===a)).map(a=>`<button data-act="filter" data-v="${a}" class="${ui.filter===a?'on':''}">${AREAS[a].e} ${AREAS[a].n}</button>`).join('')}</div>`;
+  const medals=['🥇','🥈','🥉'];
+  const rows=arr.length?arr.map((e,i)=>`<div class="rk ${e.me?'me':''}"><div class="pos">${medals[i]||(i+1)}</div><div class="av">${esc(e.avatar||'🙂')}</div>
+    <div class="nm"><b>${esc(e.name||'Estudiante')}${e.me?' (tú)':''}</b><small>${esc(e.school||'')}${e.school?' · ':''}${e.done||0} misiones${e.local?' · solo en este dispositivo':''}</small>
+    <div class="mini">${Object.keys(e.areas||{}).map(a=>AREAS[a]?`<span class="a-${a}">${AREAS[a].e} ${e.areas[a]}%</span>`:'').join('')}</div></div>
+    <div class="sc">${ui.filter==='all'?'⭐ '+e.points:val(e)+'%'}</div></div>`).join(''):`<div class="card empty">Todavía nadie tiene puntos aquí. ¡Sé el primero! 🚀</div>`;
+  return`<div class="status">${st}</div>${chips}${rows}`;
+}
+function renderRead(){
+  const m=mById(ui.mid);
+  app.innerHTML=`<div class="crumb"><button class="btn ghost sm" data-act="home">← Misiones</button><span class="chip a-${m.area}">${AREAS[m.area].e} ${AREAS[m.area].n}</span></div>
+  <div class="card"><div class="reading"><h2 class="tx-${m.area}">${m.emoji} ${esc(m.title)}</h2>
+    <div class="tools"><button class="btn ghost sm" data-act="speak">🔊 Escuchar / parar</button><button class="btn ghost sm" data-act="fs" data-v="2">A+ más grande</button><button class="btn ghost sm" data-act="fs" data-v="-2">A− más pequeña</button></div>
+    ${m.reading.map(p=>`<p>${esc(p)}</p>`).join('')}</div>
+    <div style="text-align:center;margin-top:18px"><button class="btn" data-act="start">✅ ¡Ya leí! A jugar</button><p class="muted" style="margin:10px 0 0"><small>Después de leer responderás ${m.questions.length} preguntas.</small></p></div></div>`;
+}
+function shuffle(a){a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
+function startQuiz(){
+  const m=mById(ui.mid);
+  quiz={m,i:0,ok:0,streak:0,best:0,answered:false,
+    qs:m.questions.map(q=>q.t==='mc'?{...q,order:shuffle(q.o.map((_,k)=>k))}:q)};
+  ui.screen='quiz';render();
+}
+function renderQuiz(){
+  const {m,i,qs}=quiz,q=qs[i];
+  let ans='';
+  if(q.t==='mc'){
+    ans=`<div class="opts">${q.order.map(k=>`<button class="opt" data-act="pickopt" data-k="${k}">${esc(q.o[k])}</button>`).join('')}</div>`;
+  }else{
+    ans=`<div class="numrow"><input class="t" id="na" inputmode="decimal" autocomplete="off" placeholder="Escribe tu respuesta"><button class="btn" data-act="check">Comprobar</button></div>`;
+  }
+  app.innerHTML=`<div class="crumb"><button class="btn ghost sm" data-act="home">✕ Salir</button><span class="chip a-${m.area}">${m.emoji} ${esc(m.title)}</span></div>
+  <div class="bar"><i style="width:${(i/qs.length)*100}%"></i></div>
+  <div class="qhead"><span>Pregunta ${i+1} de ${qs.length}</span><span class="streak">🔥 Racha: ${quiz.streak}</span></div>
+  <details class="rd"><summary>📖 Volver a leer la lectura</summary><div class="reading">${m.reading.map(p=>`<p>${esc(p)}</p>`).join('')}</div></details>
+  <div class="card"><div class="q">${esc(q.q)}</div><div id="ans">${ans}</div><div id="fb"></div></div>`;
+  const na=document.getElementById('na');if(na){na.focus();na.addEventListener('keydown',e=>{if(e.key==='Enter')check();});}
+}
+function parseNum(s){const t=String(s).trim().replace(',','.').replace(/[^0-9.\-]/g,'');return t===''?NaN:Number(t);}
+function showFeedback(good,q,givenText){
+  const fb=document.getElementById('fb');
+  const correctText=q.t==='mc'?q.o[q.a]:String(q.a);
+  quiz.answered=true;
+  if(good){quiz.ok++;quiz.streak++;}else quiz.streak=0;
+  const last=quiz.i===quiz.qs.length-1;
+  fb.innerHTML=`<div class="fb ${good?'good':'bad'}">${good?'🎉 ¡Correcto! +20 puntos'+(quiz.streak>=3?' · ¡Racha de '+quiz.streak+'! 🔥':''):'💪 ¡Casi! La respuesta era: '+esc(correctText)}<p>${esc(q.e)}</p></div>
+  <div style="text-align:center;margin-top:14px"><button class="btn" data-act="next">${last?'🏁 Ver mi resultado':'Siguiente →'}</button></div>`;
+}
+function pickOpt(k){
+  if(quiz.answered)return;
+  const q=quiz.qs[quiz.i];
+  document.querySelectorAll('.opt').forEach(b=>{b.disabled=true;const kk=Number(b.dataset.k);if(kk===q.a)b.classList.add('good');else if(kk===k)b.classList.add('bad');});
+  showFeedback(k===q.a,q);
+}
+function check(){
+  if(quiz.answered)return;
+  const q=quiz.qs[quiz.i],inp=document.getElementById('na');
+  const v=parseNum(inp.value);
+  if(isNaN(v)){inp.focus();inp.style.borderColor='var(--bad)';return;}
+  inp.disabled=true;
+  const good=Math.abs(v-q.a)<1e-6;
+  inp.style.borderColor=good?'var(--ok)':'var(--bad)';
+  document.querySelector('#ans .btn').disabled=true;
+  showFeedback(good,q);
+}
+function finish(){
+  const st=cur(),m=quiz.m,n=quiz.qs.length;
+  const pct=Math.round(quiz.ok/n*100),pts=quiz.ok*20;
+  const prev=st.progress[m.id];
+  const improved=!prev||pts>prev.pts;
+  st.progress[m.id]={pct:improved?pct:prev.pct,pts:improved?pts:prev.pts,tries:(prev?prev.tries:0)+1,t:Date.now()};
+  st.updated=Date.now();
+  save();push();
+  lastResult={m,pct,pts,ok:quiz.ok,n,improved,prev:!!prev,best:st.progress[m.id]};
+  ui.screen='result';render();
+  if(pct>=60)confetti(pct>=80?['🎉','⭐','🎊','✨']:['⭐','✨']);
+}
+function renderResult(){
+  const r=lastResult,s=starsOf(r.pct),lv=levelOf(r.pct);
+  const msg=r.pct===100?'¡Perfecto! Eres increíble 🏆':r.pct>=80?'¡Excelente trabajo! 🎉':r.pct>=60?'¡Muy bien! Sigue practicando 💪':'¡No te rindas! Lee otra vez e inténtalo de nuevo 🌟';
+  app.innerHTML=`<div class="card res"><div class="chip a-${r.m.area}">${r.m.emoji} ${esc(r.m.title)}</div>
+  <div class="stars" style="margin-top:10px">${'★'.repeat(s)}<span class="off">${'★'.repeat(3-s)}</span></div>
+  <div class="big">${msg}</div>
+  <div class="score">${r.pct}%</div>
+  <p style="margin:0 0 10px"><b>${r.ok} de ${r.n}</b> respuestas correctas · <span class="lvl l${lv.k}">${lv.t}</span></p>
+  <p class="muted" style="margin:0 0 18px">${r.improved?(r.prev?'🆕 ¡Nueva mejor nota! Tu puntaje subió a '+r.best.pts+' puntos.':'⭐ Ganaste '+r.pts+' puntos y tu nota quedó guardada.'):'Tu mejor nota sigue siendo '+r.best.pct+'% ('+r.best.pts+' puntos).'}</p>
+  <div class="row" style="justify-content:center"><button class="btn" data-act="retry">🔁 Jugar otra vez</button><button class="btn ghost" data-act="home">📋 Misiones</button><button class="btn ghost" data-act="ranking">🏆 Ver ranking</button></div></div>`;
+}
+function confetti(set){
+  for(let i=0;i<26;i++){
+    const s=document.createElement('span');s.className='conf';s.textContent=set[i%set.length];
+    s.style.left=Math.random()*100+'vw';s.style.animationDelay=(Math.random()*.9)+'s';s.style.animationDuration=(2.2+Math.random()*1.4)+'s';
+    document.body.appendChild(s);setTimeout(()=>s.remove(),4500);
+  }
+}
+
+/* ---------- control ---------- */
+function render(){
+  stopSpeak();
+  if(!cur())return renderRegister();
+  if(ui.screen==='read')return renderRead();
+  if(ui.screen==='quiz'&&quiz)return renderQuiz();
+  if(ui.screen==='result'&&lastResult)return renderResult();
+  ui.screen='home';renderHome();
+}
+function register(){
+  const name=reg.name.trim();if(name.length<2)return;
+  const id=rid();
+  S.students[id]={id,name,school:reg.school.trim(),avatar:reg.avatar,progress:{},created:Date.now(),updated:Date.now()};
+  S.current=id;save();push();
+  reg={name:'',school:'',avatar:AVATARS[0]};
+  ui.screen='home';ui.tab='missions';render();
+}
+let fsz=null;
+app.addEventListener('click',e=>{
+  const el=e.target.closest('[data-act]');if(!el)return;
+  const a=el.dataset.act;
+  switch(a){
+    case'av':reg.avatar=el.dataset.v;document.querySelectorAll('.avs button').forEach(b=>b.classList.toggle('on',b.dataset.v===reg.avatar));break;
+    case'register':register();break;
+    case'pick':S.current=el.dataset.id;save();ui.screen='home';ui.tab='missions';render();break;
+    case'switch':S.current=null;save();render();break;
+    case'tab':ui.tab=el.dataset.v;render();window.scrollTo(0,0);break;
+    case'filter':ui.filter=el.dataset.v;render();break;
+    case'open':ui.mid=el.dataset.id;ui.screen='read';render();window.scrollTo(0,0);break;
+    case'home':ui.screen='home';quiz=null;render();window.scrollTo(0,0);break;
+    case'ranking':ui.screen='home';ui.tab='rank';render();break;
+    case'speak':speak(mById(ui.mid));break;
+    case'fs':{const r=document.documentElement;const c=parseFloat(getComputedStyle(r).getPropertyValue('--fs'))||18;const n=Math.min(30,Math.max(15,c+Number(el.dataset.v)));r.style.setProperty('--fs',n+'px');break;}
+    case'start':startQuiz();window.scrollTo(0,0);break;
+    case'pickopt':pickOpt(Number(el.dataset.k));break;
+    case'check':check();break;
+    case'next':
+      if(quiz.i>=quiz.qs.length-1){finish();}
+      else{quiz.i++;quiz.answered=false;renderQuiz();window.scrollTo(0,0);}
+      break;
+    case'retry':ui.mid=lastResult.m.id;startQuiz();break;
+  }
+});
+app.addEventListener('input',e=>{
+  if(e.target.id==='rn'){reg.name=e.target.value;const g=document.getElementById('go');if(g)g.disabled=reg.name.trim().length<2;}
+  if(e.target.id==='rs'){reg.school=e.target.value;}
+});
+app.addEventListener('keydown',e=>{if(e.key==='Enter'&&e.target.id==='rn'&&reg.name.trim().length>=2)register();});
+
+render();
+connect();
+})();
+</script>
+</body>
+</html>
