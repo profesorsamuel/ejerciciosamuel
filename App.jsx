@@ -59,6 +59,10 @@ export default function App() {
   const [cedula, setCedula] = useState('');
   const [salon, setSalon] = useState('');
   const [salones, setSalones] = useState([]);
+  const [estudiantes, setEstudiantes] = useState([]);
+  const [estudianteId, setEstudianteId] = useState('');
+  const [cargandoEst, setCargandoEst] = useState(false);
+  const [verificando, setVerificando] = useState(false);
   const [resultadoAcceso, setResultadoAcceso] = useState('');
   const [filas, setFilas] = useState([]);
   const [mensaje, setMensaje] = useState('');
@@ -84,9 +88,23 @@ export default function App() {
     return () => { vigente = false; };
   }, [session, vista]);
 
-  function verificarMatricula(e) {
+  async function verificarMatricula(e) {
     e.preventDefault();
-    setResultadoAcceso('Salón seleccionado. Para proteger los datos de los estudiantes, la validación de cédula requiere un PIN individual y una función segura que aún no está instalada.');
+    if (!supabase || !estudianteId) return;
+    setVerificando(true);
+    setResultadoAcceso('');
+    const { data, error } = await supabase.rpc('cia_verificar_estudiante', {
+      p_estudiante_id: estudianteId,
+      p_cedula: cedula.trim(),
+    });
+    setVerificando(false);
+    if (error) {
+      setResultadoAcceso('No se pudo verificar. Falta instalar el SQL CIA_007 en Supabase.');
+    } else if (data && data.length > 0) {
+      setResultadoAcceso('Matrícula verificada: ' + data[0].nombres + '. Los ejercicios se activarán en la siguiente fase.');
+    } else {
+      setResultadoAcceso('La cédula no coincide con el estudiante seleccionado.');
+    }
   }
 
   async function iniciarSesion(e) {
@@ -135,6 +153,26 @@ export default function App() {
     if (!salon && listaSalones.length) setSalon(clave(listaSalones[0]));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [salones]);
+
+  // Carga la lista de nombres del salón seleccionado
+  useEffect(() => {
+    setEstudianteId('');
+    setEstudiantes([]);
+    if (!supabase || session || !salon || modoEjemplo) return;
+    const [grado, seccion, anio] = salon.split('|');
+    let vigente = true;
+    setCargandoEst(true);
+    supabase
+      .rpc('cia_estudiantes_salon', { p_grado: grado, p_seccion: seccion, p_anio: Number(anio) })
+      .then(({ data, error }) => {
+        if (!vigente) return;
+        setCargandoEst(false);
+        if (error) setResultadoAcceso('Falta instalar el SQL CIA_007 (lista de estudiantes).');
+        else setEstudiantes(data || []);
+      });
+    return () => { vigente = false; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [salon, session, modoEjemplo]);
 
   const pestana = (activa) =>
     'rounded-lg px-3 py-1.5 text-sm font-medium transition-colors ' +
@@ -280,6 +318,28 @@ export default function App() {
                 </div>
 
                 <div className="grid gap-2">
+                  <label className="text-sm text-slate-600" htmlFor="cia-nombre">Nombre del estudiante</label>
+                  <div className="relative">
+                    <select
+                      id="cia-nombre"
+                      className={campo + ' appearance-none pr-10'}
+                      value={estudianteId}
+                      onChange={(e) => { setEstudianteId(e.target.value); setResultadoAcceso(''); }}
+                      disabled={modoEjemplo || cargandoEst || estudiantes.length === 0}
+                      required
+                    >
+                      <option value="">
+                        {cargandoEst ? 'Cargando lista…' : 'Seleccione su nombre'}
+                      </option>
+                      {estudiantes.map((est) => (
+                        <option key={est.id} value={est.id}>{est.nombres}</option>
+                      ))}
+                    </select>
+                    <ChevronDown className="pointer-events-none absolute right-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-500" />
+                  </div>
+                </div>
+
+                <div className="grid gap-2">
                   <label className="text-sm text-slate-600" htmlFor="cia-cedula">
                     Número de cédula del estudiante
                   </label>
@@ -301,16 +361,16 @@ export default function App() {
                     Verificación de matrícula
                   </div>
                   <p className="mt-2 text-xs text-slate-500">
-                    El sistema buscará al estudiante matriculado en el salón seleccionado.
+                    Elige tu nombre en la lista y escribe tu cédula para confirmar que estás matriculado en el salón.
                   </p>
                 </div>
 
                 <button
                   type="submit"
-                  disabled={modoEjemplo || !salon || !cedula.trim()}
+                  disabled={modoEjemplo || verificando || !estudianteId || !cedula.trim()}
                   className="rounded-full bg-blue-700 px-4 py-3 text-sm font-medium text-white disabled:cursor-not-allowed disabled:bg-slate-200 disabled:text-slate-400"
                 >
-                  Ingresar al ejercicio
+                  {verificando ? 'Verificando…' : 'Ingresar al ejercicio'}
                 </button>
 
                 {resultadoAcceso && (
