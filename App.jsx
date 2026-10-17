@@ -40,7 +40,9 @@ function tomar(fila, nombres) {
 
 function normalizar(fila) {
   return {
-    codigo_estudiante: tomar(fila, ['codigo_estudiante', 'codigo', 'código', 'cedula', 'cédula']),
+    codigo_estudiante: tomar(fila, ['codigo_estudiante', 'codigo', 'código']) || tomar(fila, ['cedula', 'cédula']),
+    cedula: tomar(fila, ['cedula', 'cédula']),
+    sexo: tomar(fila, ['sexo', 'genero', 'género']),
     nombres: tomar(fila, ['nombres', 'nombre', 'estudiante']),
     grado: tomar(fila, ['grado']),
     seccion: tomar(fila, ['seccion', 'sección']),
@@ -227,6 +229,7 @@ export default function App() {
                       <tr>
                         <th className="p-2">Código</th>
                         <th className="p-2">Nombres</th>
+                        <th className="p-2">Cédula</th>
                         <th className="p-2">Grado</th>
                         <th className="p-2">Sección</th>
                         <th className="p-2">Año</th>
@@ -237,6 +240,7 @@ export default function App() {
                         <tr key={i} className="border-t border-slate-200">
                           <td className="p-2">{f.codigo_estudiante}</td>
                           <td className="p-2">{f.nombres}</td>
+                          <td className="p-2">{f.cedula}</td>
                           <td className="p-2">{f.grado}</td>
                           <td className="p-2">{f.seccion}</td>
                           <td className="p-2">{f.anio_lectivo}</td>
