@@ -1,7 +1,8 @@
 
 # PROYECTO: CIENCIAS IA
 # CODIGO: CIA
-# Publica Ciencias IA sin eliminar los HTML anteriores.
+# Publicacion automatica con GitHub Pages
+# Conserva los ejercicios HTML anteriores.
 
 name: CIA - Publicar Ciencias IA
 
@@ -22,33 +23,40 @@ concurrency:
 jobs:
   publicar:
     runs-on: ubuntu-latest
+
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
 
     steps:
-      - name: Descargar repositorio
+      # CIA_001: Descargar repositorio
+      - name: CIA - Descargar repositorio
         uses: actions/checkout@v4
 
-      - name: Preparar Node.js
+      # CIA_002: Preparar Node.js
+      - name: CIA - Preparar Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '22'
 
-      - name: Instalar dependencias de Ciencias IA
+      # CIA_003: Instalar dependencias
+      - name: CIA - Instalar dependencias
         working-directory: ciencias-ia
         run: npm install
 
-      - name: Compilar Ciencias IA
+      # CIA_004: Compilar React y Vite
+      - name: CIA - Compilar aplicacion
         working-directory: ciencias-ia
         env:
           VITE_SUPABASE_URL: ${{ vars.CIA_SUPABASE_URL }}
-          VITE_SUPABASE_ANON_KEY: ${{ secrets.CIA_SUPABASE_ANON_KEY }}
+          VITE_SUPABASE_ANON_KEY: ${{ vars.CIA_SUPABASE_ANON_KEY }}
         run: npm run build
 
-      - name: Preparar sitio completo
+      # CIA_005: Conservar paginas anteriores
+      - name: CIA - Preparar sitio completo
         run: |
           mkdir -p publicacion
+
           rsync -a \
             --exclude='.git/' \
             --exclude='.github/' \
@@ -59,17 +67,22 @@ jobs:
             ./ publicacion/
 
           mkdir -p publicacion/ciencias-ia
+
           cp -a ciencias-ia/dist/. publicacion/ciencias-ia/
+
           touch publicacion/.nojekyll
 
-      - name: Configurar GitHub Pages
+      # CIA_006: Configurar Pages
+      - name: CIA - Configurar GitHub Pages
         uses: actions/configure-pages@v5
 
-      - name: Subir archivos compilados
+      # CIA_007: Subir sitio compilado
+      - name: CIA - Subir archivos
         uses: actions/upload-pages-artifact@v3
         with:
           path: publicacion
 
-      - name: Publicar en GitHub Pages
+      # CIA_008: Publicar
+      - name: CIA - Publicar GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
