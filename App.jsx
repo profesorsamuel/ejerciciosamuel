@@ -39,7 +39,10 @@ export default function App() {
   const [error, setError] = useState('');
   const [vista, setVista] = useState('inicio');
   const [codigo, setCodigo] = useState('');
-  const [nombre, setNombre] = useState('');
+  const [cedula, setCedula] = useState('');
+  const [salon, setSalon] = useState('');
+  const [salones, setSalones] = useState([]);
+  const [resultadoAcceso, setResultadoAcceso] = useState('');
   const [filas, setFilas] = useState([]);
   const [mensaje, setMensaje] = useState('');
   const [guardando, setGuardando] = useState(false);
@@ -52,6 +55,22 @@ export default function App() {
     } = supabase.auth.onAuthStateChange((_evento, s) => setSession(s));
     return () => subscription.unsubscribe();
   }, []);
+
+  useEffect(() => {
+    if (!supabase || session || vista !== 'inicio') return;
+    let vigente = true;
+    supabase.rpc('cia_salones_disponibles').then(({ data, error }) => {
+      if (!vigente) return;
+      setSalones(error ? [] : (data || []));
+      if (error) setResultadoAcceso('Falta instalar el SQL de acceso a salones.');
+    });
+    return () => { vigente = false; };
+  }, [session, vista]);
+
+  function verificarMatricula(e) {
+    e.preventDefault();
+    setResultadoAcceso('Salón seleccionado. Para proteger los datos de los estudiantes, la validación de cédula requiere un PIN individual y una función segura que aún no está instalada.');
+  }
 
   async function iniciarSesion(e) {
     e.preventDefault();
@@ -208,28 +227,21 @@ export default function App() {
               </button>
             </form>
           ) : (
-            <div className="grid gap-3">
-              <h2 className="text-xl font-bold">Entrar a un ejercicio</h2>
-              <input
-                className="rounded-xl border p-3"
-                placeholder="Código del grupo"
-                value={codigo}
-                onChange={(e) => setCodigo(e.target.value)}
-              />
-              <input
-                className="rounded-xl border p-3"
-                placeholder="Nombre del estudiante"
-                value={nombre}
-                onChange={(e) => setNombre(e.target.value)}
-              />
-              <p className="rounded-xl bg-blue-50 p-3 text-sm">
-                El acceso a prácticas estará disponible después de instalar las funciones
-                seguras de evaluación.
-              </p>
-              <button disabled className="rounded-xl bg-slate-300 p-3 text-white">
-                Comenzar · Próximamente
-              </button>
-            </div>
+            <form onSubmit={verificarMatricula} className="grid gap-3">
+              <h2 className="text-xl font-bold">Ingreso del estudiante</h2>
+              <label className="font-semibold" htmlFor="cia-salon">Grado y salón</label>
+              <select id="cia-salon" className="rounded-xl border p-3" value={salon} onChange={(e) => { setSalon(e.target.value); setResultadoAcceso(''); }} required>
+                <option value="">Seleccione su grado y salón</option>
+                {salones.map((g) => <option key={`${g.grado}|${g.seccion}|${g.anio_lectivo}`} value={`${g.grado}|${g.seccion}|${g.anio_lectivo}`}>
+                  {g.grado}° {g.seccion} · Año {g.anio_lectivo}
+                </option>)}
+              </select>
+              <label className="font-semibold" htmlFor="cia-cedula">Número de cédula</label>
+              <input id="cia-cedula" className="rounded-xl border p-3" placeholder="Ejemplo: 3-123-4567" value={cedula} onChange={(e) => { setCedula(e.target.value); setResultadoAcceso(''); }} autoComplete="off" required maxLength={60} />
+              <p className="rounded-xl bg-blue-50 p-3 text-sm">Seleccione el salón donde está matriculado y escriba su cédula. El ingreso seguro con cédula y PIN se activará cuando el profesor instale la siguiente fase.</p>
+              <button type="submit" disabled={!configurado || !salon || !cedula.trim()} className="rounded-xl bg-blue-700 p-3 text-white disabled:opacity-40">'Continuar'</button>
+              {resultadoAcceso && <p role="status" className="rounded-xl bg-slate-100 p-3 text-sm">{resultadoAcceso}</p>}
+            </form>
           )}
         </section>
       )}
