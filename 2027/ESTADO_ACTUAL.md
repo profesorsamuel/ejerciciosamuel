@@ -1,9 +1,5 @@
-# CIA 2027 — Estado real
+# CIA 2027 — Estado actual
 
-Estructura corregida: no hay archivos JavaScript, CSS, CSV ni SQL duplicados en la raíz.
+Demostración local con banco editable, filtro y búsqueda, importación, extracción de texto PDF, laboratorio parcial, publicaciones y análisis locales. Los datos se guardan en este navegador.
 
-Funciona parcialmente en demostración local: banco, importación, PDF, laboratorio, publicaciones y análisis.
-
-Pendiente: motores completos de las 25 técnicas, IA segura, autenticación, publicación real, notas oficiales, SQL definitivo y pruebas integrales.
-
-No ejecutar SQL de borrador.
+Pendiente: 25 motores completos, generación de IA, autenticación segura, publicación real, notas verificadas y SQL final. No ejecutar SQL de borrador.
