@@ -1,16 +1,7 @@
-# CIA 2027 – Estado real de esta entrega
+# Estado CIA 2027 – Entrega de desarrollo
 
-## Implementado
-- Estructura de módulos, salones y estudiantes en memoria temporal.
-- Importación CSV/Excel con vista previa y validación de campos obligatorios y duplicados.
-- Banco de preguntas, catálogo de 25 técnicas y borrador básico de 5 preguntas.
-- Extracción de texto de PDF con PDF.js, sin envío a terceros.
+Implementado en navegador: salones y estudiantes de demostración, importación Excel/CSV con vista previa, extracción de texto PDF, banco, catálogo de 25 técnicas, borradores, selección aleatoria sin repetir dentro del ciclo, persistencia local en el navegador y vistas de algunas técnicas.
 
-## No implementado todavía
-- Motores individuales de las 25 técnicas y adaptación por IA.
-- Autenticación docente, verificación de identidad estudiantil, persistencia y notas seguras.
-- Publicación real por salón, historial, reportes y RLS.
-- Generación de 80 preguntas y función Edge segura.
-- SQL final (los borradores no deben ejecutarse).
+**No implementado:** motores completos de las 25 técnicas, verificación real de cédula, IA, publicaciones reales, servidor de calificación, RLS, historial seguro, revisión docente y SQL final. No usar con notas ni cédulas reales.
 
-**No usar para notas reales ni importar datos personales reales.**
+Los datos de demostración se guardan en localStorage de ESTE navegador. Borrar los datos del navegador los elimina.

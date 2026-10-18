@@ -1,2 +1,2 @@
 # Instalación pendiente
-Esta entrega es un prototipo de navegador. No ejecutar los SQL de borrador. No se ha configurado Supabase ni IA. Se probará al finalizar el desarrollo.
+No ejecutar los SQL borrador. Esta entrega es una demostración local, no una aplicación de evaluación segura. Antes de publicar para alumnos se requieren Auth, funciones de servidor, RLS y pruebas.
