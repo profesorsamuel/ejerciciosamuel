@@ -1,6 +1,7 @@
 /* CIA - Paso 6: editor manual de Verdadero o falso. */
 import React, { useEffect, useState } from 'react';
 import * as XLSX from 'xlsx';
+import GeneradorPDF from './GeneradorPDF.jsx';
 import { supabase } from './supabase.js';
 
 const nuevaPregunta = () => ({ enunciado: '', correcta: true, explicacion: '' });
@@ -154,6 +155,7 @@ export default function ProfesorEjercicios() {
           <button type="button" onClick={seleccionarBanco} disabled={cargando} className="rounded-lg bg-blue-700 px-3 py-2 text-sm text-white">Crear ejercicio aleatorio</button>
         </div>}
       </div>
+      <GeneradorPDF bloqueado={Boolean(id)} onGenerado={(items,nombre)=>{setPreguntas(items);setTitulo(`Evaluación de ${nombre.replace(/\.pdf$/i,'')}`.slice(0,200));setError('');setMensaje('Preguntas generadas. Revisa las respuestas y explicaciones antes de guardar.');}} />
       <div className="mt-4">
         <label className="mb-1 block text-sm font-semibold" htmlFor="cia-titulo">Título</label>
         <input id="cia-titulo" className={campo} value={titulo} maxLength={200} placeholder="Ejemplo: La célula — Clase 1" onChange={e => setTitulo(e.target.value)} />
