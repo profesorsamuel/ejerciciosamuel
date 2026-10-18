@@ -16,4 +16,11 @@ assert.throws(()=>seleccionarCinco([]),/5 preguntas/);
 const duplicado=[...banco.slice(0,4),{...banco[0]}];
 assert.throws(()=>seleccionarCinco(duplicado),/5 preguntas/);
 assert.equal(seleccionarCinco([...banco.slice(0,5),{enunciado:' ',correcta:'x'}]).length,5);
+
+const primera=seleccionarCinco(banco);
+const segunda=seleccionarCinco(banco,1,{excluir:primera.map(p=>p.enunciado)});
+assert.equal(segunda.filter(p=>primera.includes(p)).length,0,'No repetir preguntas entre borradores mientras alcance el banco');
+const reiniciado=seleccionarCinco(banco,1,{excluir:banco.map(p=>p.enunciado),detalle:true});
+assert.equal(reiniciado.reinicio,true,'Indicar reinicio al agotar el banco');
+assert.equal(reiniciado.preguntas.length,5);
 console.log('OK: pruebas de selección de cinco preguntas');
