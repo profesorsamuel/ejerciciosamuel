@@ -228,6 +228,7 @@ export default function App() {
                       <tr>
                         <th className="p-2">Código</th>
                         <th className="p-2">Nombres</th>
+                        <th className="p-2">Cédula</th>
                         <th className="p-2">Grado</th>
                         <th className="p-2">Sección</th>
                         <th className="p-2">Año</th>
@@ -238,6 +239,7 @@ export default function App() {
                         <tr key={i} className="border-t border-slate-200">
                           <td className="p-2">{f.codigo_estudiante}</td>
                           <td className="p-2">{f.nombres}</td>
+                          <td className="p-2">{f.cedula}</td>
                           <td className="p-2">{f.grado}</td>
                           <td className="p-2">{f.seccion}</td>
                           <td className="p-2">{f.anio_lectivo}</td>
