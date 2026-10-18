@@ -4,7 +4,7 @@ name: CIA - Publicar Ciencias IA
 
 on:
   push:
-    branches: [main]
+    branches: [desarrollo-cia]
   workflow_dispatch:
 
 permissions:
