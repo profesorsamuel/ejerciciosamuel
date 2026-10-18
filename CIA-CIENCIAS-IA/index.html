@@ -20,7 +20,7 @@ table{width:100%;border-collapse:collapse;font-size:.9rem}td,th{padding:6px;bord
 <script type="module">
 import {createClient} from 'https://esm.sh/@supabase/supabase-js@2';
 // ▼▼ Pega aquí la URL del proyecto y la clave "anon/publishable" (NUNCA la service_role) ▼▼
-const CONFIG={url:'',key:''};
+const CONFIG={url:'https://luewrpzgetqslxqmdcxv.supabase.co',key:'sb_publishable_zJc68aiTxJs7HBgaqeHxrQ_JDcm91xG'};
 const sb=createClient(CONFIG.url||'https://sin-configurar.supabase.co',CONFIG.key||'sin-configurar');
 const $=s=>document.querySelector(s),app=$('#app'),draw=h=>app.innerHTML=h;
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
