@@ -20,7 +20,7 @@ table{width:100%;border-collapse:collapse;font-size:.9rem}td,th{padding:6px;bord
 <script type="module">
 import {createClient} from 'https://esm.sh/@supabase/supabase-js@2';
 // ▼▼ Pega aquí la URL del proyecto y la clave "anon/publishable" (NUNCA la service_role) ▼▼
-const CONFIG={url:'',key:''}; // URL y clave publicable de Supabase
+const CONFIG={url:'https://luewrpzgetqslxqmdcxv.supabase.co',key:'sb_publishable_zJc68aiTxJs7HBgaqeHxrQ_JDcm91xG'};
 const sb=createClient(CONFIG.url||'https://sin-configurar.supabase.co',CONFIG.key||'sin-configurar');
 const $=s=>document.querySelector(s),app=$('#app'),draw=h=>app.innerHTML=h;
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -71,7 +71,7 @@ let texto='';
 async function tBanco(uid){const {data:pr=[]}=await sb.from('cia_preguntas').select('id,tipo,enunciado').order('creado_en');
  const cnt=t=>pr.filter(p=>p.tipo==t).length;
  $('#v').innerHTML=`<div class=card><h2>Banco: ${pr.length} preguntas</h2><p class=s>${Object.entries(TIPOS).map(([k,v])=>`${v}: ${cnt(k)}`).join(' · ')}</p>
- <label>PDF de la clase<input id=pdf type=file accept=application/pdf></label><p class=s id=fu></p><button id=gen>Generar banco de preguntas</button><button class=sec id=add>Agregar pregunta manualmente</button><p id=st class=s role=status></p></div>
+ <label>PDF de la clase<input id=pdf type=file accept=application/pdf></label><p class=s id=fu></p><button id=gen>Generar banco de preguntas</button><p id=st class=s role=status></p></div>
  <div class=card>${pr.map(p=>`<div class=row><span><b class=s>${TIPOS[p.tipo]}</b><br>${esc(p.enunciado)}</span><span><button class=sec data-e="${p.id}">Editar</button><button class=sec data-d="${p.id}">Borrar</button></span></div><hr>`).join('')||'<p>Aún no hay preguntas. Sube un PDF y genera el banco.</p>'}</div>`;
  $('#pdf').onchange=async e=>{try{pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
   const doc=await pdfjsLib.getDocument({data:await e.target.files[0].arrayBuffer()}).promise;const t=[];
@@ -79,7 +79,6 @@ async function tBanco(uid){const {data:pr=[]}=await sb.from('cia_preguntas').sel
   texto=t.join('\n').trim();$('#fu').textContent=texto.length>80?`Texto leído: ${texto.length} caracteres.`:'El PDF no tiene texto legible (¿escaneado?). Aplícale OCR antes.';}catch(err){texto='';$('#fu').textContent=err.message;}};
  app.querySelectorAll('[data-d]').forEach(b=>b.onclick=async()=>{if(confirm('¿Borrar esta pregunta?')){await sb.from('cia_preguntas').delete().eq('id',b.dataset.d);tBanco(uid);}});
  app.querySelectorAll('[data-e]').forEach(b=>b.onclick=async()=>{const p=pr.find(x=>x.id==b.dataset.e),n=prompt('Editar enunciado:',p.enunciado);if(n&&n.trim()){await sb.from('cia_preguntas').update({enunciado:n.trim()}).eq('id',p.id);tBanco(uid);}});
- $('#add').onclick=async()=>{const tipo=prompt('Tipo: multiple, verdadero_falso, completar, relacionar u ordenar','multiple');if(!TIPOS[tipo])return alert('Tipo inválido');const enunciado=prompt('Escribe la pregunta');if(!enunciado?.trim())return;let p={enunciado,explicacion:prompt('Explicación de la respuesta correcta')||''};try{if(tipo==='multiple'||tipo==='completar'){p.opciones=[];for(let i=0;i<4;i++){const v=prompt('Opción '+(i+1));if(!v)return;p.opciones.push(v.trim());}p.correcta=prompt('Copia exactamente la opción correcta');}else if(tipo==='verdadero_falso'){p.correcta=prompt('Respuesta: Verdadero o Falso');}else if(tipo==='relacionar'){p.pares=[];for(let i=0;i<4;i++){const a=prompt('Concepto '+(i+1)),b=prompt('Definición '+(i+1));if(!a||!b)return;p.pares.push([a,b]);}}else{p.items=[];for(let i=0;i<4;i++){const v=prompt('Elemento '+(i+1)+' en el orden CORRECTO');if(!v)return;p.items.push(v);}}const f=fila(p,tipo,uid);if(!f)return alert('Pregunta inválida. Comprueba opciones y respuesta.');const {error}=await sb.from('cia_preguntas').insert(f);if(error)throw error;await tBanco(uid);}catch(e){alert('No se pudo guardar: '+e.message);}};
  $('#gen').onclick=async()=>{if(texto.length<80)return $('#st').textContent='Primero sube un PDF con texto.';$('#gen').disabled=true;
   const tr=[];for(let i=0;i<texto.length;i+=12000)tr.push(texto.slice(i,i+12000));
   const vistos=pr.map(p=>p.enunciado);const set=new Set(vistos.map(norm));
@@ -100,9 +99,8 @@ function fila(p,t,uid){const e=String(p.enunciado||'').trim();if(e.length<8)retu
  return{docente_id:uid,tipo:t,enunciado:e,datos,correcta:c,explicacion:String(p.explicacion||''),tema:String(p.tema||'')};}
 
 async function tEst(uid){const {data:L=[]}=await sb.from('cia_estudiantes').select('nombres,cedula,grado,seccion,registrado_en').order('nombres');
- $('#v').innerHTML=`<div class=card><h2>Estudiantes: ${L.length}</h2><p class=s>Sube la plantilla Excel o CSV (columnas: nombres, cedula, grado, seccion).</p><input id=f type=file accept=".xlsx,.xls,.csv"><button class=sec id=addest>Agregar estudiante</button><p id=st class=s role=status></p></div>
+ $('#v').innerHTML=`<div class=card><h2>Estudiantes: ${L.length}</h2><p class=s>Sube la plantilla Excel o CSV (columnas: nombres, cedula, grado, seccion).</p><input id=f type=file accept=".xlsx,.xls,.csv"><p id=st class=s role=status></p></div>
  <div class="card wrap"><table><tr><th>Nombre<th>Cédula<th>Grado<th>Ingresó</tr>${L.map(s=>`<tr><td>${esc(s.nombres)}<td>${esc(s.cedula)}<td>${esc((s.grado||'')+' '+(s.seccion||''))}<td>${s.registrado_en?'Sí':'—'}</tr>`).join('')}</table></div>`;
- $('#addest').onclick=async()=>{const nombres=prompt('Nombre completo del estudiante'),cedula=prompt('Cédula');if(!nombres?.trim()||!cedula?.trim())return;const {error}=await sb.from('cia_estudiantes').upsert({docente_id:uid,nombres:nombres.trim(),cedula:cedula.trim()},{onConflict:'docente_id,cedula'});if(error)alert(error.message);else tEst(uid);};
  $('#f').onchange=async e=>{try{const wb=XLSX.read(await e.target.files[0].arrayBuffer());const rows=XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]],{defval:''});
   const g=(r,k)=>{const key=Object.keys(r).find(x=>norm(x)==k);return key?String(r[key]).trim():'';};
   const filas=rows.map(r=>({docente_id:uid,nombres:g(r,'nombres')||g(r,'nombre'),cedula:g(r,'cedula'),grado:g(r,'grado'),seccion:g(r,'seccion')})).filter(f=>f.nombres&&f.cedula);
@@ -113,6 +111,6 @@ async function tRes(){const {data:R=[]}=await sb.from('cia_intentos').select('ti
  const f=R.map(r=>[r.cia_estudiantes?.nombres,r.cia_estudiantes?.cedula,TIPOS[r.tipo]||r.tipo,r.nota+'/8',new Date(r.enviado_en).toLocaleString('es-PA')]);
  $('#v').innerHTML=`<div class=card><h2>Resultados: ${f.length}</h2><button id=ex ${f.length?'':'disabled'}>Exportar CSV</button></div><div class="card wrap"><table><tr><th>Nombre<th>Cédula<th>Ejercicio<th>Nota<th>Fecha</tr>${f.map(r=>'<tr>'+r.map(c=>`<td>${esc(c)}`).join('')+'</tr>').join('')}</table></div>`;
  $('#ex').onclick=()=>{const csv='\ufeffnombre,cedula,ejercicio,nota,fecha\n'+f.map(r=>r.map(c=>`"${String(c).replace(/"/g,'""')}"`).join(',')).join('\n');
-  const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));a.download='resultados.csv';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000);};}
+  const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));a.download='resultados.csv';a.click();};}
 inicio();
 </script></body></html>
