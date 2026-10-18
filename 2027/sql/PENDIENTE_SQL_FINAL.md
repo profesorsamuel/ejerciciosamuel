@@ -1,0 +1,1 @@
+SQL definitivo pendiente de diseño de autenticación, RLS y calificación en servidor. No ejecutar borradores.
