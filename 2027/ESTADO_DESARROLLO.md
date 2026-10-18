@@ -1,8 +1,6 @@
-# CIA 2027 — Estado verificado de esta entrega
+# Estado verificado de la entrega
 
-- Estructura unificada, sin archivos raíz duplicados.
-- Panel local: salones, estudiantes, banco, importación CSV/Excel, extracción de texto PDF, borradores y vistas parciales.
-- Exportación CSV y respaldo JSON local.
-- Galería de 25 técnicas; **no** hay 25 motores completos.
-- **Pendiente:** IA Edge Function, publicación segura, login docente, acceso seguro del estudiante, calificación en servidor, historial real, SQL definitivo y RLS.
-- **No usar datos reales ni notas oficiales.**
+- Implementado en frontend: salones, estudiantes, importación Excel/CSV, banco, PDF a texto, selección aleatoria, borradores, catálogo, laboratorio de práctica local y respaldo JSON.
+- Prototipos simplificados: varias de las 25 técnicas, sin equivalencia con motores definitivos.
+- No implementado: 25 juegos definitivos, IA, acceso seguro de estudiante, publicaciones reales, calificación servidor, estadísticas Supabase y SQL definitivo.
+- Sin pruebas integrales en GitHub Pages ni Supabase.
