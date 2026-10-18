@@ -40,7 +40,8 @@ function tomar(fila, nombres) {
 
 function normalizar(fila) {
   return {
-    codigo_estudiante: tomar(fila, ['codigo_estudiante', 'codigo', 'código', 'cedula', 'cédula']),
+    codigo_estudiante: tomar(fila, ['codigo_estudiante', 'codigo', 'código']) || tomar(fila, ['cedula', 'cédula']),
+    cedula: tomar(fila, ['cedula', 'cédula']),
     nombres: tomar(fila, ['nombres', 'nombre', 'estudiante']),
     grado: tomar(fila, ['grado']),
     seccion: tomar(fila, ['seccion', 'sección']),
