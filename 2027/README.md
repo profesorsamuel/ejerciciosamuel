@@ -1,7 +1,5 @@
 # CIA — Ciencias IA 2027
 
-Prototipo educativo local para el C.E.B.G. El Jiral.
+Abre `index.html` desde GitHub Pages o un servidor web local. Los módulos JavaScript se cargan desde `assets/js/`, estilos desde `assets/css/`, plantillas desde `plantillas/` y SQL pendiente desde `sql/`.
 
-Abra `2027/index.html` desde un servidor web estático o GitHub Pages. El sistema es una **demostración** y no está conectado a Supabase. Utilice únicamente datos ficticios. Las publicaciones son locales y no son visibles en otros dispositivos.
-
-Consulte `ESTADO_REAL.md` para conocer lo que falta. La instalación de SQL se realizará después de completar y auditar el servidor.
+**Estado:** demostración parcial; no es un portal de calificaciones oficial. Ver `ESTADO_ACTUAL.md`.
