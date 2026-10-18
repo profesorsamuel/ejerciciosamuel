@@ -17,3 +17,4 @@
 ## Notas de seguridad
 - La calificación se hace en el servidor; el estudiante nunca recibe las respuestas antes de enviar.
 - Entrar solo con cédula es débil: alguien que conozca una cédula puede entrar como ese estudiante. Úsalo para práctica, no para notas oficiales.
+f
