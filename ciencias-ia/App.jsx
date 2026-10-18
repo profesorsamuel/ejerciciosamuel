@@ -12,6 +12,7 @@ import { supabase, configurado } from './supabase.js';
 import ProfesorEjercicios from './ProfesorEjercicios.jsx';
 import ProfesorAsignaciones from './ProfesorAsignaciones.jsx';
 import EstudianteEjercicios from './EstudianteEjercicios.jsx';
+import ProfesorResultados from './ProfesorResultados.jsx';
 
 const NOMBRES_GRADO = {
   '1': 'Primero', '2': 'Segundo', '3': 'Tercero', '4': 'Cuarto', '5': 'Quinto',
@@ -218,6 +219,7 @@ export default function App() {
 
             <ProfesorEjercicios />
             <ProfesorAsignaciones />
+            <ProfesorResultados />
 
             <h3 className="mt-6 text-base font-semibold">Importar matrícula (Excel)</h3>
             <input
