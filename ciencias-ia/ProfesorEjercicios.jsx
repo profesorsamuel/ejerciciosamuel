@@ -1,5 +1,6 @@
 /* CIA - Paso 6: editor manual de Verdadero o falso. */
 import React, { useEffect, useState } from 'react';
+import * as XLSX from 'xlsx';
 import { supabase } from './supabase.js';
 
 const nuevaPregunta = () => ({ enunciado: '', correcta: true, explicacion: '' });
@@ -16,6 +17,8 @@ export default function ProfesorEjercicios() {
   const [cargando, setCargando] = useState(false);
   const [mensaje, setMensaje] = useState('');
   const [error, setError] = useState('');
+  const [banco, setBanco] = useState([]);
+  const [cantidad, setCantidad] = useState(20);
 
   async function cargarLista() {
     const { data, error: fallo } = await supabase.rpc('cia_profesor_listar_ejercicios');
@@ -40,6 +43,54 @@ export default function ProfesorEjercicios() {
       if (p.explicacion.trim().length < 3 || p.explicacion.trim().length > 2000) return `Revisa la explicación de la pregunta ${i + 1} (3 a 2000 caracteres).`;
     }
     return '';
+  }
+  // Importa un banco local sin subir el archivo original al servidor.
+  async function importarBanco(evento) {
+    const archivo = evento.target.files?.[0];
+    evento.target.value = '';
+    if (!archivo) return;
+    setError(''); setMensaje('');
+    try {
+      if (archivo.size > 3 * 1024 * 1024) throw new Error('El archivo debe pesar menos de 3 MB.');
+      const libro = XLSX.read(await archivo.arrayBuffer(), { type: 'array' });
+      const filas = XLSX.utils.sheet_to_json(libro.Sheets[libro.SheetNames[0]], { defval: '' });
+      if (!filas.length || filas.length > 500) throw new Error('El banco debe contener entre 1 y 500 filas.');
+      const tomar = (f, claves) => {
+        const clave = Object.keys(f).find(k => claves.includes(k.trim().toLowerCase()));
+        return clave ? String(f[clave]).trim() : '';
+      };
+      const convertidas = filas.map((f, i) => {
+        const enunciado = tomar(f, ['enunciado', 'pregunta', 'afirmacion', 'afirmación']);
+        const respuesta = tomar(f, ['correcta', 'respuesta', 'verdadero_falso']).toLowerCase();
+        const explicacion = tomar(f, ['explicacion', 'explicación', 'justificacion', 'justificación']);
+        if (!enunciado || !explicacion || !['verdadero', 'falso', 'v', 'f', 'true', 'false', '1', '0'].includes(respuesta)) {
+          throw new Error(`Fila ${i + 2}: revisa enunciado, correcta (Verdadero/Falso) y explicacion.`);
+        }
+        return { enunciado, correcta: ['verdadero', 'v', 'true', '1'].includes(respuesta), explicacion };
+      });
+      setBanco(convertidas);
+      setMensaje(`Banco cargado: ${convertidas.length} preguntas. Selecciona cuántas pasar al ejercicio.`);
+    } catch (e) { setError('No se pudo importar el banco: ' + e.message); }
+  }
+  function seleccionarBanco() {
+    if (!banco.length) return;
+    if (id) { setError('Pulsa + Nuevo ejercicio antes de generar otro conjunto; así no modificarás un ejercicio existente.'); return; }
+    const n = Math.min(80, Math.max(1, Number(cantidad) || 20), banco.length);
+    const copia = [...banco];
+    for (let i = copia.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [copia[i], copia[j]] = [copia[j], copia[i]];
+    }
+    setPreguntas(copia.slice(0, n));
+    setMensaje(`${n} preguntas elegidas aleatoriamente. Revísalas y pulsa Guardar ejercicio.`);
+    setError('');
+  }
+  function descargarPlantilla() {
+    const ejemplo = [{ enunciado: 'El agua está formada por hidrógeno y oxígeno.', correcta: 'Verdadero', explicacion: 'Su fórmula química es H2O.' }, { enunciado: 'La Tierra es una estrella.', correcta: 'Falso', explicacion: 'La Tierra es un planeta.' }];
+    const hoja = XLSX.utils.json_to_sheet(ejemplo);
+    const libro = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(libro, hoja, 'Banco');
+    XLSX.writeFile(libro, 'CIA_plantilla_banco_preguntas.xlsx');
   }
   async function guardar() {
     const problema = validar();
@@ -89,7 +140,20 @@ export default function ProfesorEjercicios() {
         <h3 className="text-lg font-bold text-slate-900">Ejercicios · Verdadero o falso</h3>
         <button type="button" onClick={limpiar} className="rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm">+ Nuevo ejercicio</button>
       </div>
-      <p className="mt-2 text-sm text-slate-600">Primera prueba: crea preguntas manualmente. La IA y los PDF se añadirán después.</p>
+      <p className="mt-2 text-sm text-slate-600">Crea preguntas manualmente o importa un banco Excel/CSV. La generación automática mediante IA desde PDF requiere una etapa de servidor independiente.</p>
+      <div className="mt-4 rounded-xl border border-indigo-200 bg-white p-3 space-y-3">
+        <h4 className="font-bold text-indigo-900">Banco de preguntas · Importar Excel o CSV</h4>
+        <p className="text-xs text-slate-600">Prepara hasta 500 afirmaciones con columnas: enunciado, correcta, explicacion. Elige hasta 80 por ejercicio. El banco se mantiene solo en esta sesión del navegador; guarda el ejercicio para conservar las seleccionadas en Supabase.</p>
+        <div className="flex flex-wrap gap-2 items-center">
+          <button type="button" onClick={descargarPlantilla} className="rounded-lg border border-indigo-300 px-3 py-2 text-sm">Descargar plantilla Excel</button>
+          <label className="rounded-lg bg-indigo-700 px-3 py-2 text-sm text-white cursor-pointer">Importar banco<input className="sr-only" type="file" accept=".xlsx,.xls,.csv" onChange={importarBanco} /></label>
+        </div>
+        {banco.length > 0 && <div className="flex flex-wrap items-center gap-2">
+          <span className="text-sm">{banco.length} preguntas disponibles · Seleccionar:</span>
+          <input type="number" min="1" max={Math.min(80,banco.length)} value={cantidad} onChange={e => setCantidad(e.target.value)} className="w-20 rounded-lg border p-2 text-sm" />
+          <button type="button" onClick={seleccionarBanco} disabled={cargando} className="rounded-lg bg-blue-700 px-3 py-2 text-sm text-white">Crear ejercicio aleatorio</button>
+        </div>}
+      </div>
       <div className="mt-4">
         <label className="mb-1 block text-sm font-semibold" htmlFor="cia-titulo">Título</label>
         <input id="cia-titulo" className={campo} value={titulo} maxLength={200} placeholder="Ejemplo: La célula — Clase 1" onChange={e => setTitulo(e.target.value)} />
