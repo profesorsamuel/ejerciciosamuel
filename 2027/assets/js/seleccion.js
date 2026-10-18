@@ -14,14 +14,17 @@ export function seleccionarCinco(banco,tecnica=1,opciones={}){
  const excluidas=new Set((opciones.excluir||[]).map(normalizar));
  let disponibles=unicas.filter(p=>!excluidas.has(clave(p))&&!excluidas.has(normalizar(p.enunciado)));
  const reinicio=disponibles.length<5;
+ // Consumir las preguntas restantes antes de comenzar un ciclo nuevo.
+ const restantes=disponibles;
  if(reinicio)disponibles=unicas;
  const elegidas=[],temas=new Set(),niveles=new Set();
+ const obligatorias=reinicio?mezclar(restantes):[];
  while(elegidas.length<5){
-  const candidatos=disponibles.filter(p=>!elegidas.includes(p));
+  const candidatos=(obligatorias.length?obligatorias:disponibles).filter(p=>!elegidas.includes(p));
   const ordenados=mezclar(candidatos).map(p=>({p,puntos:(temas.has(normalizar(p.tema))?0:2)+(niveles.has(normalizar(p.nivel))?0:1)}));
   ordenados.sort((a,b)=>b.puntos-a.puntos);
   const elegido=ordenados[0].p;
-  elegidas.push(elegido);temas.add(normalizar(elegido.tema));niveles.add(normalizar(elegido.nivel));
+  elegidas.push(elegido);if(obligatorias.length)obligatorias.splice(obligatorias.indexOf(elegido),1);temas.add(normalizar(elegido.tema));niveles.add(normalizar(elegido.nivel));
  }
  const preguntas=mezclar(elegidas);
  return opciones.detalle?{preguntas,reinicio}:preguntas;
