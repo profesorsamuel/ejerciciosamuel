@@ -1,1 +1,116 @@
-<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Técnica 01 · Banco 80</title><link rel="stylesheet" href="banco80.css"></head><body><header><a href="../../index.html">← Inicio CIA – Ciencias IA</a><h1>Técnica 01 · Banco de 80 preguntas</h1><p>C.E.B.G. El Jiral · Ciencias Naturales</p></header><main><section><h2>1. Fuente y distribución</h2><label>PDF de clase <input id="pdf" type="file" accept="application/pdf"></label><label>Tema <input id="tema" value="Clase de Ciencias Naturales"></label><div id="cuotas" class="grid"></div><p id="fuente" role="status"></p><button id="generar">Generar banco</button><button id="cancelar" class="secondary">Cancelar</button><progress id="progreso" value="0" max="80"></progress><p id="estado" role="status"></p></section><section><h2>2. Banco y revisión</h2><div class="actions"><button id="nueva">Agregar pregunta</button><button id="guardar">Guardar banco</button><button id="json">Exportar JSON</button><button id="csv">Exportar CSV</button><label>Importar JSON <input id="importar-json" type="file" accept=".json"></label></div><p id="conteo"></p><div id="preguntas"></div></section><section><h2>3. Estudiantes</h2><p>CSV o Excel según plantilla existente. En modo demostración se almacenan localmente.</p><label>Importar estudiantes <input id="estudiantes-archivo" type="file" accept=".csv,.xlsx,.xls"></label><div class="grid"><label>Nombre<input id="nombre"></label><label>Cédula<input id="cedula"></label><label>Grado<input id="grado" value="9"></label><label>Sección<input id="seccion" value="C"></label></div><button id="agregar-estudiante">Agregar estudiante</button><button id="cargar-nube">Leer estudiantes de Supabase</button><div id="estudiantes"></div></section><section><h2>4. Impresión</h2><label>Preguntas por estudiante <select id="cantidad"><option>20</option><option>40</option><option selected>80</option></select></label><button id="imprimir">Imprimir / Guardar PDF</button><button id="clave">Imprimir clave docente</button><p>Revise que las preguntas abiertas dispongan de espacio suficiente para responder.</p></section></main><div id="impresion"></div><script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script><script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script><script type="module" src="banco80.js"></script></body></html>
+<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>CIA · Ciencias IA</title>
+<style>
+:root{--ink:#10302f;--hoja:#2e8b57;--papel:#f5f7f2;--sol:#e9a23b;--mal:#b83b2e;--ok:#1f7a4a;--linea:#cfd9cc}
+*{box-sizing:border-box}body{margin:0;background:var(--papel);color:var(--ink);font:17px/1.5 system-ui,sans-serif}
+h1,h2,h3{font-family:Georgia,serif;line-height:1.2;margin:.2em 0 .5em}
+header{background:var(--ink);color:#fff;padding:18px 20px}header h1{margin:0;font-size:1.5rem}header p{margin:0;opacity:.8;font-size:.9rem}
+main{max-width:860px;margin:0 auto;padding:16px}.card{background:#fff;border:1px solid var(--linea);border-radius:12px;padding:20px;margin:14px 0}
+button,select,input{font:inherit}button{background:var(--hoja);color:#fff;border:0;border-radius:10px;padding:12px 18px;margin:4px;cursor:pointer;font-weight:600}
+button.sec{background:#e4ebe1;color:var(--ink)}button.big{padding:18px 24px;font-size:1.1rem}button:disabled{opacity:.5}
+:focus-visible{outline:3px solid var(--sol);outline-offset:2px}
+input,select{width:100%;padding:11px;border:1px solid #9fb09c;border-radius:8px;margin:4px 0 12px;background:#fff}
+.op{display:block;width:100%;text-align:left;background:#fff;color:var(--ink);border:2px solid var(--linea)}.op.sel{border-color:var(--hoja);background:#e8f4ec}
+.bien{border-left:6px solid var(--ok)}.mal{border-left:6px solid var(--mal)}.bar{height:10px;background:#dde6da;border-radius:9px;overflow:hidden}.bar i{display:block;height:100%;background:var(--sol)}
+table{width:100%;border-collapse:collapse;font-size:.9rem}td,th{padding:6px;border-bottom:1px solid var(--linea);text-align:left}
+.tabs button.on{background:var(--ink)}.err{color:var(--mal);font-weight:600}.row{display:flex;gap:8px;align-items:center;justify-content:space-between}.s{font-size:.9rem;color:#4a625f}.wrap{overflow-x:auto}
+</style></head><body>
+<header><h1>CIA · Ciencias IA</h1><p>C.E.B.G. El Jiral · Ciencias Naturales</p></header><main id="app"></main>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<script type="module">
+import {createClient} from 'https://esm.sh/@supabase/supabase-js@2';
+// ▼▼ Pega aquí la URL del proyecto y la clave "anon/publishable" (NUNCA la service_role) ▼▼
+const CONFIG={url:'',key:''};
+const sb=createClient(CONFIG.url||'https://sin-configurar.supabase.co',CONFIG.key||'sin-configurar');
+const $=s=>document.querySelector(s),app=$('#app'),draw=h=>app.innerHTML=h;
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const norm=s=>String(s).toLowerCase().normalize('NFD').replace(/[^a-z0-9]/g,'');
+const TIPOS={multiple:'Selección múltiple',verdadero_falso:'Verdadero o falso',completar:'Completar el espacio',relacionar:'Relacionar columnas',ordenar:'Ordenar la secuencia'};
+const META=18; // 18 por tipo x 5 tipos = 90 preguntas (mínimo pedido: 80)
+let est=null;
+const fmt=c=>Array.isArray(c)?(Array.isArray(c[0])?c.map(p=>p.join(' = ')).join('; '):c.join(' → ')):c;
+
+function inicio(){draw(`<div class=card><h2>¿Quién eres?</h2>${CONFIG.url?'':'<p class=err>Falta configurar Supabase en index.html (CONFIG).</p>'}<button class=big id=e>Soy estudiante</button><button class="big sec" id=d>Soy docente</button></div>`);$('#e').onclick=loginEst;$('#d').onclick=loginDoc;}
+
+/* ---------- ESTUDIANTE ---------- */
+function loginEst(){draw(`<div class=card><h2>Ingreso de estudiante</h2><label>Nombre<input id=n autocomplete=name></label><label>Cédula<input id=c inputmode=text></label><p class=err id=m></p><button id=go>Entrar</button><button class=sec id=b>Volver</button></div>`);
+$('#b').onclick=inicio;
+$('#go').onclick=async()=>{const n=$('#n').value.trim(),c=$('#c').value.trim();if(!n||!c)return $('#m').textContent='Escribe tu nombre y tu cédula.';
+ const {data,error}=await sb.rpc('cia_ingresar',{p_cedula:c,p_nombre:n});if(error)return $('#m').textContent=error.message;est=data;menu();};}
+function menu(){draw(`<div class=card><h2>Hola, ${esc(est.nombres)}</h2><p>Elige un ejercicio. Cada intento trae 8 preguntas distintas.</p>${Object.entries(TIPOS).map(([k,v])=>`<button class=big data-t=${k}>${v}</button>`).join('')}<p class=err id=m></p><button class=sec id=s>Salir</button></div>`);
+app.querySelectorAll('[data-t]').forEach(b=>b.onclick=async()=>{const {data,error}=await sb.rpc('cia_iniciar',{p_est:est.id,p_tipo:b.dataset.t});if(error)return $('#m').textContent=error.message;quiz(data);});$('#s').onclick=()=>{est=null;inicio();};}
+function quiz(d){let i=0;const R={};
+ const paso=()=>{const q=d.preguntas[i],x=q.datos;let cu='';
+  if(q.tipo=='multiple'||q.tipo=='completar')cu=x.opciones.map(o=>`<button class=op data-v="${esc(o)}">${esc(o)}</button>`).join('');
+  else if(q.tipo=='verdadero_falso')cu=['Verdadero','Falso'].map(o=>`<button class=op data-v="${o}">${o}</button>`).join('');
+  else if(q.tipo=='relacionar')cu=x.izq.map(a=>`<label>${esc(a)}<select data-a="${esc(a)}"><option value="">Elige…</option>${x.der.map(b=>`<option>${esc(b)}</option>`).join('')}</select></label>`).join('');
+  else{R[q.id]=R[q.id]||[...x.items];cu='<div id=lst></div>';}
+  draw(`<div class=card><div class=bar><i style="width:${i/8*100}%"></i></div><p class=s>Pregunta ${i+1} de 8</p><h3>${esc(q.enunciado)}</h3>${cu}<p class=err id=m></p><button id=nx>${i<7?'Siguiente':'Terminar y calificar'}</button></div>`);
+  app.querySelectorAll('.op').forEach(b=>b.onclick=()=>{R[q.id]=b.dataset.v;app.querySelectorAll('.op').forEach(o=>o.classList.toggle('sel',o==b));});
+  app.querySelectorAll('select').forEach(s=>s.onchange=()=>{(R[q.id]=R[q.id]||{})[s.dataset.a]=s.value;});
+  if(q.tipo=='ordenar'){const L=()=>{$('#lst').innerHTML=R[q.id].map((o,k)=>`<div class=row><span>${k+1}. ${esc(o)}</span><span><button class=sec data-m="${k}:-1" aria-label="Subir">▲</button><button class=sec data-m="${k}:1" aria-label="Bajar">▼</button></span></div>`).join('');
+   $('#lst').querySelectorAll('[data-m]').forEach(b=>b.onclick=()=>{const [k,s]=b.dataset.m.split(':').map(Number),a=R[q.id];if(a[k+s]===undefined)return;[a[k],a[k+s]]=[a[k+s],a[k]];L();});};L();}
+  $('#nx').onclick=async()=>{const r=R[q.id];
+   if(q.tipo=='relacionar'?(!r||x.izq.some(a=>!r[a])):!r)return $('#m').textContent='Responde antes de continuar.';
+   if(i<7){i++;return paso();}
+   $('#nx').disabled=true;const {data,error}=await sb.rpc('cia_enviar',{p_est:est.id,p_intento:d.intento,p_resp:R});if(error)return $('#m').textContent=error.message;resultado(data);};};
+ paso();}
+function resultado(r){draw(`<div class=card><h2>Nota: ${r.nota} / ${r.total} (${Math.round(r.nota/r.total*100)}%)</h2><button id=o>Hacer otro ejercicio</button></div>${r.detalle.map((q,k)=>`<div class="card ${q.ok?'bien':'mal'}"><b>${k+1}. ${esc(q.enunciado)}</b><p>${q.ok?'Correcta':'Incorrecta'}. Respuesta: <b>${esc(fmt(q.correcta))}</b></p><p class=s>${esc(q.explicacion)}</p></div>`).join('')}`);$('#o').onclick=menu;}
+
+/* ---------- DOCENTE ---------- */
+async function loginDoc(){const {data:{session}}=await sb.auth.getSession();if(session)return panel();
+ draw(`<div class=card><h2>Ingreso docente</h2><label>Correo<input id=em type=email></label><label>Contraseña<input id=pw type=password></label><p class=err id=m></p><button id=go>Entrar</button><button class=sec id=b>Volver</button></div>`);$('#b').onclick=inicio;
+ $('#go').onclick=async()=>{const {error}=await sb.auth.signInWithPassword({email:$('#em').value.trim(),password:$('#pw').value});if(error)return $('#m').textContent=error.message;panel();};}
+async function panel(){const {data:{user}}=await sb.auth.getUser();const {data:dc}=await sb.from('cia_docentes').select('id').eq('id',user.id).maybeSingle();
+ if(!dc){draw(`<div class=card><p class=err>Tu usuario no está autorizado en cia_docentes. Ejecuta el INSERT del final del archivo SQL.</p><button id=x class=sec>Salir</button></div>`);return $('#x').onclick=async()=>{await sb.auth.signOut();inicio();};}
+ draw(`<div class="card tabs"><button data-p=banco>Banco de preguntas</button><button data-p=est>Estudiantes</button><button data-p=res>Resultados</button><button class=sec id=x>Salir</button></div><div id=v></div>`);
+ app.querySelectorAll('[data-p]').forEach(b=>b.onclick=()=>{app.querySelectorAll('[data-p]').forEach(o=>o.classList.toggle('on',o==b));({banco:tBanco,est:tEst,res:tRes})[b.dataset.p](user.id);});
+ $('#x').onclick=async()=>{await sb.auth.signOut();inicio();};app.querySelector('[data-p=banco]').click();}
+
+let texto='';
+async function tBanco(uid){const {data:pr=[]}=await sb.from('cia_preguntas').select('id,tipo,enunciado').order('creado_en');
+ const cnt=t=>pr.filter(p=>p.tipo==t).length;
+ $('#v').innerHTML=`<div class=card><h2>Banco: ${pr.length} preguntas</h2><p class=s>${Object.entries(TIPOS).map(([k,v])=>`${v}: ${cnt(k)}`).join(' · ')}</p>
+ <label>PDF de la clase<input id=pdf type=file accept=application/pdf></label><p class=s id=fu></p><button id=gen>Generar banco de preguntas</button><p id=st class=s role=status></p></div>
+ <div class=card>${pr.map(p=>`<div class=row><span><b class=s>${TIPOS[p.tipo]}</b><br>${esc(p.enunciado)}</span><span><button class=sec data-e="${p.id}">Editar</button><button class=sec data-d="${p.id}">Borrar</button></span></div><hr>`).join('')||'<p>Aún no hay preguntas. Sube un PDF y genera el banco.</p>'}</div>`;
+ $('#pdf').onchange=async e=>{try{pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+  const doc=await pdfjsLib.getDocument({data:await e.target.files[0].arrayBuffer()}).promise;const t=[];
+  for(let i=1;i<=doc.numPages;i++){const c=await(await doc.getPage(i)).getTextContent();t.push(c.items.map(x=>x.str).join(' '));}
+  texto=t.join('\n').trim();$('#fu').textContent=texto.length>80?`Texto leído: ${texto.length} caracteres.`:'El PDF no tiene texto legible (¿escaneado?). Aplícale OCR antes.';}catch(err){texto='';$('#fu').textContent=err.message;}};
+ app.querySelectorAll('[data-d]').forEach(b=>b.onclick=async()=>{if(confirm('¿Borrar esta pregunta?')){await sb.from('cia_preguntas').delete().eq('id',b.dataset.d);tBanco(uid);}});
+ app.querySelectorAll('[data-e]').forEach(b=>b.onclick=async()=>{const p=pr.find(x=>x.id==b.dataset.e),n=prompt('Editar enunciado:',p.enunciado);if(n&&n.trim()){await sb.from('cia_preguntas').update({enunciado:n.trim()}).eq('id',p.id);tBanco(uid);}});
+ $('#gen').onclick=async()=>{if(texto.length<80)return $('#st').textContent='Primero sube un PDF con texto.';$('#gen').disabled=true;
+  const tr=[];for(let i=0;i<texto.length;i+=12000)tr.push(texto.slice(i,i+12000));
+  const vistos=pr.map(p=>p.enunciado);const set=new Set(vistos.map(norm));
+  for(const t of Object.keys(TIPOS)){let n=cnt(t),ron=0;
+   while(n<META&&ron<8){$('#st').textContent=`Generando ${TIPOS[t]}: ${n}/${META}…`;
+    const {data,error}=await sb.functions.invoke('cia-generar',{body:{texto_pdf:tr[ron%tr.length],tipo:t,cantidad:8,excluir:vistos}});
+    if(error||data?.error){$('#st').textContent='Error: '+(data?.error||error.message);$('#gen').disabled=false;return;}
+    const filas=(data.preguntas||[]).map(p=>fila(p,t,uid)).filter(f=>f&&!set.has(norm(f.enunciado)));
+    if(filas.length){const {error:e2}=await sb.from('cia_preguntas').insert(filas);if(e2){$('#st').textContent='Error al guardar: '+e2.message;$('#gen').disabled=false;return;}
+     filas.forEach(f=>{set.add(norm(f.enunciado));vistos.push(f.enunciado);});n+=filas.length;}
+    ron++;}}
+  tBanco(uid);};}
+function fila(p,t,uid){const e=String(p.enunciado||'').trim();if(e.length<8)return;let datos={},c=p.correcta;
+ if(t=='multiple'||t=='completar'){const o=p.opciones;if(!Array.isArray(o)||new Set(o).size!=4||!o.includes(c))return;datos={opciones:o};}
+ else if(t=='verdadero_falso'){if(!['Verdadero','Falso'].includes(c))return;}
+ else if(t=='relacionar'){const r=p.pares;if(!Array.isArray(r)||r.length<3||r.some(x=>!Array.isArray(x)||x.length!=2)||new Set(r.map(x=>x[0])).size!=r.length||new Set(r.map(x=>x[1])).size!=r.length)return;datos={pares:r};c=r;}
+ else{const r=p.items;if(!Array.isArray(r)||r.length<3||new Set(r).size!=r.length)return;datos={items:r};c=r;}
+ return{docente_id:uid,tipo:t,enunciado:e,datos,correcta:c,explicacion:String(p.explicacion||''),tema:String(p.tema||'')};}
+
+async function tEst(uid){const {data:L=[]}=await sb.from('cia_estudiantes').select('nombres,cedula,grado,seccion,registrado_en').order('nombres');
+ $('#v').innerHTML=`<div class=card><h2>Estudiantes: ${L.length}</h2><p class=s>Sube la plantilla Excel o CSV (columnas: nombres, cedula, grado, seccion).</p><input id=f type=file accept=".xlsx,.xls,.csv"><p id=st class=s role=status></p></div>
+ <div class="card wrap"><table><tr><th>Nombre<th>Cédula<th>Grado<th>Ingresó</tr>${L.map(s=>`<tr><td>${esc(s.nombres)}<td>${esc(s.cedula)}<td>${esc((s.grado||'')+' '+(s.seccion||''))}<td>${s.registrado_en?'Sí':'—'}</tr>`).join('')}</table></div>`;
+ $('#f').onchange=async e=>{try{const wb=XLSX.read(await e.target.files[0].arrayBuffer());const rows=XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]],{defval:''});
+  const g=(r,k)=>{const key=Object.keys(r).find(x=>norm(x)==k);return key?String(r[key]).trim():'';};
+  const filas=rows.map(r=>({docente_id:uid,nombres:g(r,'nombres')||g(r,'nombre'),cedula:g(r,'cedula'),grado:g(r,'grado'),seccion:g(r,'seccion')})).filter(f=>f.nombres&&f.cedula);
+  if(!filas.length)return $('#st').textContent='No se encontraron filas con nombres y cedula.';
+  const {error}=await sb.from('cia_estudiantes').upsert(filas,{onConflict:'docente_id,cedula'});if(error)throw error;tEst(uid);}catch(err){$('#st').textContent='Error: '+err.message;}};}
+
+async function tRes(){const {data:R=[]}=await sb.from('cia_intentos').select('tipo,nota,enviado_en,cia_estudiantes(nombres,cedula)').not('enviado_en','is',null).order('enviado_en',{ascending:false});
+ const f=R.map(r=>[r.cia_estudiantes?.nombres,r.cia_estudiantes?.cedula,TIPOS[r.tipo]||r.tipo,r.nota+'/8',new Date(r.enviado_en).toLocaleString('es-PA')]);
+ $('#v').innerHTML=`<div class=card><h2>Resultados: ${f.length}</h2><button id=ex ${f.length?'':'disabled'}>Exportar CSV</button></div><div class="card wrap"><table><tr><th>Nombre<th>Cédula<th>Ejercicio<th>Nota<th>Fecha</tr>${f.map(r=>'<tr>'+r.map(c=>`<td>${esc(c)}`).join('')+'</tr>').join('')}</table></div>`;
+ $('#ex').onclick=()=>{const csv='\ufeffnombre,cedula,ejercicio,nota,fecha\n'+f.map(r=>r.map(c=>`"${String(c).replace(/"/g,'""')}"`).join(',')).join('\n');
+  const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));a.download='resultados.csv';a.click();};}
+inicio();
+</script></body></html>
