@@ -36,9 +36,9 @@ function inicio(){draw(`<div class=card><h2>¿Quién eres?</h2>${CONFIG.url?'':'
 function loginEst(){draw(`<div class=card><h2>Ingreso de estudiante</h2><label>Nombre<input id=n autocomplete=name></label><label>Cédula<input id=c inputmode=text></label><p class=err id=m></p><button id=go>Entrar</button><button class=sec id=b>Volver</button></div>`);
 $('#b').onclick=inicio;
 $('#go').onclick=async()=>{const n=$('#n').value.trim(),c=$('#c').value.trim();if(!n||!c)return $('#m').textContent='Escribe tu nombre y tu cédula.';
- const {data,error}=await sb.rpc('cia8_ingresar',{p_cedula:c,p_nombre:n});if(error)return $('#m').textContent=error.message;est=data;menu();};}
+ const {data,error}=await sb.rpc('cia27_ingresar',{p_cedula:c,p_nombre:n});if(error)return $('#m').textContent=error.message;est=data;menu();};}
 function menu(){draw(`<div class=card><h2>Hola, ${esc(est.nombres)}</h2><p>Elige un ejercicio. Cada intento trae 8 preguntas distintas.</p>${Object.entries(TIPOS).map(([k,v])=>`<button class=big data-t=${k}>${v}</button>`).join('')}<p class=err id=m></p><button class=sec id=s>Salir</button></div>`);
-app.querySelectorAll('[data-t]').forEach(b=>b.onclick=async()=>{const {data,error}=await sb.rpc('cia8_iniciar',{p_est:est.id,p_tipo:b.dataset.t});if(error)return $('#m').textContent=error.message;quiz(data);});$('#s').onclick=()=>{est=null;inicio();};}
+app.querySelectorAll('[data-t]').forEach(b=>b.onclick=async()=>{const {data,error}=await sb.rpc('cia27_iniciar',{p_est:est.id,p_tipo:b.dataset.t});if(error)return $('#m').textContent=error.message;quiz(data);});$('#s').onclick=()=>{est=null;inicio();};}
 function quiz(d){let i=0;const R={};
  const paso=()=>{const q=d.preguntas[i],x=q.datos;let cu='';
   if(q.tipo=='multiple'||q.tipo=='completar')cu=x.opciones.map(o=>`<button class=op data-v="${esc(o)}">${esc(o)}</button>`).join('');
@@ -53,7 +53,7 @@ function quiz(d){let i=0;const R={};
   $('#nx').onclick=async()=>{const r=R[q.id];
    if(q.tipo=='relacionar'?(!r||x.izq.some(a=>!r[a])):!r)return $('#m').textContent='Responde antes de continuar.';
    if(i<7){i++;return paso();}
-   $('#nx').disabled=true;const {data,error}=await sb.rpc('cia8_enviar',{p_est:est.id,p_intento:d.intento,p_resp:R});if(error)return $('#m').textContent=error.message;resultado(data);};};
+   $('#nx').disabled=true;const {data,error}=await sb.rpc('cia27_enviar',{p_est:est.id,p_intento:d.intento,p_resp:R});if(error)return $('#m').textContent=error.message;resultado(data);};};
  paso();}
 function resultado(r){draw(`<div class=card><h2>Nota: ${r.nota} / ${r.total} (${Math.round(r.nota/r.total*100)}%)</h2><button id=o>Hacer otro ejercicio</button></div>${r.detalle.map((q,k)=>`<div class="card ${q.ok?'bien':'mal'}"><b>${k+1}. ${esc(q.enunciado)}</b><p>${q.ok?'Correcta':'Incorrecta'}. Respuesta: <b>${esc(fmt(q.correcta))}</b></p><p class=s>${esc(q.explicacion)}</p></div>`).join('')}`);$('#o').onclick=menu;}
 
@@ -61,14 +61,14 @@ function resultado(r){draw(`<div class=card><h2>Nota: ${r.nota} / ${r.total} (${
 async function loginDoc(){const {data:{session}}=await sb.auth.getSession();if(session)return panel();
  draw(`<div class=card><h2>Ingreso docente</h2><label>Correo<input id=em type=email></label><label>Contraseña<input id=pw type=password></label><p class=err id=m></p><button id=go>Entrar</button><button class=sec id=b>Volver</button></div>`);$('#b').onclick=inicio;
  $('#go').onclick=async()=>{const {error}=await sb.auth.signInWithPassword({email:$('#em').value.trim(),password:$('#pw').value});if(error)return $('#m').textContent=error.message;panel();};}
-async function panel(){const {data:{user}}=await sb.auth.getUser();const {data:dc}=await sb.from('cia8_docentes').select('id').eq('id',user.id).maybeSingle();
- if(!dc){draw(`<div class=card><p class=err>Tu usuario no está autorizado en cia8_docentes. Ejecuta el INSERT del final del archivo SQL.</p><button id=x class=sec>Salir</button></div>`);return $('#x').onclick=async()=>{await sb.auth.signOut();inicio();};}
+async function panel(){const {data:{user}}=await sb.auth.getUser();const {data:dc}=await sb.from('cia27_docentes').select('id').eq('id',user.id).maybeSingle();
+ if(!dc){draw(`<div class=card><p class=err>Tu usuario no está autorizado en cia27_docentes. Ejecuta el INSERT del final del archivo SQL.</p><button id=x class=sec>Salir</button></div>`);return $('#x').onclick=async()=>{await sb.auth.signOut();inicio();};}
  draw(`<div class="card tabs"><button data-p=banco>Banco de preguntas</button><button data-p=est>Estudiantes</button><button data-p=res>Resultados</button><button class=sec id=x>Salir</button></div><div id=v></div>`);
  app.querySelectorAll('[data-p]').forEach(b=>b.onclick=()=>{app.querySelectorAll('[data-p]').forEach(o=>o.classList.toggle('on',o==b));({banco:tBanco,est:tEst,res:tRes})[b.dataset.p](user.id);});
  $('#x').onclick=async()=>{await sb.auth.signOut();inicio();};app.querySelector('[data-p=banco]').click();}
 
 let texto='';
-async function tBanco(uid){const {data:pr=[]}=await sb.from('cia8_preguntas').select('id,tipo,enunciado').order('creado_en');
+async function tBanco(uid){const {data:pr=[]}=await sb.from('cia27_preguntas').select('id,tipo,enunciado').order('creado_en');
  const cnt=t=>pr.filter(p=>p.tipo==t).length;
  $('#v').innerHTML=`<div class=card><h2>Banco: ${pr.length} preguntas</h2><p class=s>${Object.entries(TIPOS).map(([k,v])=>`${v}: ${cnt(k)}`).join(' · ')}</p>
  <label>PDF de la clase<input id=pdf type=file accept=application/pdf></label><p class=s id=fu></p><button id=gen>Generar banco de preguntas</button><p id=st class=s role=status></p></div>
@@ -77,8 +77,8 @@ async function tBanco(uid){const {data:pr=[]}=await sb.from('cia8_preguntas').se
   const doc=await pdfjsLib.getDocument({data:await e.target.files[0].arrayBuffer()}).promise;const t=[];
   for(let i=1;i<=doc.numPages;i++){const c=await(await doc.getPage(i)).getTextContent();t.push(c.items.map(x=>x.str).join(' '));}
   texto=t.join('\n').trim();$('#fu').textContent=texto.length>80?`Texto leído: ${texto.length} caracteres.`:'El PDF no tiene texto legible (¿escaneado?). Aplícale OCR antes.';}catch(err){texto='';$('#fu').textContent=err.message;}};
- app.querySelectorAll('[data-d]').forEach(b=>b.onclick=async()=>{if(confirm('¿Borrar esta pregunta?')){await sb.from('cia8_preguntas').delete().eq('id',b.dataset.d);tBanco(uid);}});
- app.querySelectorAll('[data-e]').forEach(b=>b.onclick=async()=>{const p=pr.find(x=>x.id==b.dataset.e),n=prompt('Editar enunciado:',p.enunciado);if(n&&n.trim()){await sb.from('cia8_preguntas').update({enunciado:n.trim()}).eq('id',p.id);tBanco(uid);}});
+ app.querySelectorAll('[data-d]').forEach(b=>b.onclick=async()=>{if(confirm('¿Borrar esta pregunta?')){await sb.from('cia27_preguntas').delete().eq('id',b.dataset.d);tBanco(uid);}});
+ app.querySelectorAll('[data-e]').forEach(b=>b.onclick=async()=>{const p=pr.find(x=>x.id==b.dataset.e),n=prompt('Editar enunciado:',p.enunciado);if(n&&n.trim()){await sb.from('cia27_preguntas').update({enunciado:n.trim()}).eq('id',p.id);tBanco(uid);}});
  $('#gen').onclick=async()=>{if(texto.length<80)return $('#st').textContent='Primero sube un PDF con texto.';$('#gen').disabled=true;
   const tr=[];for(let i=0;i<texto.length;i+=12000)tr.push(texto.slice(i,i+12000));
   const vistos=pr.map(p=>p.enunciado);const set=new Set(vistos.map(norm));
@@ -87,7 +87,7 @@ async function tBanco(uid){const {data:pr=[]}=await sb.from('cia8_preguntas').se
     const {data,error}=await sb.functions.invoke('cia-generar',{body:{texto_pdf:tr[ron%tr.length],tipo:t,cantidad:8,excluir:vistos}});
     if(error||data?.error){$('#st').textContent='Error: '+(data?.error||error.message);$('#gen').disabled=false;return;}
     const filas=(data.preguntas||[]).map(p=>fila(p,t,uid)).filter(f=>f&&!set.has(norm(f.enunciado)));
-    if(filas.length){const {error:e2}=await sb.from('cia8_preguntas').insert(filas);if(e2){$('#st').textContent='Error al guardar: '+e2.message;$('#gen').disabled=false;return;}
+    if(filas.length){const {error:e2}=await sb.from('cia27_preguntas').insert(filas);if(e2){$('#st').textContent='Error al guardar: '+e2.message;$('#gen').disabled=false;return;}
      filas.forEach(f=>{set.add(norm(f.enunciado));vistos.push(f.enunciado);});n+=filas.length;}
     ron++;}}
   tBanco(uid);};}
@@ -98,17 +98,17 @@ function fila(p,t,uid){const e=String(p.enunciado||'').trim();if(e.length<8)retu
  else{const r=p.items;if(!Array.isArray(r)||r.length<3||new Set(r).size!=r.length)return;datos={items:r};c=r;}
  return{docente_id:uid,tipo:t,enunciado:e,datos,correcta:c,explicacion:String(p.explicacion||''),tema:String(p.tema||'')};}
 
-async function tEst(uid){const {data:L=[]}=await sb.from('cia8_estudiantes').select('nombres,cedula,grado,seccion,registrado_en').order('nombres');
+async function tEst(uid){const {data:L=[]}=await sb.from('cia27_estudiantes').select('nombres,cedula,grado,seccion,registrado_en').order('nombres');
  $('#v').innerHTML=`<div class=card><h2>Estudiantes: ${L.length}</h2><p class=s>Sube la plantilla Excel o CSV (columnas: nombres, cedula, grado, seccion).</p><input id=f type=file accept=".xlsx,.xls,.csv"><p id=st class=s role=status></p></div>
  <div class="card wrap"><table><tr><th>Nombre<th>Cédula<th>Grado<th>Ingresó</tr>${L.map(s=>`<tr><td>${esc(s.nombres)}<td>${esc(s.cedula)}<td>${esc((s.grado||'')+' '+(s.seccion||''))}<td>${s.registrado_en?'Sí':'—'}</tr>`).join('')}</table></div>`;
  $('#f').onchange=async e=>{try{const wb=XLSX.read(await e.target.files[0].arrayBuffer());const rows=XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]],{defval:''});
   const g=(r,k)=>{const key=Object.keys(r).find(x=>norm(x)==k);return key?String(r[key]).trim():'';};
   const filas=rows.map(r=>({docente_id:uid,nombres:g(r,'nombres')||g(r,'nombre'),cedula:g(r,'cedula'),grado:g(r,'grado'),seccion:g(r,'seccion')})).filter(f=>f.nombres&&f.cedula);
   if(!filas.length)return $('#st').textContent='No se encontraron filas con nombres y cedula.';
-  const {error}=await sb.from('cia8_estudiantes').upsert(filas,{onConflict:'docente_id,cedula'});if(error)throw error;tEst(uid);}catch(err){$('#st').textContent='Error: '+err.message;}};}
+  const {error}=await sb.from('cia27_estudiantes').upsert(filas,{onConflict:'docente_id,cedula'});if(error)throw error;tEst(uid);}catch(err){$('#st').textContent='Error: '+err.message;}};}
 
-async function tRes(){const {data:R=[]}=await sb.from('cia8_intentos').select('tipo,nota,enviado_en,cia8_estudiantes(nombres,cedula)').not('enviado_en','is',null).order('enviado_en',{ascending:false});
- const f=R.map(r=>[r.cia8_estudiantes?.nombres,r.cia8_estudiantes?.cedula,TIPOS[r.tipo]||r.tipo,r.nota+'/8',new Date(r.enviado_en).toLocaleString('es-PA')]);
+async function tRes(){const {data:R=[]}=await sb.from('cia27_intentos').select('tipo,nota,enviado_en,cia27_estudiantes(nombres,cedula)').not('enviado_en','is',null).order('enviado_en',{ascending:false});
+ const f=R.map(r=>[r.cia27_estudiantes?.nombres,r.cia27_estudiantes?.cedula,TIPOS[r.tipo]||r.tipo,r.nota+'/8',new Date(r.enviado_en).toLocaleString('es-PA')]);
  $('#v').innerHTML=`<div class=card><h2>Resultados: ${f.length}</h2><button id=ex ${f.length?'':'disabled'}>Exportar CSV</button></div><div class="card wrap"><table><tr><th>Nombre<th>Cédula<th>Ejercicio<th>Nota<th>Fecha</tr>${f.map(r=>'<tr>'+r.map(c=>`<td>${esc(c)}`).join('')+'</tr>').join('')}</table></div>`;
  $('#ex').onclick=()=>{const csv='\ufeffnombre,cedula,ejercicio,nota,fecha\n'+f.map(r=>r.map(c=>`"${String(c).replace(/"/g,'""')}"`).join(',')).join('\n');
   const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));a.download='resultados.csv';a.click();};}
