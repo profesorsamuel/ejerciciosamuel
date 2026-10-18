@@ -14,7 +14,7 @@ Deno.serve(async req=>{
   const auth=req.headers.get('Authorization');if(!auth?.startsWith('Bearer '))return send({error:'Inicia sesión'},401);
   const sb=createClient(Deno.env.get('SUPABASE_URL')!,Deno.env.get('SUPABASE_ANON_KEY')!,{global:{headers:{Authorization:auth}}});
   const {data:{user}}=await sb.auth.getUser();if(!user)return send({error:'Sesión no válida'},401);
-  const {data:doc}=await sb.from('cia8_docentes').select('id').eq('id',user.id).maybeSingle();if(!doc)return send({error:'Usuario no autorizado como docente'},403);
+  const {data:doc}=await sb.from('cia_docentes').select('id').eq('id',user.id).maybeSingle();if(!doc)return send({error:'Usuario no autorizado como docente'},403);
   const {texto_pdf,tipo,cantidad,excluir=[]}=await req.json();
   if(typeof texto_pdf!=='string'||texto_pdf.length<80||texto_pdf.length>35000||!FORMATO[tipo]||!Number.isInteger(cantidad)||cantidad<1||cantidad>10)return send({error:'Entrada inválida'},400);
   const key=Deno.env.get('ANTHROPIC_API_KEY');if(!key)return send({error:'Falta el secreto ANTHROPIC_API_KEY'},503);
