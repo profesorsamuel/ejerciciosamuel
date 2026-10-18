@@ -11,6 +11,7 @@ import { ChevronDown, CircleCheck } from 'lucide-react';
 import { supabase, configurado } from './supabase.js';
 import ProfesorEjercicios from './ProfesorEjercicios.jsx';
 import ProfesorAsignaciones from './ProfesorAsignaciones.jsx';
+import EstudianteEjercicios from './EstudianteEjercicios.jsx';
 
 const NOMBRES_GRADO = {
   '1': 'Primero', '2': 'Segundo', '3': 'Tercero', '4': 'Cuarto', '5': 'Quinto',
@@ -67,6 +68,7 @@ export default function App() {
   const [cargandoEst, setCargandoEst] = useState(false);
   const [verificando, setVerificando] = useState(false);
   const [resultadoAcceso, setResultadoAcceso] = useState('');
+  const [accesoEstudiante, setAccesoEstudiante] = useState(null);
   const [filas, setFilas] = useState([]);
   const [mensaje, setMensaje] = useState('');
   const [guardando, setGuardando] = useState(false);
@@ -104,7 +106,8 @@ export default function App() {
     if (error) {
       setResultadoAcceso('No se pudo verificar. Falta instalar el SQL CIA_007 en Supabase.');
     } else if (data && data.length > 0) {
-      setResultadoAcceso('Matrícula verificada: ' + data[0].nombres + '. Los ejercicios se activarán en la siguiente fase.');
+      setResultadoAcceso('');
+      setAccesoEstudiante({ id: estudianteId, cedula: cedula.trim(), nombres: data[0].nombres });
     } else {
       setResultadoAcceso('La cédula no coincide con el estudiante seleccionado.');
     }
@@ -265,6 +268,13 @@ export default function App() {
           </section>
         ) : (
           <section className="mt-5">
+            {accesoEstudiante ? (
+              <>
+                <p className="text-sm text-slate-600">Estudiante: <strong>{accesoEstudiante.nombres}</strong></p>
+                <EstudianteEjercicios estudianteId={accesoEstudiante.id} cedula={accesoEstudiante.cedula}
+                  onSalir={() => { setAccesoEstudiante(null); setCedula(''); setEstudianteId(''); setResultadoAcceso(''); }} />
+              </>
+            ) : (<>
             <div className="mb-5 flex gap-2">
               <button type="button" onClick={() => setVista('inicio')} className={pestana(vista === 'inicio')}>
                 Estudiante
@@ -390,6 +400,7 @@ export default function App() {
                 )}
               </form>
             )}
+            </>)}
           </section>
         )}
       </div>
