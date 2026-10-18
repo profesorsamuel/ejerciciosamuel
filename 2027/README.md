@@ -1,5 +1,5 @@
 # CIA — Ciencias IA 2027
 
-Abre `index.html` desde GitHub Pages o un servidor web local. Los módulos JavaScript se cargan desde `assets/js/`, estilos desde `assets/css/`, plantillas desde `plantillas/` y SQL pendiente desde `sql/`.
+Proyecto del C.E.B.G. El Jiral. Esta entrega reúne el panel local, importación Excel/CSV, extracción de PDF, laboratorio parcial, banco editable, análisis local, control de calidad, selección validada de cinco preguntas, SQL de esquema con RLS y Edge Function de generación IA.
 
-**Estado:** demostración parcial; no es un portal de calificaciones oficial. Ver `ESTADO_ACTUAL.md`.
+**Estado:** prototipo local con infraestructura backend preparada, NO un sistema de calificaciones oficial. Lea `GUIA_INSTALACION.md`.
