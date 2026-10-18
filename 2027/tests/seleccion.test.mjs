@@ -23,4 +23,10 @@ assert.equal(segunda.filter(p=>primera.includes(p)).length,0,'No repetir pregunt
 const reiniciado=seleccionarCinco(banco,1,{excluir:banco.map(p=>p.enunciado),detalle:true});
 assert.equal(reiniciado.reinicio,true,'Indicar reinicio al agotar el banco');
 assert.equal(reiniciado.preguntas.length,5);
+
+const usadas=[...primera,...segunda];
+const tercera=seleccionarCinco(banco,1,{excluir:usadas.map(p=>p.enunciado),detalle:true});
+assert.equal(tercera.reinicio,true);
+const pendientes=banco.filter(p=>!usadas.includes(p));
+assert.equal(tercera.preguntas.filter(p=>pendientes.includes(p)).length,2,'Consumir preguntas pendientes antes del reinicio');
 console.log('OK: pruebas de selección de cinco preguntas');
