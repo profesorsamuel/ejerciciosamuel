@@ -1,17 +1,139 @@
-import {createClient} from 'https://esm.sh/@supabase/supabase-js@2';
-const cors={'Access-Control-Allow-Origin':'*','Access-Control-Allow-Headers':'authorization, x-client-info, apikey, content-type','Access-Control-Allow-Methods':'POST, OPTIONS'};
-const send=(v:unknown,s=200)=>new Response(JSON.stringify(v),{status:s,headers:{...cors,'Content-Type':'application/json'}});
-Deno.serve(async req=>{if(req.method==='OPTIONS')return new Response(null,{headers:cors});if(req.method!=='POST')return send({error:'Método no permitido'},405);
-try{const authorization=req.headers.get('authorization');if(!authorization?.startsWith('Bearer '))return send({error:'Inicie sesión'},401);
-const sb=createClient(Deno.env.get('SUPABASE_URL')!,Deno.env.get('SUPABASE_ANON_KEY')!,{global:{headers:{Authorization:authorization}}});
-const {data:{user},error:ue}=await sb.auth.getUser();if(ue||!user)return send({error:'Sesión inválida'},401);
-const {data:doc,error:de}=await sb.from('cia_docentes').select('id').eq('id',user.id).maybeSingle();if(de||!doc)return send({error:'Solo docentes autorizados'},403);
-const {texto_pdf,cantidad}=await req.json();if(typeof texto_pdf!=='string'||texto_pdf.trim().length<150||texto_pdf.length>45000||![20,40,60,80].includes(cantidad))return send({error:'Texto o cantidad inválidos'},400);
-const key=Deno.env.get('GEMINI_API_KEY');if(!key)return send({error:'Configure GEMINI_API_KEY en Supabase Secrets'},503);
-const model=Deno.env.get('GEMINI_MODEL')||'gemini-2.5-flash-lite';const preguntas:any[]=[];
-for(let inicio=0;inicio<cantidad;inicio+=10){const n=Math.min(10,cantidad-inicio);const prompt=`Eres un profesor de ciencias. Genera EXACTAMENTE ${n} preguntas diferentes basadas ÚNICAMENTE en el texto proporcionado. No inventes información. Entrega JSON puro {"preguntas":[{"enunciado":"...","correcta":"respuesta textual","distractores":["incorrecta 1","incorrecta 2","incorrecta 3"],"explicacion":"...","tema":"...","nivel":"facil|medio|dificil","tipo":"multiple"}]}. Cada pregunta tendrá una respuesta correcta y tres distractores distintos. Evita repetir: ${JSON.stringify(preguntas.map(p=>p.enunciado).slice(-50))}. Texto: ${texto_pdf}`;
-const resp=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`,{method:'POST',headers:{'Content-Type':'application/json','x-goog-api-key':key},body:JSON.stringify({contents:[{parts:[{text:prompt}]}],generationConfig:{responseMimeType:'application/json',temperature:0.65,maxOutputTokens:4500}})});
-if(!resp.ok){const detail=await resp.text();return send({error:`Gemini respondió ${resp.status}: ${detail.slice(0,400)}`},502);}const data=await resp.json();const raw=data.candidates?.[0]?.content?.parts?.map((p:any)=>p.text||'').join('')||'';let parsed;try{parsed=JSON.parse(raw);}catch{return send({error:'Gemini devolvió JSON inválido. Intente nuevamente.'},502);}
-if(!Array.isArray(parsed.preguntas))return send({error:'Respuesta sin preguntas'},502);
-for(const p of parsed.preguntas){if(typeof p.enunciado==='string'&&typeof p.correcta==='string'&&Array.isArray(p.distractores)&&p.distractores.length===3&&!preguntas.some(x=>x.enunciado.trim().toLowerCase()===p.enunciado.trim().toLowerCase()))preguntas.push(p);}
-}return send({preguntas});}catch(e){return send({error:e instanceof Error?e.message:'Error interno'},500);}});
+import "jsr:@supabase/functions-js/edge-runtime.d.ts";
+import { createClient } from "jsr:@supabase/supabase-js@2";
+
+const headers = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "authorization, apikey, content-type, x-client-info",
+  "Access-Control-Allow-Methods": "POST, OPTIONS",
+  "Content-Type": "application/json",
+};
+
+function responder(data: unknown, status = 200) {
+  return new Response(JSON.stringify(data), { status, headers });
+}
+
+Deno.serve(async (req) => {
+  if (req.method === "OPTIONS") return new Response(null, { headers });
+  if (req.method !== "POST") return responder({ error: "Metodo no permitido" }, 405);
+
+  try {
+    const url = Deno.env.get("SUPABASE_URL");
+    const anonKey = Deno.env.get("SUPABASE_ANON_KEY") || Deno.env.get("SUPABASE_PUBLISHABLE_KEY");
+    const geminiKey = Deno.env.get("GEMINI_API_KEY");
+
+    if (!url || !anonKey || !geminiKey) {
+      return responder({ error: "Falta configuracion del servidor" }, 500);
+    }
+
+    const token = req.headers.get("Authorization");
+    if (!token?.startsWith("Bearer ")) {
+      return responder({ error: "Inicie sesion" }, 401);
+    }
+
+    // Enviar el JWT del docente en las consultas para que RLS reconozca auth.uid().
+    const supabase = createClient(url, anonKey, {
+      global: { headers: { Authorization: token } },
+    });
+
+    const { data: auth, error: authError } = await supabase.auth.getUser(token.slice(7));
+    if (authError || !auth.user) return responder({ error: "Sesion no valida" }, 401);
+
+    const { data: docente, error: docenteError } = await supabase
+      .from("cia_docentes")
+      .select("id")
+      .eq("id", auth.user.id)
+      .maybeSingle();
+
+    if (docenteError) {
+      console.error("Error consultando cia_docentes:", docenteError.message);
+      return responder({ error: "No se pudo verificar el acceso docente" }, 403);
+    }
+    if (!docente) return responder({ error: "Acceso reservado a docentes" }, 403);
+
+    const body = await req.json();
+    const texto = String(body.texto || "").trim();
+    const tema = String(body.tema || "Ciencias Naturales").slice(0, 150);
+    const grado = String(body.grado || "9").slice(0, 20);
+    const cantidad = Math.min(80, Math.max(5, Number(body.cantidad) || 20));
+
+    if (texto.length < 100) return responder({ error: "El PDF no contiene suficiente texto" }, 400);
+    if (texto.length > 100000) return responder({ error: "Documento demasiado extenso" }, 413);
+
+    const instrucciones = `
+Eres un profesor experto en Ciencias Naturales.
+TEMA: ${tema}
+GRADO: ${grado}
+CANTIDAD: ${cantidad}
+Genera hasta ${cantidad} preguntas educativas basadas exclusivamente en el texto.
+No inventes informacion. Lenguaje apropiado para el grado. Mezcla niveles facil, medio y dificil.
+Incluye seleccion multiple, verdadero/falso, completar, relacionar, ordenar y casos.
+Evita preguntas repetidas. Cada pregunta debe tener respuesta correcta y explicacion breve.
+Si no hay contenido suficiente, genera menos preguntas.
+Devuelve exclusivamente JSON valido con esta forma:
+{
+  "preguntas": [
+    {
+      "tipo": "seleccion_multiple",
+      "pregunta": "Texto de la pregunta",
+      "opciones": ["Opcion A", "Opcion B", "Opcion C", "Opcion D"],
+      "respuesta": "Opcion A",
+      "explicacion": "Explicacion breve",
+      "dificultad": "facil"
+    }
+  ]
+}
+Tipos: seleccion_multiple, verdadero_falso, completar, relacionar, ordenar, caso.
+Dificultades: facil, medio, dificil.
+CONTENIDO DEL PDF:
+${texto}`;
+
+    const respuesta = await fetch(
+      "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent",
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "x-goog-api-key": geminiKey },
+        body: JSON.stringify({
+          contents: [{ role: "user", parts: [{ text: instrucciones }] }],
+          generationConfig: {
+            responseMimeType: "application/json",
+            temperature: 0.3,
+            maxOutputTokens: 16000,
+          },
+        }),
+      },
+    );
+
+    if (!respuesta.ok) {
+      console.error("Gemini:", respuesta.status, await respuesta.text());
+      return responder({ error: "No se pudieron generar preguntas", codigo: respuesta.status }, 502);
+    }
+
+    const resultado = await respuesta.json();
+    const contenido = resultado.candidates?.[0]?.content?.parts
+      ?.map((p: { text?: string }) => p.text || "").join("") || "";
+
+    if (!contenido) return responder({ error: "Gemini no devolvio preguntas" }, 502);
+
+    let datos;
+    try { datos = JSON.parse(contenido); }
+    catch { return responder({ error: "Gemini devolvio una respuesta incompleta" }, 502); }
+
+    if (!Array.isArray(datos.preguntas)) {
+      return responder({ error: "Formato de preguntas incorrecto" }, 502);
+    }
+
+    const preguntas = datos.preguntas.filter((p: Record<string, unknown>) =>
+      typeof p.pregunta === "string" &&
+      typeof p.respuesta === "string" &&
+      typeof p.explicacion === "string"
+    ).slice(0, cantidad);
+
+    return responder({
+      correcto: true, tema, grado, cantidad: preguntas.length, preguntas,
+      mensaje: "Preguntas generadas para revision",
+    });
+  } catch (error) {
+    console.error("cia-generar:", error);
+    return responder({ error: "Error interno al generar preguntas" }, 500);
+  }
+});
