@@ -11,6 +11,7 @@ export default function ProfesorEjercicios() {
   const [preguntas, setPreguntas] = useState([nuevaPregunta()]);
   const [id, setId] = useState(null);
   const [publicado, setPublicado] = useState(false);
+  const [documentoId, setDocumentoId] = useState(null);
   const [ejercicios, setEjercicios] = useState([]);
   const [cargando, setCargando] = useState(false);
   const [mensaje, setMensaje] = useState('');
@@ -27,7 +28,7 @@ export default function ProfesorEjercicios() {
     setPreguntas(actual => actual.map((p, j) => i === j ? { ...p, [clave]: valor } : p));
   }
   function limpiar() {
-    setId(null); setTitulo(''); setPreguntas([nuevaPregunta()]); setPublicado(false);
+    setId(null); setTitulo(''); setPreguntas([nuevaPregunta()]); setPublicado(false); setDocumentoId(null);
     setMensaje(''); setError('');
   }
   function validar() {
@@ -47,7 +48,7 @@ export default function ProfesorEjercicios() {
     setCargando(true);
     const limpias = preguntas.map(p => ({ enunciado: p.enunciado.trim(), correcta: p.correcta, explicacion: p.explicacion.trim() }));
     const { data, error: fallo } = await supabase.rpc('cia_profesor_guardar_ejercicio', {
-      p_titulo: titulo.trim(), p_preguntas: limpias, p_ejercicio_id: id, p_documento_id: null,
+      p_titulo: titulo.trim(), p_preguntas: limpias, p_ejercicio_id: id, p_documento_id: documentoId,
     });
     setCargando(false);
     if (fallo) { setError(fallo.message); return; }
@@ -64,12 +65,23 @@ export default function ProfesorEjercicios() {
     setMensaje(valor ? 'Ejercicio publicado. Aún debes asignarlo a un salón en el siguiente paso.' : 'Ejercicio retirado de publicación.');
     await cargarLista();
   }
-  function abrirEjercicio(e) {
-    setId(e.id); setTitulo(e.titulo); setPublicado(e.publicado);
-    // La RPC de listado no entrega preguntas. No se permite fingir que se cargaron.
-    setPreguntas([nuevaPregunta()]);
-    setError('Este ejercicio está guardado, pero el listado actual no devuelve sus preguntas. No lo edites desde aquí todavía: se añadirá una función de lectura segura.');
-    setMensaje('');
+  async function abrirEjercicio(e) {
+    setCargando(true); setError(''); setMensaje('');
+    const { data, error: fallo } = await supabase.rpc('cia_profesor_obtener_ejercicio', { p_ejercicio_id: e.id });
+    setCargando(false);
+    if (fallo) { setError('No se pudo abrir el ejercicio: ' + fallo.message); return; }
+    const detalle = Array.isArray(data) ? data[0] : data;
+    if (!detalle || !Array.isArray(detalle.preguntas) || detalle.preguntas.length === 0) {
+      setError('No se encontraron las preguntas del ejercicio.'); return;
+    }
+    setId(detalle.id);
+    setTitulo(detalle.titulo);
+    setPublicado(detalle.publicado);
+    setDocumentoId(detalle.documento_id || null);
+    setPreguntas(detalle.preguntas.map(p => ({
+      enunciado: p.enunciado || '', correcta: p.correcta === true, explicacion: p.explicacion || ''
+    })));
+    setMensaje('Ejercicio cargado. Puedes revisarlo y publicarlo.');
   }
   return (
     <section className="mt-6 rounded-2xl border border-blue-200 bg-blue-50/40 p-4">
@@ -102,8 +114,8 @@ export default function ProfesorEjercicios() {
       </div>
       <button type="button" disabled={cargando || preguntas.length >= 80} onClick={() => setPreguntas(actual => [...actual, nuevaPregunta()])} className="mt-3 rounded-xl border border-blue-300 bg-white px-4 py-2 text-sm font-semibold text-blue-800 disabled:opacity-50">+ Agregar pregunta</button>
       <div className="mt-4 flex flex-wrap gap-2">
-        <button type="button" className={boton} disabled={cargando || (id && error.startsWith('Este ejercicio está guardado'))} onClick={guardar}>{cargando ? 'Procesando…' : id ? 'Guardar cambios' : 'Guardar ejercicio'}</button>
-        {id && !error.startsWith('Este ejercicio está guardado') && <button type="button" disabled={cargando} onClick={() => publicar(!publicado)} className="rounded-xl bg-emerald-700 px-4 py-2.5 text-sm font-semibold text-white disabled:opacity-50">{publicado ? 'Retirar publicación' : 'Publicar ejercicio'}</button>}
+        <button type="button" className={boton} disabled={cargando} onClick={guardar}>{cargando ? 'Procesando…' : id ? 'Guardar cambios' : 'Guardar ejercicio'}</button>
+        {id && <button type="button" disabled={cargando} onClick={() => publicar(!publicado)} className="rounded-xl bg-emerald-700 px-4 py-2.5 text-sm font-semibold text-white disabled:opacity-50">{publicado ? 'Retirar publicación' : 'Publicar ejercicio'}</button>}
       </div>
       {error && <p role="alert" className="mt-3 rounded-lg bg-red-50 p-3 text-sm text-red-800">{error}</p>}
       {mensaje && <p role="status" className="mt-3 rounded-lg bg-emerald-50 p-3 text-sm text-emerald-900">{mensaje}</p>}
