@@ -10,6 +10,7 @@ import * as XLSX from 'xlsx';
 import { ChevronDown, CircleCheck } from 'lucide-react';
 import { supabase, configurado } from './supabase.js';
 import ProfesorEjercicios from './ProfesorEjercicios.jsx';
+import ProfesorAsignaciones from './ProfesorAsignaciones.jsx';
 
 const NOMBRES_GRADO = {
   '1': 'Primero', '2': 'Segundo', '3': 'Tercero', '4': 'Cuarto', '5': 'Quinto',
@@ -213,6 +214,7 @@ export default function App() {
             <p className="mt-3 text-sm text-slate-600">Sesión iniciada: {session.user.email}</p>
 
             <ProfesorEjercicios />
+            <ProfesorAsignaciones />
 
             <h3 className="mt-6 text-base font-semibold">Importar matrícula (Excel)</h3>
             <input
