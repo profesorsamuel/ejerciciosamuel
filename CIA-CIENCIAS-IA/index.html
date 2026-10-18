@@ -61,8 +61,16 @@ function resultado(r){draw(`<div class=card><h2>Nota: ${r.nota} / ${r.total} (${
 async function loginDoc(){const {data:{session}}=await sb.auth.getSession();if(session)return panel();
  draw(`<div class=card><h2>Ingreso docente</h2><label>Correo<input id=em type=email></label><label>Contraseña<input id=pw type=password></label><p class=err id=m></p><button id=go>Entrar</button><button class=sec id=b>Volver</button></div>`);$('#b').onclick=inicio;
  $('#go').onclick=async()=>{const {error}=await sb.auth.signInWithPassword({email:$('#em').value.trim(),password:$('#pw').value});if(error)return $('#m').textContent=error.message;panel();};}
-async function panel(){const {data:{user}}=await sb.auth.getUser();const {data:dc}=await sb.from('cia_docentes').select('id').eq('id',user.id).maybeSingle();
- if(!dc){draw(`<div class=card><p class=err>Tu usuario no está autorizado en cia_docentes. Ejecuta el INSERT del final del archivo SQL.</p><button id=x class=sec>Salir</button></div>`);return $('#x').onclick=async()=>{await sb.auth.signOut();inicio();};}
+async function panel(){
+ const {data:ud,error:ue}=await sb.auth.getUser();
+ const user=ud?.user;
+ if(ue||!user){draw(`<div class=card><p class=err>No se pudo verificar la sesión: ${esc(ue?.message||'sesión no disponible')}.</p><button id=x>Volver</button></div>`);$('#x').onclick=loginDoc;return;}
+ const {data:dc,error:de}=await sb.from('cia_docentes').select('id').eq('id',user.id).maybeSingle();
+ if(de||!dc){
+  const detalle=de?`Error de consulta (${esc(de.code||'sin código')}): ${esc(de.message)}. ${esc(de.details||'')}`:'La consulta no devolvió el registro. Compruebe que la sesión pertenezca al mismo proyecto Supabase que contiene el docente.';
+  draw(`<div class=card><h2>No se pudo verificar el acceso docente</h2><p class=err>${detalle}</p><p class=s>Cuenta: ${esc(user.email||'sin correo')} · ID: ${esc(user.id)}</p><button id=x class=sec>Salir</button></div>`);
+  $('#x').onclick=async()=>{await sb.auth.signOut();inicio();};return;
+ }
  draw(`<div class="card tabs"><button data-p=banco>Banco de preguntas</button><button data-p=est>Estudiantes</button><button data-p=res>Resultados</button><button class=sec id=x>Salir</button></div><div id=v></div>`);
  app.querySelectorAll('[data-p]').forEach(b=>b.onclick=()=>{app.querySelectorAll('[data-p]').forEach(o=>o.classList.toggle('on',o==b));({banco:tBanco,est:tEst,res:tRes})[b.dataset.p](user.id);});
  $('#x').onclick=async()=>{await sb.auth.signOut();inicio();};app.querySelector('[data-p=banco]').click();}
