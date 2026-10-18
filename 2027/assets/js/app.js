@@ -1,3 +1,4 @@
+import {seleccionarCinco} from './seleccion.js';
 import {TECNICAS} from './catalogo.js';
 import {CONFIG} from './config.js';
 const $=id=>document.getElementById(id);
@@ -42,7 +43,7 @@ $('buscar-banco').addEventListener('input',renderBanco);$('filtrar-tema').addEve
 $('agregar-salon').onclick=()=>{const s=$('nuevo-salon').value.trim();if(!s)return;if(!state.salones.includes(s))state.salones.push(s);$('nuevo-salon').value='';render();};
 $('agregar-estudiante').onclick=()=>{const nombres=$('nombre-estudiante').value.trim(),cedula=$('cedula-estudiante').value.trim(),salon=$('salon-estudiante').value;if(!nombres||!cedula||!salon)return aviso('Complete nombre, cédula y salón.','error');if(state.estudiantes.some(e=>e.cedula===cedula))return aviso('La cédula ya existe.','error');state.estudiantes.push({nombres,cedula,salon});render();};
 $('agregar-pregunta').onclick=()=>{const enunciado=$('enunciado').value.trim(),correcta=$('correcta').value.trim(),explicacion=$('explicacion').value.trim();if(!enunciado||!correcta)return aviso('Faltan enunciado y respuesta.','error');state.preguntas.push({enunciado,correcta,explicacion,tema:$('tema').value.trim(),nivel:'recordar'});render();};
-$('crear-ejercicio').onclick=()=>{if(state.preguntas.length<5)return aviso('Necesita al menos cinco preguntas.','error');const titulo=$('titulo-ejercicio').value.trim()||'Ejercicio sin título';state.ejercicios.push({titulo,tecnica:state.tecnica,preguntas:sample(),publicado:false});aviso('Borrador creado. Las 25 técnicas están catalogadas, pero todavía no tienen motores individuales.','ok');render();};
+$('crear-ejercicio').onclick=()=>{if(state.preguntas.length<5)return aviso('Necesita al menos cinco preguntas.','error');const titulo=$('titulo-ejercicio').value.trim()||'Ejercicio sin título';try{state.ejercicios.push({titulo,tecnica:state.tecnica,preguntas:seleccionarCinco(state.preguntas,state.tecnica),publicado:false});aviso('Borrador con 5 preguntas distintas. La técnica sigue en desarrollo.','ok');render();}catch(error){aviso(error.message,'error');}};
 $('importar-estudiantes').onchange=async e=>{try{await importarArchivo(e.target.files[0],'estudiantes');}catch(err){aviso(err.message,'error');}};
 $('importar-preguntas').onchange=async e=>{try{await importarArchivo(e.target.files[0],'preguntas');}catch(err){aviso(err.message,'error');}};
 $('descargar-estudiantes').onclick=()=>csvDescarga('plantilla_estudiantes.csv','codigo_estudiante,nombres,cedula,sexo,grado,seccion,anio_lectivo,correo_estudiante,nombre_acudiente,telefono_acudiente,estado');
