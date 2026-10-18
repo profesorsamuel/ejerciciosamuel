@@ -20,3 +20,12 @@
 - Autenticación segura estudiantil distinta de cédula sola.
 - API segura para distribuir intentos sin exponer respuestas, calificarlos y guardar notas.
 - Pruebas E2E y seguridad.
+
+## Nuevo: acceso docente a Supabase (consulta)
+1. Ejecute el SQL definitivo **solo después de revisarlo** y cree el usuario docente en Supabase Auth.
+2. Autorice el UUID del usuario en `ej27_docentes`.
+3. En `assets/js/config.js` coloque la URL del proyecto y su clave pública `anon` o `publishable`, nunca `service_role`. Cambie `modoDemostracion` a `false`.
+4. Abra la pestaña **Supabase docente**, inicie sesión y pulse **Consultar datos de la nube**.
+5. Si desea reemplazar los datos locales de demostración, primero exporte un respaldo y luego pulse **Importar a datos locales**.
+
+**Alcance:** conexión y lectura docente mediante RLS; no guarda notas oficiales ni publica ejercicios. El módulo usa la librería Supabase desde CDN y requiere internet. No almacena contraseñas en el proyecto.
