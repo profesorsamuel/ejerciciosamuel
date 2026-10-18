@@ -65,6 +65,22 @@ $('descargar-estudiantes').onclick=()=>csvDescarga('plantilla_estudiantes.csv','
 $('descargar-preguntas').onclick=()=>csvDescarga('plantilla_banco.csv','enunciado,correcta,explicacion,distractor1,distractor2,distractor3,tema,nivel');
 $('subir-pdf').onchange=async e=>{const file=e.target.files[0];if(!file)return;try{if(!window.pdfjsLib)throw Error('No se pudo cargar PDF.js. Compruebe internet.');if(file.size>12*1024*1024)throw Error('PDF demasiado grande (máximo 12 MB).');pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';const doc=await pdfjsLib.getDocument({data:await file.arrayBuffer()}).promise;let texto='';for(let n=1;n<=doc.numPages;n++){const page=await doc.getPage(n);const content=await page.getTextContent();texto+=content.items.map(i=>i.str).join(' ')+'\n';}if(texto.trim().length<100)throw Error('PDF sin texto suficiente. Puede estar escaneado; necesita OCR.');$('resultado-pdf').innerHTML='<h3>Texto extraído ('+doc.numPages+' páginas)</h3><p>Revíselo. La generación de preguntas con IA aún necesita la función segura del servidor.</p><textarea rows="9" readonly></textarea>';$('resultado-pdf').querySelector('textarea').value=texto;aviso('Texto PDF extraído correctamente. No se ha enviado a IA.','ok');}catch(err){aviso(err.message,'error');}};
 $('acceso-estudiante').onclick=()=>aviso('El acceso por cédula requiere sesiones verificadas en servidor. Se habilitará tras configurar Supabase.');
-aviso(CONFIG.modoDemostracion?'Modo de demostración: los datos NO se guardan y desaparecen al actualizar la página.':'Configuración de servidor pendiente.');render();
+aviso('Modo de demostración: los datos se guardan solo en este navegador. No están en Supabase ni son notas oficiales.');render();
 
 try{const saved=JSON.parse(localStorage.getItem('cia27_demo_v2')||'null');if(saved){for(const k of ['salones','estudiantes','preguntas','ejercicios','intentos','usadas'])if(Array.isArray(saved[k]))state[k]=saved[k];render();}}catch(e){console.warn('No se pudo recuperar la demostración',e);}
+
+// Herramientas de desarrollo local: exportación, copia de seguridad y generación múltiple.
+function descargarArchivo(nombre,contenido,tipo='application/json'){
+ const url=URL.createObjectURL(new Blob([contenido],{type:tipo}));const a=document.createElement('a');a.href=url;a.download=nombre;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
+}
+function exportarCSV(filas,cabeceras,nombre){
+ const q=v=>'"'+String(v??'').replace(/"/g,'""')+'"';
+ descargarArchivo(nombre,'\uFEFF'+[cabeceras.join(','),...filas.map(o=>cabeceras.map(k=>q(o[k])).join(','))].join('\r\n'),'text/csv;charset=utf-8');
+}
+function nuevaSeleccion(){if(state.preguntas.length<5)throw Error('Necesita al menos cinco preguntas en el banco.');return sample(5);}
+const herramientas=document.createElement('section');herramientas.className='tile';herramientas.innerHTML=`<h2>Herramientas de preparación (local)</h2><p>Estas operaciones trabajan solo en este navegador; no publican ni califican oficialmente.</p><div class="actions"><button id="exp-preguntas" class="secondary">Exportar preguntas CSV</button><button id="exp-estudiantes" class="secondary">Exportar estudiantes CSV</button><button id="respaldo-local" class="secondary">Respaldo JSON</button><button id="varios-local">Crear borradores de las 25 técnicas</button></div><p class="muted">La generación múltiple crea borradores, no implementa automáticamente los 25 motores de juego.</p>`;
+document.querySelector('[data-panel="inicio"]').append(herramientas);
+document.getElementById('exp-preguntas').onclick=()=>exportarCSV(state.preguntas,['enunciado','correcta','explicacion','distractor1','distractor2','distractor3','tema','nivel'],'cia27_banco.csv');
+document.getElementById('exp-estudiantes').onclick=()=>exportarCSV(state.estudiantes,['codigo_estudiante','nombres','cedula','sexo','grado','seccion','anio_lectivo','correo_estudiante','nombre_acudiente','telefono_acudiente','estado'],'cia27_estudiantes.csv');
+document.getElementById('respaldo-local').onclick=()=>descargarArchivo('cia27_respaldo_demo.json',JSON.stringify({salones:state.salones,estudiantes:state.estudiantes,preguntas:state.preguntas,ejercicios:state.ejercicios,intentos:state.intentos,usadas:state.usadas},null,2));
+document.getElementById('varios-local').onclick=()=>{if(state.preguntas.length<5)return aviso('Primero importe al menos cinco preguntas.','error');for(const t of TECNICAS){state.ejercicios.push({titulo:'Borrador · '+t.nombre,tecnica:t.id,preguntas:nuevaSeleccion(),publicado:false});}render();aviso('25 borradores creados. Las técnicas sin motor propio NO son juegos terminados.','ok');};
