@@ -1,15 +1,16 @@
-# CIA 2027 - Estado de desarrollo
+# Estado de la entrega unificada
 
-## Corregido
-- Rutas de `assets/css/app.css` y `assets/js/app.js` alineadas con `index.html`.
-- Importaciones relativas de módulos JS conservadas en `assets/js/`.
-- SQL anterior identificado como borrador: **NO EJECUTAR**.
+- [x] Estructura 2027 con rutas CSS y JS coherentes
+- [x] Catálogo de 25 técnicas (solo galería)
+- [x] CRUD básico local de salones, estudiantes y preguntas
+- [x] Importación CSV básica y descarga de cabeceras
+- [x] Borradores con cinco preguntas y vista previa de respuesta escrita exacta
+- [ ] Implementar motores distintos para 25 técnicas
+- [ ] Importación Excel real y PDF.js
+- [ ] Edge Function de IA
+- [ ] SQL definitivo, RPC, RLS, políticas y autenticación
+- [ ] Calificación y acceso seguros en servidor
+- [ ] Publicación, QR, historial y analítica
+- [ ] Pruebas integrales
 
-## Pendiente antes de publicar para estudiantes
-- Supabase Auth, RLS, RPC y Edge Functions.
-- Importación real XLSX y extracción de PDF.
-- Adaptación funcional de 25 técnicas y calificación en servidor.
-- Persistencia de salones, alumnos, bancos, publicaciones, usos e intentos.
-- Pruebas de seguridad y funcionamiento.
-
-**Esta entrega sigue siendo una demostración local, no un sistema de notas real.**
+La vista previa y el botón publicar son simulaciones locales, no funcionalidades en producción.
