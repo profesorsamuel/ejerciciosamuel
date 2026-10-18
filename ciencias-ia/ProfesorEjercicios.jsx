@@ -147,6 +147,8 @@ export default function ProfesorEjercicios() {
         <p className="text-xs text-slate-600">Prepara hasta 500 afirmaciones con columnas: enunciado, correcta, explicacion. Elige hasta 80 por ejercicio. El banco se mantiene solo en esta sesión del navegador; guarda el ejercicio para conservar las seleccionadas en Supabase.</p>
         <div className="flex flex-wrap gap-2 items-center">
           <button type="button" onClick={descargarPlantilla} className="rounded-lg border border-indigo-300 px-3 py-2 text-sm">Descargar plantilla Excel</button>
+          <a href={`${import.meta.env.BASE_URL}CIA_demo_banco_preguntas.xlsx`} download="CIA_demo_banco_preguntas.xlsx" className="rounded-lg border border-emerald-400 bg-emerald-50 px-3 py-2 text-sm text-emerald-900">Descargar demo Excel (20 preguntas)</a>
+          <a href={`${import.meta.env.BASE_URL}CIA_demo_banco_preguntas.csv`} download="CIA_demo_banco_preguntas.csv" className="rounded-lg border border-emerald-400 bg-emerald-50 px-3 py-2 text-sm text-emerald-900">Descargar demo CSV</a>
           <label className="rounded-lg bg-indigo-700 px-3 py-2 text-sm text-white cursor-pointer">Importar banco<input className="sr-only" type="file" accept=".xlsx,.xls,.csv" onChange={importarBanco} /></label>
         </div>
         {banco.length > 0 && <div className="flex flex-wrap items-center gap-2">
