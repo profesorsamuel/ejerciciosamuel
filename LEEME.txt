@@ -1,0 +1,1 @@
+Reemplace solamente CIA-CIENCIAS-IA/index.html en GitHub. No requiere SQL. Las alternativas de ejercicios rápidos y evaluaciones oficiales se mezclan una vez por intento, y conservan su orden al navegar. Las respuestas correctas siguen calificándose por su valor, no por posición.
