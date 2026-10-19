@@ -14,6 +14,7 @@ function responder(data: unknown, status = 200) {
 
 type ModeloGemini = { name?: string; supportedGenerationMethods?: string[] };
 
+const TECNICAS_E3 = ["errores3", "mision3", "prediccion3", "clasificacion3", "evidencia3"];
 const TECNICAS_ENLACE2 = ["detective", "quien", "causa", "mito", "casos"];
 const TECNICAS_BANCO = ["seleccion_multiple", "verdadero_falso", "completar"];
 
@@ -111,7 +112,7 @@ Deno.serve(async (req) => {
 
     // modo "banco" = Banco de preguntas; cualquier otro valor = Técnicas Enlace 2 (comportamiento anterior)
     const modoBanco = body.modo === "banco";
-    const validas = modoBanco ? TECNICAS_BANCO : TECNICAS_ENLACE2;
+    const validas = modoBanco ? TECNICAS_BANCO : body.modo === "evaluacion3" ? TECNICAS_E3 : TECNICAS_ENLACE2;
     const tecnicas: string[] = Array.isArray(body.tecnicas)
       ? body.tecnicas.filter((t: unknown) => typeof t === "string" && validas.includes(t))
       : [];
@@ -138,6 +139,7 @@ CANTIDAD: ${cantidad}
 
 Genera hasta ${cantidad} preguntas basadas exclusivamente en el texto del PDF. No inventes información ni uses información externa. Lenguaje apropiado para el grado. Mezcla dificultad facil, medio y dificil. Evita preguntas repetidas y cubre distintas partes del texto.
 ${bloqueEvitar}
+Para Evaluación 3: errores3 = detectar errores en una situación; mision3 = resolver una misión con pistas; prediccion3 = anticipar una consecuencia; clasificacion3 = identificar la categoría correcta; evidencia3 = elegir evidencia que respalde una conclusión. Todas las preguntas deben tener una respuesta verificable en el PDF.
 SOLO puedes usar estos valores en el campo "tipo": ${tecnicas.map((t) => `"${t}"`).join(", ")}.
 Reparte las preguntas equitativamente entre esos tipos. Está PROHIBIDO usar otro tipo.
 
