@@ -634,7 +634,7 @@ async function ciaAdministrarPeriodos(uid,box){
  const cont=document.createElement('section');cont.id='cia-administrar-periodos';
  cont.innerHTML=`<hr><h3>Prácticas para estudiantes</h3><p class=s><b>Último paso:</b> guarda la programación sin publicarla; después pulsa «Activar para estudiantes» cuando el banco esté completo.</p>
  <div class="s" style="padding:9px;border:1px solid #d6e6d9;border-radius:8px;margin:10px 0">Para elegir cuál ve el estudiante, pulsa <b>Activar para estudiantes</b> en el periodo deseado: ese queda visible y los otros periodos vigentes de su salón se desactivan (puedes reactivarlos después). Para reordenar fechas usa <b>↑ Primero</b> o <b>↓ Después</b>. Se intercambian las fechas de los dos periodos, sin cambiar sus técnicas ni sus notas.</div>
- <div class="cia-accesos"><button type="button" id="cia-comprobar-cobertura">✅ Comprobar banco E3</button><button type="button" id="cia-ver-tecnicas">📋 Ver técnicas</button><button type="button" id="cia-nuevo-rapido">➕ Nueva práctica</button><button type="button" id="cia-recargar-periodos">🔄 Actualizar estados</button></div>
+ <div id="cia-estado-visible" class="card" role="status" aria-live="polite"><b>Visible para estudiantes</b><p class="s">Consultando prácticas activas…</p></div><div class="cia-accesos"><button type="button" id="cia-comprobar-cobertura">✅ Comprobar banco E3</button><button type="button" id="cia-ver-tecnicas">📋 Ver técnicas</button><button type="button" id="cia-nuevo-rapido">➕ Nueva práctica</button><button type="button" id="cia-recargar-periodos">🔄 Actualizar estados</button></div>
  <form id="cia-form-periodo"><label>Nombre automático de la práctica<input name="titulo" maxlength="120" readonly placeholder="Se asigna automáticamente"></label>
  <label>Evaluación que verán los estudiantes<select name="tecnica" required><option value="banco">Evaluación 1</option><option value="e2">Evaluación 2</option><option value="e3">Evaluación 3</option></select></label>
  <label>Grado<select name="grado" required><option value="">Seleccionar grado</option><option value="7">7.º</option><option value="8">8.º</option><option value="9">9.º</option></select></label>
@@ -705,6 +705,15 @@ async function ciaAdministrarPeriodos(uid,box){
   const {data,error}=await sb.from('cia_periodos').select('id,docente_id,materia_id,titulo,tecnica,grado,seccion,inicio,fin,activo').eq('docente_id',uid).order('inicio',{ascending:true});
   if(error){list.textContent='No se pudieron consultar los periodos: '+error.message;return;}
   periodos=data||[];actualizarNombre();
+  const estadoVisible=cont.querySelector('#cia-estado-visible');
+  const ahoraVisible=Date.now();
+  const visibles=periodos.filter(p=>p.activo&&new Date(p.inicio).getTime()<=ahoraVisible&&new Date(p.fin).getTime()>ahoraVisible);
+  const nombresTecnicas={banco:Object.values(TIPOS),e2:Object.values(E2_TECNICAS),e3:Object.values(E3_TECNICAS)};
+  estadoVisible.innerHTML='<b>Qué ven los estudiantes ahora</b>'+(visibles.length?visibles.map(p=>{
+   const modo=['e2','e3'].includes(p.tecnica)?p.tecnica:'banco';
+   const salon=esc(String(p.grado))+'º '+esc(p.seccion||'Todas las secciones');
+   return '<div style="border-top:1px solid #c7dfd2;padding:9px 0"><strong>🟢 '+esc(p.titulo)+'</strong> · '+esc(etiquetaEval(modo))+' · '+salon+'<p class="s" style="margin:4px 0">Materia: '+esc((materias||[]).find(m=>String(m.id)===String(p.materia_id))?.nombre||'No especificada')+'</p><p class="s" style="margin:4px 0"><b>Técnicas:</b> '+(nombresTecnicas[modo]||[]).map(esc).join(' · ')+'</p><small>Visible por programación; cada tarjeta necesita preguntas suficientes y los permisos correctos para abrir.</small></div>';
+  }).join(''):'<p class="s">🔴 No hay prácticas activas dentro de sus fechas. Ninguna práctica está confirmada como publicada.</p>');
   {const ahoraMs=Date.now(),vig=periodos.filter(p=>p.activo&&new Date(p.inicio).getTime()<=ahoraMs&&new Date(p.fin).getTime()>ahoraMs);const el=document.querySelector('#cia-vigente');if(el)el.textContent=vig.length?'Ahora mismo los estudiantes ven: '+vig.map(p=>'«'+p.titulo+'» → '+etiquetaEval(p.tecnica)+' ('+p.grado+'.º '+(p.seccion||'Todas')+')').join(' · '):'No hay periodo vigente: los estudiantes ven la técnica por defecto.';}
   if(!editando&&campo('modalidad').value==='fechas'&&!campo('inicio').value&&periodos.length){const ult=periodos[periodos.length-1];const siguiente=new Date(new Date(ult.fin).getTime()+60000);campo('inicio').value=localFecha(siguiente);}
   if(!periodos.length){list.textContent='Todavía no hay prácticas registradas.';return;}
@@ -1019,8 +1028,7 @@ async function matPreguntas(c,root){
  root.innerHTML=`<div class=card><h3>3 · Preguntas de ${esc(c.mat.nombre)}</h3><div class=resumen-banco><div><b>${items.filter(i=>i.k==='banco').length}</b><span>En el banco</span></div><div><b>${items.filter(i=>i.k==='e2').length}</b><span>Enlace 2</span></div></div>${cob}${aviso}</div>
 <div class=card id=bk><h3>🗑️ Eliminar preguntas en bloque</h3><p class=s>Borra de una vez las preguntas de esta materia. No se puede deshacer. No afecta estudiantes, periodos ni notas.</p><div class=grid2><label>¿Qué evaluación?<select id=bk-ev><option value=all>Todas las evaluaciones</option><option value=banco>Evaluación 1 (banco)</option><option value=e2>Evaluación 2</option><option value=e3>Evaluación 3</option></select></label><label>Grado<select id=bk-g><option value="">Todos los grados</option>${grs.map(g=>`<option value=${g}>${g}.º</option>`).join('')}</select></label><label>Técnica<select id=bk-t><option value="">Todas las técnicas</option><option value=banco>Banco de preguntas</option>${tipos.map(t=>`<option value=${t}>${esc(ETQ(t))}</option>`).join('')}</select></label><label>Fecha en que se crearon<select id=bk-d><option value="">Todas las fechas</option>${dias.map(([d,n])=>`<option value=${d}>${diaTxt(d)} · ${n} pregunta(s)</option>`).join('')}</select></label></div><p id=bk-n class=s></p><label style="display:flex;gap:8px;align-items:center;margin:10px 0"><input type=checkbox id=bk-ok style="width:auto"> Entiendo que se eliminarán definitivamente</label><button id=bk-b disabled style="background:#a62020;color:#fff">Eliminar preguntas</button><p id=bk-m class=s role=status></p></div>
 <div class=card><h3>Ver y eliminar preguntas</h3><div class=grid2><label>Técnica<select id=pt><option value="">Todas</option><option value=banco>Banco de preguntas</option>${tipos.map(t=>`<option value=${t}>${esc(ETQ(t))}</option>`).join('')}</select></label><label>Grado<select id=pg><option value="">Todos</option>${gr.map(g=>`<option value=${g}>${g}.º</option>`).join('')}</select></label></div><p id=pc class=s></p><div style="margin:8px 0 14px"><label style="display:flex;gap:8px;align-items:center;margin:6px 0"><input type=checkbox id=pq-ok style="width:auto"> Confirmo que quiero eliminarlas definitivamente</label><button id=pq-b disabled style="background:#a62020;color:#fff">🗑️ Eliminar las mostradas</button><p id=pq-m class=s role=status></p></div><div id=pl></div></div>
-<div class=card><details><summary><b>Crear una pregunta de Enlace 2 a mano</b></summary><label>Técnica<select id=mt>${tipos.map(t=>`<option value=${t}>${esc(ETQ(t))}</option>`).join('')}</select></label><label>Grado<select id=mg>${(gr.length?gr:E2_GRADOS).map(g=>`<option value=${g}>${g}.º</option>`).join('')}</select></label><label>Enunciado<textarea id=me rows=3></textarea></label><label>Alternativa A<input id=ma1></label><label>Alternativa B<input id=ma2></label><label>Alternativa C<input id=ma3></label><label>Respuesta correcta<select id=mc><option value=0>A</option><option value=1>B</option><option value=2>C</option></select></label><label>Explicación<textarea id=mx rows=2></textarea></label><button id=mgd>Guardar pregunta</button><p id=mmsg class=s role=status></p></details></div>
-<div class=card><p class=s>¿Necesitas exportar, auditar o publicar preguntas del banco general a prácticas rápidas?</p><button class=sec id=adv>Herramientas avanzadas del banco general</button></div>`;
+`;
  let vistas=[];
  const pintarQ=()=>{const b=$('#pq-b');if(!b)return;b.textContent='🗑️ Eliminar las '+vistas.length+' preguntas mostradas';b.disabled=!vistas.length||!$('#pq-ok').checked;};
  const borrarItems=async(v,m,bt)=>{if(!v.length)return;bt.disabled=true;m.textContent='Eliminando…';
@@ -1043,7 +1051,6 @@ async function matPreguntas(c,root){
    matPreguntas(c,root);});
  };
  $('#pt').onchange=()=>{$('#pq-ok').checked=false;lista();};$('#pg').onchange=()=>{$('#pq-ok').checked=false;lista();};$('#pq-ok').onchange=pintarQ;$('#pq-b').onclick=()=>borrarItems(vistas,$('#pq-m'),$('#pq-b'));lista();
- $('#adv').onclick=()=>tBanco(c.uid);
  {const sel=()=>{const ev=$('#bk-ev').value,g=$('#bk-g').value,t=$('#bk-t').value,d=$('#bk-d').value;return items.filter(i=>(ev==='all'||(ev==='banco'?i.k==='banco':ev==='e2'?(i.k==='e2'&&!!E2_TECNICAS[i.tec]):(i.k==='e2'&&!!E3_TECNICAS[i.tec])))&&(!g||i.grado===g)&&(!t||i.tec===t)&&(!d||i.dia===d));};
   const pintar=()=>{const n=sel().length;$('#bk-n').textContent=n?`Se eliminarán ${n} pregunta(s).`:'No hay preguntas con esta selección.';$('#bk-b').disabled=!n||!$('#bk-ok').checked;};
   ['#bk-ev','#bk-g','#bk-t','#bk-d'].forEach(x=>$(x).onchange=()=>{$('#bk-ok').checked=false;pintar();});$('#bk-ok').onchange=pintar;pintar();
@@ -1053,13 +1060,7 @@ async function matPreguntas(c,root){
     for(let i=0;i<bids.length;i+=100){const part=bids.slice(i,i+100);let r=await sb.from('cia_pregunta_materia').delete().eq('docente_id',c.uid).in('pregunta_id',part);if(r.error)throw r.error;r=await sb.from('cia_preguntas').delete().eq('docente_id',c.uid).in('id',part).select('id');if(r.error)throw r.error;}
     await matPreguntas(c,root);const mm=$('#bk-m');if(mm)mm.textContent='Listo: se eliminaron '+v.length+' pregunta(s).';
    }catch(e){m.textContent='No se pudo eliminar: '+(e.message||e)+' (revisa los permisos de borrado en Supabase).';bt.disabled=false;}};}
- $('#mgd').onclick=async()=>{const m=$('#mmsg');try{
-  const vals=['ma1','ma2','ma3'].map(x=>$('#'+x).value.trim()),enun=$('#me').value.trim(),tec=$('#mt').value,gd=$('#mg').value;
-  if(!enun||vals.some(x=>!x)||new Set(vals.map(e2Sin)).size!==3)throw Error('Completa el enunciado y tres alternativas diferentes');
-  const {data:ex,error:er}=await sb.from('cia14_preguntas').select('id').eq('docente_id',c.uid).eq('materia_id',c.mat.id).eq('grado',gd).eq('tecnica',tec).eq('enunciado',enun).limit(1);
-  if(er)throw er;if(ex?.length)throw Error('Esta pregunta ya está registrada');
-  const {error}=await sb.from('cia14_preguntas').insert({docente_id:c.uid,materia_id:c.mat.id,grado:gd,tecnica:tec,enunciado:enun,opciones:vals,correcta:vals[Number($('#mc').value)],explicacion:$('#mx').value.trim(),activa:true});
-  if(error)throw error;matPreguntas(c,root);}catch(e){m.textContent=e.message;}};
+
 }
 
 /* ======== ENLACE 2 · ESTUDIANTE (práctica de 8 preguntas) ======== */
