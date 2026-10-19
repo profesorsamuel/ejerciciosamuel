@@ -911,20 +911,32 @@ function matGenerar(c,root){
    if(r.error)throw r.error;
    const previas=r.data||[],enBanco=new Set(previas.map(x=>e2Clave(x.enunciado))),evitar=previas.slice(-30).map(x=>x.enunciado);
    const objetivo=Number($('#gc').value),vistos=new Set(),rech=[],norm=e2?e2Unificar:bancoNormalizar;let recib=0,rondas=0;pregs=[];
+   // Evaluación 3: priorizar las técnicas con menor cobertura, sin duplicar enunciados.
+   const coberturaActual=Object.fromEntries(tec.map(t=>[t,0]));
+   if(gctx.modo==='e3'){
+    const {data:existentes,error:errCob}=await sb.from('cia14_preguntas').select('tecnica,enunciado').eq('docente_id',c.uid).eq('materia_id',c.mat.id).eq('grado',gctx.grado).eq('activa',true).in('tecnica',tec).limit(5000);
+    if(errCob)throw errCob;
+    for(const t of tec)coberturaActual[t]=new Set((existentes||[]).filter(q=>q.tecnica===t).map(q=>e2Clave(q.enunciado))).size;
+   }
+   const metaPorTecnica=Object.fromEntries(tec.map(t=>[t,Math.max(0,E2_META-(coberturaActual[t]||0))]));
+   const nuevasPorTecnica=Object.fromEntries(tec.map(t=>[t,0]));
    while(pregs.length<objetivo&&rondas<10){
     rondas++;st.textContent=`Generando lote ${rondas} de 10 · ${pregs.length} de ${objetivo} preguntas válidas…`;
+    const pendientesTec=gctx.modo==='e3'?tec.filter(t=>nuevasPorTecnica[t]<metaPorTecnica[t]):tec;
+    if(gctx.modo==='e3'&&!pendientesTec.length)break;
     let data;
-    try{data=await invocarIA({texto:pdfCache.texto,materia:c.mat.nombre,tema:gctx.tema,grado:gctx.grado,cantidad:Math.min(20,Math.max(5,objetivo-pregs.length)),tecnicas:tec,modo:tipoSel()==='e3'?'evaluacion3':e2?'enlace2':'banco',evitar:[...evitar,...pregs.slice(-30).map(x=>x.enunciado)].slice(-40)});}
+    try{data=await invocarIA({texto:pdfCache.texto,materia:c.mat.nombre,tema:gctx.tema,grado:gctx.grado,cantidad:Math.min(20,Math.max(5,objetivo-pregs.length)),tecnicas:pendientesTec,modo:tipoSel()==='e3'?'evaluacion3':e2?'enlace2':'banco',evitar:[...evitar,...pregs.slice(-30).map(x=>x.enunciado)].slice(-40)});}
     catch(err){if(!pregs.length)throw err;rech.push('Lote '+rondas+' falló: '+err.message);break;}
     const crudas=Array.isArray(data?.preguntas)?data.preguntas:[];recib+=crudas.length;
     for(const raw of crudas){
      const p=norm(raw);
      if(p.error){rech.push(p.error);continue;}
      if(!tec.includes(p.tipo)){rech.push('Tipo no solicitado');continue;}
+     if(gctx.modo==='e3'&&nuevasPorTecnica[p.tipo]>=metaPorTecnica[p.tipo]){rech.push('Técnica ya completa');continue;}
      const k=e2Clave(p.enunciado);
      if(enBanco.has(k)){rech.push('Ya estaba guardada');continue;}
      if(vistos.has(k)){rech.push('Repetida');continue;}
-     vistos.add(k);pregs.push(p);if(pregs.length===objetivo)break;
+     vistos.add(k);pregs.push(p);if(gctx.modo==='e3')nuevasPorTecnica[p.tipo]++;if(pregs.length===objetivo)break;
     }
     if(!crudas.length)break;
    }
@@ -934,7 +946,8 @@ function matGenerar(c,root){
     for(const p of pend()){if(!p.guardar)continue;st.textContent=`Guardando ${ok+mal+1} de ${total}…`;(await p.guardar())?ok++:mal++;}
     resumenPend();autoMsg=`✅ Guardadas automáticamente: ${ok}.${mal?` ⚠️ ${mal} con error (en rojo, corrígelas y pulsa Guardar).`:''} `;}
    const res=Object.entries(rech.reduce((a,x)=>{const k=x.slice(0,80);a[k]=(a[k]||0)+1;return a;},{})).map(([k,n])=>k+' ('+n+')').join('; ');
-   st.textContent=`${autoMsg}Gemini devolvió ${recib} preguntas en ${rondas} lote(s); ${pregs.length} de ${objetivo} listas para revisar.${rech.length?' Descartadas '+rech.length+': '+res+'.':''}${pregs.length<objetivo?' No se alcanzó la meta: revisa las preguntas y vuelve a generar otro lote. No se garantiza llegar a 80 en una sola ejecución.':''}`;
+   const resumenE3=gctx.modo==='e3'?' Cobertura prevista: '+tec.map(t=>`${E3_TECNICAS[t]} ${coberturaActual[t]+nuevasPorTecnica[t]}/${E2_META}`).join(' · ')+'. Verifica las guardadas en Paso 3. ':'';
+   st.textContent=`${autoMsg}${resumenE3}Gemini devolvió ${recib} preguntas en ${rondas} lote(s); ${pregs.length} de ${objetivo} listas para revisar.${rech.length?' Descartadas '+rech.length+': '+res+'.':''}${pregs.length<objetivo?' No se alcanzó la meta: revisa las preguntas y vuelve a generar otro lote. No se garantiza llegar a 80 en una sola ejecución.':''}`;
   }catch(err){st.textContent='Error: '+(err.message||err);}
   finally{btn.disabled=!pdfCache;}
  };
