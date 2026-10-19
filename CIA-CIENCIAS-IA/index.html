@@ -5,14 +5,14 @@
 h1,h2,h3{font-family:Georgia,serif;line-height:1.2;margin:.2em 0 .5em}
 header{background:var(--ink);color:#fff;padding:18px 20px}header h1{margin:0;font-size:1.5rem}header p{margin:0;opacity:.8;font-size:.9rem}
 main{max-width:860px;margin:0 auto;padding:16px}.card{background:#fff;border:1px solid var(--linea);border-radius:12px;padding:20px;margin:14px 0}
-button,select,input{font:inherit}button{background:var(--hoja);color:#fff;border:0;border-radius:10px;padding:12px 18px;margin:4px;cursor:pointer;font-weight:600}
+button,select,input,textarea{font:inherit}button{background:var(--hoja);color:#fff;border:0;border-radius:10px;padding:12px 18px;margin:4px;cursor:pointer;font-weight:600}
 button.sec{background:#e4ebe1;color:var(--ink)}button.big{padding:18px 24px;font-size:1.1rem}button:disabled{opacity:.5}
 :focus-visible{outline:3px solid var(--sol);outline-offset:2px}
-input,select{width:100%;padding:11px;border:1px solid #9fb09c;border-radius:8px;margin:4px 0 12px;background:#fff}
+input,select,textarea{width:100%;padding:11px;border:1px solid #9fb09c;border-radius:8px;margin:4px 0 12px;background:#fff}
 .op{display:block;width:100%;text-align:left;background:#fff;color:var(--ink);border:2px solid var(--linea)}.op.sel{border-color:var(--hoja);background:#e8f4ec}
 .bien{border-left:6px solid var(--ok)}.mal{border-left:6px solid var(--mal)}.bar{height:10px;background:#dde6da;border-radius:9px;overflow:hidden}.bar i{display:block;height:100%;background:var(--sol)}
 table{width:100%;border-collapse:collapse;font-size:.9rem}td,th{padding:6px;border-bottom:1px solid var(--linea);text-align:left}
-.tabs button.on{background:var(--ink)}.err{color:var(--mal);font-weight:600}.row{display:flex;gap:8px;align-items:center;justify-content:space-between}.s{font-size:.9rem;color:#4a625f}.wrap{overflow-x:auto}
+.tabs button.on{background:var(--ink)}.err{color:var(--mal);font-weight:600}.row{display:flex;gap:8px;align-items:center;justify-content:space-between}.s{font-size:.9rem;color:#4a625f}.wrap{overflow-x:auto}.editor-fondo{position:fixed;inset:0;background:#0009;display:flex;align-items:center;justify-content:center;padding:12px;z-index:1000}.editor-caja{width:min(680px,100%);max-height:94vh;overflow:auto;background:white;border-radius:12px;padding:22px;box-shadow:0 12px 40px #0004}.editor-caja label{display:block;font-weight:600;margin-top:8px}.editor-caja textarea{min-height:80px}.editor-acciones{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}.editor-caja .err{min-height:1em}
 </style></head><body>
 <header><h1>CIA · Ciencias IA</h1><p>C.E.B.G. El Jiral · Ciencias Naturales</p></header><main id="app"></main>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
@@ -85,7 +85,48 @@ async function tBanco(uid){
  $('#gen').onclick=async()=>{const st=$('#st'),gen=$('#gen');gen.disabled=true;st.textContent='Generando preguntas. Puede tardar varios minutos...';try{const {data,error}=await sb.functions.invoke('cia-generar',{body:{texto,tema:$('#bn').value.trim()||'Ciencias Naturales',grado:'9',cantidad:Number($('#cant').value)}});if(error){let detalle=data?.error||error.message;try{if(error.context){const j=await error.context.json();detalle=j.error||detalle;}}catch{}throw Error(detalle);}if(data?.error)throw Error(data.error);const qs=(data.preguntas||[]).map(q=>({enunciado:String(q.enunciado||q.pregunta||'').trim(),correcta:String(q.correcta||q.respuesta||'').trim(),distractores:Array.isArray(q.distractores)?q.distractores:(Array.isArray(q.opciones)?q.opciones.filter(o=>o!==q.respuesta).slice(0,3):[]),explicacion:q.explicacion||'',tema:q.tema||$('#bn').value.trim()||'Ciencias Naturales',nivel:({facil:'facil',medio:'medio',dificil:'dificil'})[q.nivel||q.dificultad]||'medio',tipo:q.tipo||'multiple'})).filter(q=>q.enunciado&&q.correcta);if(!qs.length)throw Error('La IA no devolvió preguntas');st.textContent=`${qs.length} preguntas generadas. Revise, edite o descarte antes de guardar. No se han guardado todavía.`;$('#prev').innerHTML=qs.map((q,i)=>`<div class=card><label><input type=checkbox data-keep="${i}" checked> Guardar pregunta ${i+1}</label><textarea data-q="${i}" rows=3 style="width:100%;font:inherit;padding:10px">${esc(q.enunciado)}</textarea><p class=s>Respuesta: ${esc(q.correcta)} · ${esc(q.nivel)}</p><p class=s>${esc(q.explicacion)}</p></div>`).join('')+'<button id=save>Guardar preguntas seleccionadas</button>';
  $('#save').onclick=async()=>{const nombre=$('#bn').value.trim()||'Banco generado desde PDF';const selected=qs.map((q,i)=>({...q,enunciado:app.querySelector(`[data-q="${i}"]`).value.trim(),keep:app.querySelector(`[data-keep="${i}"]`).checked})).filter(q=>q.keep&&q.enunciado);if(!selected.length)return st.textContent='Seleccione al menos una pregunta.';$('#save').disabled=true;try{const {data:b,error:be}=await sb.from('cia_bancos').insert({docente_id:uid,nombre,fuente:'PDF / Gemini'}).select('id').single();if(be)throw be;const filas=selected.map(q=>({docente_id:uid,banco_id:b.id,enunciado:q.enunciado,correcta:q.correcta,explicacion:q.explicacion,distractores:q.distractores||[],tema:q.tema||nombre,nivel:q.nivel||'medio',metadatos:{origen:'gemini_pdf',tipo:q.tipo||'multiple'}}));const {error:pe}=await sb.from('cia_preguntas').insert(filas);if(pe)throw pe;await tBanco(uid);}catch(e){st.textContent='No se pudo guardar: '+e.message;$('#save').disabled=false;}};
  }catch(e){st.textContent='Error de generación: '+e.message;gen.disabled=false;}};
- app.querySelectorAll('[data-e]').forEach(b=>b.onclick=async()=>{const p=pr.find(x=>x.id===b.dataset.e),n=prompt('Editar enunciado:',p.enunciado);if(n?.trim()){const {error}=await sb.from('cia_preguntas').update({enunciado:n.trim()}).eq('id',p.id).eq('docente_id',uid);if(error)alert(error.message);else tBanco(uid);}});
+ app.querySelectorAll('[data-e]').forEach(b=>b.onclick=async()=>{
+  const id=b.dataset.e;
+  const {data:p,error:consultaError}=await sb.from('cia_preguntas')
+    .select('id,enunciado,correcta,explicacion,distractores,tema,nivel,metadatos')
+    .eq('id',id).eq('docente_id',uid).single();
+  if(consultaError){alert('No se pudo abrir la pregunta: '+consultaError.message);return;}
+  const fondo=document.createElement('div');fondo.className='editor-fondo';
+  fondo.innerHTML=`<section class="editor-caja" role="dialog" aria-modal="true" aria-labelledby="editor-titulo">
+    <h2 id="editor-titulo">Editar pregunta</h2>
+    <p class="s">Cambie los datos y pulse Guardar. Las modificaciones se guardan en Supabase.</p>
+    <label for="ed-enunciado">Enunciado</label><textarea id="ed-enunciado" rows="3" required>${esc(p.enunciado)}</textarea>
+    <label for="ed-correcta">Respuesta correcta</label><textarea id="ed-correcta" rows="2" required>${esc(typeof p.correcta==='string'?p.correcta:JSON.stringify(p.correcta??''))}</textarea>
+    <label for="ed-distractores">Opciones incorrectas (una por línea)</label><textarea id="ed-distractores" rows="4">${esc(Array.isArray(p.distractores)?p.distractores.map(x=>typeof x==='string'?x:JSON.stringify(x)).join('\n'):'')}</textarea>
+    <label for="ed-explicacion">Explicación</label><textarea id="ed-explicacion" rows="3">${esc(p.explicacion||'')}</textarea>
+    <label for="ed-tema">Tema</label><input id="ed-tema" value="${esc(p.tema||'')}">
+    <label for="ed-nivel">Dificultad</label><select id="ed-nivel"><option value="facil">Fácil</option><option value="medio">Medio</option><option value="dificil">Difícil</option></select>
+    <p id="ed-error" class="err" role="alert"></p>
+    <div class="editor-acciones"><button class="sec" id="ed-cancelar">Cancelar</button><button id="ed-guardar">Guardar cambios</button></div>
+  </section>`;
+  document.body.appendChild(fondo);
+  const get=x=>fondo.querySelector(x);
+  get('#ed-nivel').value=['facil','medio','dificil'].includes(p.nivel)?p.nivel:'medio';
+  const cerrar=()=>fondo.remove();
+  get('#ed-cancelar').onclick=cerrar;
+  fondo.addEventListener('click',e=>{if(e.target===fondo)cerrar();});
+  get('#ed-enunciado').focus();
+  get('#ed-guardar').onclick=async()=>{
+    const enunciado=get('#ed-enunciado').value.trim();
+    const correcta=get('#ed-correcta').value.trim();
+    const distractores=get('#ed-distractores').value.split('\n').map(x=>x.trim()).filter(Boolean);
+    const explicacion=get('#ed-explicacion').value.trim();
+    const tema=get('#ed-tema').value.trim();
+    if(!enunciado||!correcta){get('#ed-error').textContent='El enunciado y la respuesta correcta son obligatorios.';return;}
+    if(distractores.some(x=>x.toLowerCase()===correcta.toLowerCase())){get('#ed-error').textContent='La respuesta correcta no debe repetirse entre las incorrectas.';return;}
+    const guardar=get('#ed-guardar');guardar.disabled=true;
+    get('#ed-error').textContent='Guardando...';
+    const {data:actualizada,error}=await sb.from('cia_preguntas').update({enunciado,correcta,distractores,explicacion,tema,nivel:get('#ed-nivel').value})
+      .eq('id',p.id).eq('docente_id',uid).select('id');
+    if(error||!actualizada?.length){get('#ed-error').textContent='No se pudo guardar: '+(error?.message||'Sin permiso para modificar esta pregunta.');guardar.disabled=false;return;}
+    cerrar();await tBanco(uid);
+  };
+});
 }
 async function tEst(uid){
  const {data:L,error}=await sb.from('cia_estudiantes').select('id,nombres,cedula,grado,seccion,creado_en').eq('docente_id',uid).order('nombres');
