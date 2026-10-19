@@ -634,7 +634,7 @@ async function ciaAdministrarPeriodos(uid,box){
  const cont=document.createElement('section');cont.id='cia-administrar-periodos';
  cont.innerHTML=`<hr><h3>Prácticas para estudiantes</h3><p class=s><b>Último paso:</b> guarda la programación sin publicarla; después pulsa «Activar para estudiantes» cuando el banco esté completo.</p>
  <div class="s" style="padding:9px;border:1px solid #d6e6d9;border-radius:8px;margin:10px 0">Para elegir cuál ve el estudiante, pulsa <b>Activar para estudiantes</b> en el periodo deseado: ese queda visible y los otros periodos vigentes de su salón se desactivan (puedes reactivarlos después). Para reordenar fechas usa <b>↑ Primero</b> o <b>↓ Después</b>. Se intercambian las fechas de los dos periodos, sin cambiar sus técnicas ni sus notas.</div>
- <div id="cia-estado-visible" class="card" role="status" aria-live="polite"><b>Visible para estudiantes</b><p class="s">Consultando prácticas activas…</p></div><div class="cia-accesos"><button type="button" id="cia-comprobar-cobertura">✅ Comprobar banco E3</button><button type="button" id="cia-ver-tecnicas">📋 Ver técnicas</button><button type="button" id="cia-nuevo-rapido">➕ Nueva práctica</button><button type="button" id="cia-recargar-periodos">🔄 Actualizar estados</button></div>
+ <div id="cia-estado-visible" class="card" role="status" aria-live="polite"><b>Visible para estudiantes</b><p class="s">Consultando prácticas activas…</p></div><div class="cia-accesos"><button type="button" id="cia-comprobar-cobertura">✅ Comprobar banco E3</button><button type="button" id="cia-completar-e3" style="background:#217b50;color:white">➕ Completar preguntas E3</button><button type="button" id="cia-ver-tecnicas">📋 Ver técnicas</button><button type="button" id="cia-nuevo-rapido">➕ Nueva práctica</button><button type="button" id="cia-recargar-periodos">🔄 Actualizar estados</button></div>
  <form id="cia-form-periodo"><label>Nombre automático de la práctica<input name="titulo" maxlength="120" readonly placeholder="Se asigna automáticamente"></label>
  <label>Evaluación que verán los estudiantes<select name="tecnica" required><option value="banco">Evaluación 1</option><option value="e2">Evaluación 2</option><option value="e3">Evaluación 3</option></select></label>
  <label>Grado<select name="grado" required><option value="">Seleccionar grado</option><option value="7">7.º</option><option value="8">8.º</option><option value="9">9.º</option></select></label>
@@ -696,6 +696,21 @@ async function ciaAdministrarPeriodos(uid,box){
    return true;
   }catch(e){panel.textContent='No se pudo verificar el banco: '+e.message;return false;}
  };
+ cont.querySelector('#cia-completar-e3').onclick=async()=>{
+  const materia=campo('materia_id').value,grado=campo('grado').value;
+  if(!materia||!grado){cont.querySelector('#cia-cobertura-visible').textContent='Selecciona primero materia y grado.';return;}
+  const listo=await mostrarCobertura();
+  if(listo){cont.querySelector('#cia-cobertura-visible').textContent='Las cinco técnicas E3 están completas. Ya puedes activar la práctica.';return;}
+  const enlace=document.querySelector('.cia-ruta a[href="#cia-etapa-2"]');
+  if(!enlace){cont.querySelector('#cia-cobertura-visible').textContent+=' Abre el paso 2 · Generar.';return;}
+  enlace.click();
+  const selector=document.querySelector('#cia-panel-generar input[name="gtec"][value="e3"]');
+  if(selector){selector.checked=true;selector.dispatchEvent(new Event('change',{bubbles:true}));}
+  const gradoGenerar=document.querySelector('#cia-panel-generar #gg');
+  if(gradoGenerar&&[...gradoGenerar.options].some(o=>o.value===grado))gradoGenerar.value=grado;
+  const mensaje=document.querySelector('#cia-panel-generar #ges');
+  if(mensaje)mensaje.textContent='Evaluación 3 seleccionada. Sube el PDF y genera preguntas; el sistema evita enunciados duplicados. Después comprueba el banco antes de activar.';
+ }; 
  cont.querySelector('#cia-comprobar-cobertura').onclick=mostrarCobertura;
  campo('grado').addEventListener('change',()=>{cont.querySelector('#cia-cobertura-visible').textContent='Grado cambiado: comprueba de nuevo el banco.'});
  campo('materia_id').addEventListener('change',()=>{cont.querySelector('#cia-cobertura-visible').textContent='Materia cambiada: comprueba de nuevo el banco.'});
