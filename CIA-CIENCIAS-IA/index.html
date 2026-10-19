@@ -50,6 +50,7 @@ details>summary{cursor:pointer;padding:4px 0}
 #cia-administrar-periodos .cia-estado-periodo.futuro{background:#e1edff;color:#204b9b}
 #cia-administrar-periodos .cia-accesos{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0}
 #cia-administrar-periodos .cia-accesos button{padding:10px;border-radius:10px;background:#225eae;color:white;font-weight:bold}
+#cia-administrar-periodos .cia-av-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:12px;margin-top:10px;align-items:end}#cia-administrar-periodos .cia-av-grid>label{font-weight:700;color:#254574;display:flex;flex-direction:column;gap:5px}#cia-administrar-periodos .cia-av-grid>label:has(input[type=checkbox]){flex-direction:row;align-items:center}
 @media(max-width:600px){#cia-administrar-periodos{padding:10px}#cia-administrar-periodos #cia-form-periodo{grid-template-columns:1fr}}
 </style>
 </head><body>
@@ -628,16 +629,18 @@ async function ciaCatalogoEvaluaciones(uid,box){
 /* Periodos de práctica: administración desde Materias, sin alterar otras pantallas. */
 async function ciaAdministrarPeriodos(uid,box){
  const cont=document.createElement('section');cont.id='cia-administrar-periodos';
- cont.innerHTML=`<hr><h3>Periodos de práctica</h3><p class=s>Programa las prácticas de Evaluación 1, 2 o 3 para un salón.</p>
+ cont.innerHTML=`<hr><h3>Periodos de práctica</h3><p class=s>Crea un periodo por salón: elige evaluación, grado y sección, y guarda. Queda abierto y visible de inmediato.</p>
  <div class="s" style="padding:9px;border:1px solid #d6e6d9;border-radius:8px;margin:10px 0">Para elegir cuál ve el estudiante, pulsa <b>Activar para estudiantes</b> en el periodo deseado: ese queda visible y los otros periodos vigentes de su salón se desactivan (puedes reactivarlos después). Para reordenar fechas usa <b>↑ Primero</b> o <b>↓ Después</b>. Se intercambian las fechas de los dos periodos, sin cambiar sus técnicas ni sus notas.</div>
  <div class="cia-accesos"><button type="button" id="cia-ver-tecnicas">📋 Ver técnicas</button><button type="button" id="cia-nuevo-rapido">➕ Nueva práctica</button><button type="button" id="cia-recargar-periodos">🔄 Actualizar estados</button></div>
- <form id="cia-form-periodo"><label>Título del periodo<input name="titulo" maxlength="120" required placeholder="Ej.: Prácticas de octubre"></label>
- <label>Materia (opcional)<select name="materia_id"><option value="">Todas las materias</option></select></label>
- <label>Técnica de este periodo<select name="tecnica" required><option value="banco">Evaluación 1</option><option value="e2">Evaluación 2</option><option value="e3">Evaluación 3</option></select></label>
+ <form id="cia-form-periodo"><label>Título del periodo<input name="titulo" maxlength="120" required placeholder="Ej.: Evaluación actual"></label>
+ <label>Evaluación que verán los estudiantes<select name="tecnica" required><option value="banco">Evaluación 1</option><option value="e2">Evaluación 2</option><option value="e3">Evaluación 3</option></select></label>
  <label>Grado<select name="grado" required><option value="">Seleccionar grado</option><option value="7">7.º</option><option value="8">8.º</option><option value="9">9.º</option></select></label>
  <label>Sección<select name="seccion"><option value="">Todas las secciones</option><option value="A">A</option><option value="B">B</option><option value="C">C</option></select></label>
+ <details id="cia-avanzado" style="grid-column:1/-1"><summary style="cursor:pointer;font-weight:700;color:#254574">⚙️ Opciones avanzadas (materia, fechas, activo)</summary><div class="cia-av-grid">
+ <label>Materia (opcional)<select name="materia_id"><option value="">Todas las materias</option></select></label>
  <label>Disponibilidad<select name="modalidad"><option value="abierta">🟢 Sin fechas — hasta desactivar</option><option value="fechas">🔵 Inicio y cierre programados</option><option value="inicio">🟠 Inicio programado, sin cierre</option></select></label><div id="cia-fechas" style="display:none;grid-template-columns:repeat(auto-fit,minmax(175px,1fr));gap:8px"><label>Inicio<input name="inicio" type="datetime-local"></label><label id="cia-cierre-label">Cierre<input name="fin" type="datetime-local"></label></div><p class="s" id="cia-ayuda-modalidad">Disponible inmediatamente y sin vencimiento, hasta que lo desactive.</p>
  <label><input type="checkbox" name="activo" checked style="width:auto"> Periodo activo</label>
+ </div></details>
  <button type="submit" id="cia-guardar-periodo">Guardar periodo</button><button type="button" class="sec" id="cia-cancelar-periodo" hidden>Cancelar edición</button>
  <p id="cia-periodo-mensaje" role="status" class=s></p></form><h3>Periodos existentes</h3><div id="cia-lista-periodos">Cargando…</div>`;
  box.appendChild(cont);
@@ -655,7 +658,7 @@ async function ciaAdministrarPeriodos(uid,box){
  const {data:materias,error:errMat}=await sb.from('cia_materias').select('id,nombre').eq('docente_id',uid).order('nombre');
  if(!errMat)campo('materia_id').innerHTML='<option value="">Todas las materias</option>'+(materias||[]).map(m=>`<option value="${esc(String(m.id))}">${esc(m.nombre)}</option>`).join('');
  const localFecha=fecha=>{if(!fecha)return '';const d=new Date(fecha);return new Date(d.getTime()-d.getTimezoneOffset()*60000).toISOString().slice(0,16)};
- const limpiar=()=>{editando=null;form.reset();campo('activo').checked=true;campo('modalidad').value='abierta';cambiarModalidad();const g=box.querySelector('[name=ta]:checked');if(g)campo('tecnica').value=g.value;cont.querySelector('#cia-guardar-periodo').textContent='Guardar periodo';cont.querySelector('#cia-cancelar-periodo').hidden=true;};
+ const limpiar=()=>{editando=null;form.reset();campo('activo').checked=true;campo('modalidad').value='abierta';cambiarModalidad();cont.querySelector('#cia-avanzado').open=false;const g=box.querySelector('[name=ta]:checked');if(g)campo('tecnica').value=g.value;cont.querySelector('#cia-guardar-periodo').textContent='Guardar periodo';cont.querySelector('#cia-cancelar-periodo').hidden=true;};
  async function cargar(){
   const {data,error}=await sb.from('cia_periodos').select('id,docente_id,materia_id,titulo,tecnica,grado,seccion,inicio,fin,activo').eq('docente_id',uid).order('inicio',{ascending:true});
   if(error){list.textContent='No se pudieron consultar los periodos: '+error.message;return;}
@@ -706,7 +709,7 @@ async function ciaAdministrarPeriodos(uid,box){
   });
   list.querySelectorAll('[data-up]').forEach(b=>b.onclick=()=>moverPeriodo(b.dataset.up,-1));
   list.querySelectorAll('[data-down]').forEach(b=>b.onclick=()=>moverPeriodo(b.dataset.down,1));
-  list.querySelectorAll('[data-pe]').forEach(b=>b.onclick=()=>{const p=periodos.find(x=>String(x.id)===b.dataset.pe);if(!p)return;editando=p.id;for(const n of ['titulo','materia_id','grado','seccion'])campo(n).value=p[n]==null?'':String(p[n]);campo('modalidad').value=esSinInicio(p)&&esSinFin(p)?'abierta':esSinFin(p)?'inicio':'fechas';cambiarModalidad();campo('inicio').value=esSinInicio(p)?'':localFecha(p.inicio);campo('fin').value=esSinFin(p)?'':localFecha(p.fin);campo('activo').checked=!!p.activo;campo('tecnica').value=['e2','e3'].includes(p.tecnica)?p.tecnica:'banco';cont.querySelector('#cia-guardar-periodo').textContent='Guardar cambios';cont.querySelector('#cia-cancelar-periodo').hidden=false;msg.textContent='Editando: '+p.titulo;form.scrollIntoView({behavior:'smooth',block:'nearest'});});
+  list.querySelectorAll('[data-pe]').forEach(b=>b.onclick=()=>{const p=periodos.find(x=>String(x.id)===b.dataset.pe);if(!p)return;editando=p.id;for(const n of ['titulo','materia_id','grado','seccion'])campo(n).value=p[n]==null?'':String(p[n]);campo('modalidad').value=esSinInicio(p)&&esSinFin(p)?'abierta':esSinFin(p)?'inicio':'fechas';cambiarModalidad();campo('inicio').value=esSinInicio(p)?'':localFecha(p.inicio);campo('fin').value=esSinFin(p)?'':localFecha(p.fin);campo('activo').checked=!!p.activo;cont.querySelector('#cia-avanzado').open=!!p.materia_id||!(esSinInicio(p)&&esSinFin(p))||!p.activo;campo('tecnica').value=['e2','e3'].includes(p.tecnica)?p.tecnica:'banco';cont.querySelector('#cia-guardar-periodo').textContent='Guardar cambios';cont.querySelector('#cia-cancelar-periodo').hidden=false;msg.textContent='Editando: '+p.titulo;form.scrollIntoView({behavior:'smooth',block:'nearest'});});
   
   list.querySelectorAll('[data-pb]').forEach(b=>b.onclick=async()=>{const p=periodos.find(x=>String(x.id)===b.dataset.pb);if(!p||!confirm('¿Borrar el periodo «'+p.titulo+'»? Esta acción no se puede deshacer.'))return;b.disabled=true;const {error}=await sb.from('cia_periodos').delete().eq('id',p.id).eq('docente_id',uid);msg.textContent=error?'Error: '+error.message:'Periodo eliminado.';if(!error&&String(editando)===String(p.id))limpiar();await cargar();});
  }
@@ -961,7 +964,7 @@ async function matPreguntas(c,root){
 const E2_DESC={detective:'Encuentra el error en cada afirmación.',quien:'Adivina el concepto a partir de las pistas.',causa:'Relaciona cada causa con su efecto.',mito:'Distingue lo que es mito de lo que es ciencia.',casos:'Aplica lo aprendido a situaciones reales.',
  errores3:'Encuentra el error en una situación aplicada.',mision3:'Resuelve una misión científica paso a paso.',prediccion3:'Predice qué pasaría si cambia una condición.',clasificacion3:'Clasifica cada caso según su característica científica.',evidencia3:'Elige la evidencia que respalda la afirmación.'};
 const e2PanelHTML=()=>`<h3>${etiquetaEval(MODO_E)}</h3><label id=e2mw>Materia<select id=e2m><option>Cargando…</option></select></label>
- <label>Evaluación<select id=e2catalogo><option value="">${etiquetaEval(MODO_E)} (original)</option></select></label><p id="e2-resumen-aviso" class="s" role="status" aria-live="polite"></p><div class=matgrid>${Object.entries(tecnicasDe(MODO_E)).map(([k,n])=>`<button class=big data-e2t="${k}" disabled style="text-align:left;display:block;width:100%;margin:6px 0"><b>${esc(n)}</b><br><span style="font-weight:400;font-size:.85rem">${esc(E2_DESC[k]||'')}</span><span class=e2-estado style="display:block;font-size:.8rem"></span></button>`).join('')}</div>`;
+ <label id=e2cw>Evaluación<select id=e2catalogo><option value="">${etiquetaEval(MODO_E)} (original)</option></select></label><p id="e2-resumen-aviso" class="s" role="status" aria-live="polite"></p><div class=matgrid>${Object.entries(tecnicasDe(MODO_E)).map(([k,n])=>`<button class=big data-e2t="${k}" disabled style="text-align:left;display:block;width:100%;margin:6px 0"><b>${esc(n)}</b><br><span style="font-weight:400;font-size:.85rem">${esc(E2_DESC[k]||'')}</span><span class=e2-estado style="display:block;font-size:.8rem"></span></button>`).join('')}</div>`;
 async function e2Cablear(seleccionAnterior){
  const {data,error}=await sb.rpc('cia14_materias',{p_cedula:est.cedula});
  if(error){$('#m').textContent=error.message;return;}
@@ -973,10 +976,12 @@ async function e2Cablear(seleccionAnterior){
  const avisoMateria=document.createElement('p');avisoMateria.className='s';avisoMateria.id='cia-aviso-materia';
  selectorMateria.insertAdjacentElement('afterend',avisoMateria);
  avisoMateria.textContent=unicas.length>1?'Tienes varias materias. Elige la que deseas practicar.':'Materia asignada automáticamente según tu matrícula.';
+ if(unicas.length===1){const mw=$('#e2mw');if(mw)mw.style.display='none';avisoMateria.style.display='none';}
  const {data:cats,error:catError}=await sb.rpc('cia14_catalogos_estudiante',{p_cedula:est.cedula});
  if(catError){$('#m').textContent='No se pudo cargar el catálogo: '+catError.message;return;}
  const lista=(Array.isArray(cats)?cats:[]).filter(c=>MODO_E!=='e3'||!c.motor||c.motor==='e3');
  $('#e2catalogo').innerHTML='<option value="">'+etiquetaEval(MODO_E)+' (original)</option>'+lista.map(c=>`<option value="${esc(c.id)}">${esc(c.nombre)}</option>`).join('');
+ {const w=$('#e2cw');if(w&&!lista.length)w.style.display='none';}
  async function actualizarEstadoE2(){
   const cat=$('#e2catalogo').value;
   let resumen={};let servidorDisponible=false;let errorResumen='';
@@ -988,7 +993,7 @@ async function e2Cablear(seleccionAnterior){
    for(const x of data)if(x&&x.tecnica)resumen[x.tecnica]=x;
   }catch(e){errorResumen=e?.message||String(e);console.warn('Resumen E2:',errorResumen)}
   const aviso=$('#e2-resumen-aviso');
-  if(aviso)aviso.textContent=servidorDisponible?'Seguimiento confirmado en Supabase. Puedes repetir cualquier técnica.':'No se pudo consultar Supabase ('+errorResumen+'). Las marcas de este dispositivo son provisionales.';
+  if(aviso)aviso.textContent=servidorDisponible?'Puedes repetir cualquier técnica las veces que quieras.':'No se pudo consultar Supabase ('+errorResumen+'). Las marcas de este dispositivo son provisionales.';
   document.querySelectorAll('[data-e2t]').forEach(b=>{
    const x=resumen[b.dataset.e2t];const tipo=cat?MODO_E+':'+cat+':'+b.dataset.e2t:MODO_E+':'+b.dataset.e2t;
    let local=false;try{local=localStorage.getItem(claveMarca(tipo))==='1'}catch(_){}
