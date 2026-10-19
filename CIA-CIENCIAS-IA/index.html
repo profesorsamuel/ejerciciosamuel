@@ -856,7 +856,7 @@ async function matPreguntas(c,root){
 /* ======== ENLACE 2 · ESTUDIANTE (práctica de 8 preguntas) ======== */
 const E2_DESC={detective:'Encuentra el error en cada afirmación.',quien:'Adivina el concepto a partir de las pistas.',causa:'Relaciona cada causa con su efecto.',mito:'Distingue lo que es mito de lo que es ciencia.',casos:'Aplica lo aprendido a situaciones reales.'};
 const e2PanelHTML=()=>`<h3>Evaluación 2</h3><label id=e2mw>Materia<select id=e2m><option>Cargando…</option></select></label>
- <label>Evaluación<select id=e2catalogo><option value="">Evaluación 2 (original)</option></select></label><div class=matgrid>${Object.entries(E2_TECNICAS).map(([k,n])=>`<button class=big data-e2t="${k}" disabled style="text-align:left;display:block;width:100%;margin:6px 0"><b>${esc(n)}</b><br><span style="font-weight:400;font-size:.85rem">${esc(E2_DESC[k]||'')}</span><span class=e2-estado style="display:block;font-size:.8rem"></span></button>`).join('')}</div>`;
+ <label>Evaluación<select id=e2catalogo><option value="">Evaluación 2 (original)</option></select></label><p id="e2-resumen-aviso" class="s" role="status" aria-live="polite"></p><div class=matgrid>${Object.entries(E2_TECNICAS).map(([k,n])=>`<button class=big data-e2t="${k}" disabled style="text-align:left;display:block;width:100%;margin:6px 0"><b>${esc(n)}</b><br><span style="font-weight:400;font-size:.85rem">${esc(E2_DESC[k]||'')}</span><span class=e2-estado style="display:block;font-size:.8rem"></span></button>`).join('')}</div>`;
 async function e2Cablear(seleccionAnterior){
  const {data,error}=await sb.rpc('cia14_materias',{p_cedula:est.cedula});
  if(error){$('#m').textContent=error.message;return;}
@@ -869,13 +869,21 @@ async function e2Cablear(seleccionAnterior){
  $('#e2catalogo').innerHTML='<option value="">Evaluación 2 (original)</option>'+lista.map(c=>`<option value="${esc(c.id)}">${esc(c.nombre)}</option>`).join('');
  async function actualizarEstadoE2(){
   const cat=$('#e2catalogo').value;
-  let resumen={};
-  try {const {data,error}=await sb.rpc('cia14_resumen_catalogo',{p_cedula:est.cedula,p_catalogo:cat?Number(cat):null});if(!error && Array.isArray(data))for(const x of data)resumen[x.tecnica]=x;else if(error)console.warn('Resumen E2:',error.message);}catch(e){console.warn(e)}
+  let resumen={};let servidorDisponible=false;let errorResumen='';
+  try {
+   const {data,error}=await sb.rpc('cia14_resumen_catalogo',{p_cedula:est.cedula,p_catalogo:cat?Number(cat):null});
+   if(error)throw error;
+   if(!Array.isArray(data))throw new Error('El resumen no devolvió una lista válida');
+   servidorDisponible=true;
+   for(const x of data)if(x&&x.tecnica)resumen[x.tecnica]=x;
+  }catch(e){errorResumen=e?.message||String(e);console.warn('Resumen E2:',errorResumen)}
+  const aviso=$('#e2-resumen-aviso');
+  if(aviso)aviso.textContent=servidorDisponible?'Seguimiento confirmado en Supabase. Puedes repetir cualquier técnica.':'No se pudo consultar Supabase ('+errorResumen+'). Las marcas de este dispositivo son provisionales.';
   document.querySelectorAll('[data-e2t]').forEach(b=>{
    const x=resumen[b.dataset.e2t];const tipo=cat?'e2:'+cat+':'+b.dataset.e2t:'e2:'+b.dataset.e2t;
    let local=false;try{local=localStorage.getItem(claveMarca(tipo))==='1'}catch(_){}
-   b.classList.toggle('practica-hecha',Boolean(x)||local);
-   const t=b.querySelector('.e2-estado');if(t)t.textContent=x?' ✓ Realizado · Mejor nota: '+Number(x.mejor_nota).toFixed(2):local?' ✓ Realizado en este dispositivo':'';
+   b.classList.toggle('practica-hecha',Boolean(x)||( !servidorDisponible && local));
+   const t=b.querySelector('.e2-estado');if(t)t.textContent=x?' ✓ Realizado · Mejor nota: '+(Number.isFinite(Number(x.mejor_nota))?Number(x.mejor_nota).toFixed(2):'sin dato'):(!servidorDisponible&&local)?' ✓ Realizado en este dispositivo (provisional)':'';
   });
  }
  if(seleccionAnterior && [...$('#e2catalogo').options].some(o=>o.value===String(seleccionAnterior.catalogo))) $('#e2catalogo').value=String(seleccionAnterior.catalogo);
