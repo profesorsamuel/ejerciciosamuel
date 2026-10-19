@@ -1027,6 +1027,17 @@ async function e2Cablear(seleccionAnterior){
  document.querySelectorAll('[data-e2t]').forEach(b=>{b.disabled=false;b.onclick=()=>iniciarE2(b.dataset.e2t);});
 }
 async function practicaE2(seleccionAnterior){
+ // Refrescar el periodo vigente al abrir ejercicios: no reutilizar el motor e2 de una visita anterior.
+ if(est?.cedula){
+  const consulta=await obtenerPeriodo();
+  if(consulta.periodo){
+   window.__ciaPeriodoActual=consulta.periodo;
+   MODO_E=['e2','e3'].includes(consulta.periodo.tecnica)?consulta.periodo.tecnica:'banco';
+  }else{
+   const activa=await tecnicaActiva();
+   if(['e2','e3'].includes(activa))MODO_E=activa;
+  }
+ }
  draw(`<div class=card><h2>Elige tu ejercicio</h2><p class=s>Toca una tarjeta para empezar. Cada intento trae ocho preguntas. La nota es de práctica; no es una evaluación oficial.</p>${e2PanelHTML()}<p class=err id=m></p><button class=sec id=e2b>Volver al menú</button></div>`);
  $('#e2b').onclick=()=>menu();
  await e2Cablear(seleccionAnterior);
