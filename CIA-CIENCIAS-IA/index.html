@@ -30,7 +30,7 @@ details>summary{cursor:pointer;padding:4px 0}
 .opts{grid-template-columns:repeat(2,minmax(0,1fr))}.opt{min-width:0;min-height:105px}.opt b{font-size:1rem}.matgrid{grid-template-columns:repeat(auto-fit,minmax(min(100%,240px),1fr))}.practicas-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,240px),1fr));gap:10px}.practicas-grid button{margin:0;width:100%;min-height:85px;text-align:left}.practica-hecha{background:#176344!important;color:#fff!important;border:2px solid #f1c453!important}.practica-hecha::after{content:"  ✓ Realizado";display:block;font-size:.78rem;margin-top:5px}@media(max-width:520px){.opts{grid-template-columns:1fr}}
 
 /* CIA: recorrido único del profesor, sin pestañas ni pantallas intermedias */
-.cia-ruta{display:flex;flex-wrap:wrap;gap:8px;margin:14px 0}.cia-ruta a{padding:10px 12px;background:#e8f2ef;color:#105c47;border-radius:9px;font-weight:700;text-decoration:none}.cia-ruta a:hover,.cia-ruta a:focus{background:#c8e6dc}.cia-etapa{scroll-margin-top:12px;margin:18px 0}.cia-etapa>.card{margin-bottom:0}.cia-etapa #cia-administrar-periodos{margin-top:0}.cia-etapa #cia-administrar-periodos>hr{display:none}.cia-etapa #cia-panel-publicar{padding:12px}.cia-etapa #cia-administrar-periodos .cia-accesos #cia-nuevo-rapido{display:none}
+.cia-ruta{display:flex;flex-wrap:wrap;gap:8px;margin:14px 0}.cia-ruta a{padding:10px 12px;background:#e8f2ef;color:#105c47;border-radius:9px;font-weight:700;text-decoration:none}.cia-ruta a:hover,.cia-ruta a:focus{background:#c8e6dc}.cia-ruta a[aria-selected="true"]{background:#17694f;color:white}.cia-etapa[hidden]{display:none!important}.cia-etapa{scroll-margin-top:12px;margin:18px 0}.cia-etapa>.card{margin-bottom:0}.cia-etapa #cia-administrar-periodos{margin-top:0}.cia-etapa #cia-administrar-periodos>hr{display:none}.cia-etapa #cia-panel-publicar{padding:12px}.cia-etapa #cia-administrar-periodos .cia-accesos #cia-nuevo-rapido{display:none}
 </style><style id="cia-periodos-mejora">
 #cia-administrar-periodos{background:#f1f8f4;border:2px solid #b8dccc;border-radius:16px;padding:18px;margin-top:18px;color:#173e31}
 #cia-administrar-periodos>h3{color:#12543e;font-size:1.35rem}
@@ -848,7 +848,7 @@ async function matEntrar(uid,id,paso){
  const {data:sal,error:se}=await sb.from('cia_materia_salones').select('id,grado,seccion').eq('docente_id',uid).eq('materia_id',id);
  if(se)return volver(avisoError(se));
  const salones=sal||[],grados=[...new Set(salones.map(x=>String(x.grado)))].sort(porGrado);
- v.innerHTML=`<div class="card"><div class="row"><button class="sec" id="mv">← Todas las materias</button><span><button class="sec" id="mr">Cambiar nombre</button><button class="sec" id="md">Eliminar materia</button></span></div><h2>${esc(mat.nombre)}</h2><p class="s">Trabaja de arriba hacia abajo. Todos los pasos están aquí, sin cambiar de pantalla.</p><nav class="cia-ruta"><a href="#cia-etapa-1">1 · Salones</a><a href="#cia-etapa-2">2 · Generar</a><a href="#cia-etapa-3">3 · Revisar</a><a href="#cia-etapa-4">4 · Activar</a></nav></div><section id="cia-etapa-1" class="cia-etapa"><div id="cia-panel-salones"></div></section><section id="cia-etapa-2" class="cia-etapa"><div id="cia-panel-generar"></div></section><section id="cia-etapa-3" class="cia-etapa"><div id="cia-panel-preguntas"></div></section><section id="cia-etapa-4" class="cia-etapa"><div id="cia-panel-publicar" class="card"><h3>4 · Programar y activar para estudiantes</h3><p class="s">Cargando periodos…</p></div></section>`;
+ v.innerHTML=`<div class="card"><div class="row"><button class="sec" id="mv">← Todas las materias</button><span><button class="sec" id="mr">Cambiar nombre</button><button class="sec" id="md">Eliminar materia</button></span></div><h2>${esc(mat.nombre)}</h2><p class="s">Selecciona una pestaña para trabajar. Solo se muestra el paso elegido, sin desplazamientos.</p><nav class="cia-ruta"><a href="#cia-etapa-1">1 · Salones</a><a href="#cia-etapa-2">2 · Generar</a><a href="#cia-etapa-3">3 · Revisar</a><a href="#cia-etapa-4">4 · Activar</a></nav></div><section id="cia-etapa-1" class="cia-etapa"><div id="cia-panel-salones"></div></section><section id="cia-etapa-2" class="cia-etapa"><div id="cia-panel-generar"></div></section><section id="cia-etapa-3" class="cia-etapa"><div id="cia-panel-preguntas"></div></section><section id="cia-etapa-4" class="cia-etapa"><div id="cia-panel-publicar" class="card"><h3>4 · Programar y activar para estudiantes</h3><p class="s">Cargando periodos…</p></div></section>`;
  const c={uid,mat,salones,grados,recargar:p=>matEntrar(uid,id,p)};
  // Todos los módulos originales siguen funcionando; solo cambia su disposición.
  matSalones(c,$('#cia-panel-salones'));
@@ -867,9 +867,13 @@ async function matEntrar(uid,id,paso){
  $('#mr').onclick=async()=>{const nombre=prompt('Nuevo nombre de la materia:',mat.nombre)?.trim();if(!nombre||nombre===mat.nombre)return;if(nombre.length<2||nombre.length>90)return alert('El nombre debe tener entre 2 y 90 caracteres.');const {error:e}=await sb.from('cia_materias').update({nombre}).eq('id',id).eq('docente_id',uid);if(e)return alert(e.message);c.recargar(paso);};
  $('#md').onclick=async()=>{if(!confirm(`¿Eliminar la materia "${mat.nombre}"?\n\nSe quitan sus salones asignados. Si tiene preguntas guardadas, el sistema puede impedirlo: bórralas antes en el paso 3.`))return;await sb.from('cia_materia_salones').delete().eq('materia_id',id).eq('docente_id',uid);const {data,error:e}=await sb.from('cia_materias').delete().eq('id',id).eq('docente_id',uid).select('id');if(e||!data?.length)return alert('No se pudo eliminar: '+(e?.message||'sin permiso (revise las políticas RLS de delete en cia_materias).'));matLista(uid);};
  // Navegación inmediata dentro de la misma pantalla.
- const irPaso=(n)=>{const destino=document.getElementById('cia-etapa-'+n);if(destino)destino.scrollIntoView({behavior:'auto',block:'start'});};
+ const irPaso=(n)=>{
+  const elegido=Number(n)>=1&&Number(n)<=4?Number(n):1;
+  v.querySelectorAll('.cia-etapa').forEach(sec=>{sec.hidden=sec.id!=='cia-etapa-'+elegido;});
+  v.querySelectorAll('.cia-ruta a').forEach(a=>{const activo=a.getAttribute('href')==='#cia-etapa-'+elegido;a.setAttribute('aria-selected',String(activo));a.setAttribute('aria-current',activo?'step':'false');});
+ };
  v.querySelectorAll('.cia-ruta a').forEach(a=>a.addEventListener('click',e=>{e.preventDefault();const n=Number(a.getAttribute('href').slice(-1));irPaso(n);}));
- if(paso&&paso>1)requestAnimationFrame(()=>irPaso(paso));
+ irPaso(paso||1);
 
 }
 
@@ -881,7 +885,7 @@ function matSalones(c,root){
   const {error}=await sb.from('cia_materia_salones').upsert(secs.map(seccion=>({docente_id:c.uid,materia_id:c.mat.id,grado:$('#sg').value,seccion})),{onConflict:'docente_id,materia_id,grado,seccion'});
   if(error)return $('#sm').textContent=error.message;c.recargar(1);};
  root.querySelectorAll('[data-q]').forEach(b=>b.onclick=async()=>{if(!confirm('¿Quitar este salón de la materia?'))return;const {error}=await sb.from('cia_materia_salones').delete().eq('id',b.dataset.q).eq('docente_id',c.uid);if(error)return alert(error.message);c.recargar(1);});
- if($('#sn'))$('#sn').onclick=()=>document.getElementById('cia-etapa-2')?.scrollIntoView({behavior:'auto',block:'start'});
+ if($('#sn'))$('#sn').onclick=()=>document.querySelector('.cia-ruta a[href="#cia-etapa-2"]')?.click();
 }
 
 /* Paso 2 · PDF, grado y técnica */
