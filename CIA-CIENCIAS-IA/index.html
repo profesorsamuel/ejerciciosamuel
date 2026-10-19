@@ -888,7 +888,27 @@ async function e2Cablear(seleccionAnterior){
  }
  if(seleccionAnterior && [...$('#e2catalogo').options].some(o=>o.value===String(seleccionAnterior.catalogo))) $('#e2catalogo').value=String(seleccionAnterior.catalogo);
  if(seleccionAnterior && [...$('#e2m').options].some(o=>o.value===String(seleccionAnterior.materia))) $('#e2m').value=String(seleccionAnterior.materia);
- $('#e2catalogo').onchange=actualizarEstadoE2;
+ // Mostrar el banco vinculado a la evaluación seleccionada, sin impedir practicar si RLS no permite consultarlo.
+ const selectorCatalogo=$('#e2catalogo');
+ const estadoBanco=document.createElement('p');
+ estadoBanco.className='s';
+ estadoBanco.setAttribute('aria-live','polite');
+ estadoBanco.style.margin='8px 0';
+ selectorCatalogo.insertAdjacentElement('afterend',estadoBanco);
+ let consultaBancoVersion=0;
+ async function revisarBancoE2(){
+  const version=++consultaBancoVersion;
+  const catalogo=selectorCatalogo.value;
+  if(!catalogo){estadoBanco.textContent='Evaluación 2 original: utiliza su banco habitual.';return;}
+  estadoBanco.textContent='Comprobando preguntas vinculadas a esta evaluación…';
+  try{
+   const {count,error}=await sb.from('cia_catalogo_preguntas').select('pregunta_id',{count:'exact',head:true}).eq('catalogo_id',Number(catalogo));
+   if(version!==consultaBancoVersion)return;
+   if(error){estadoBanco.textContent='No se pudo consultar el número de preguntas. Puedes intentar la práctica.';return;}
+   estadoBanco.textContent=count===0?'Esta evaluación todavía no tiene preguntas vinculadas. El docente debe asignarlas.':`${count} pregunta(s) vinculada(s) a esta evaluación. Cada técnica requiere preguntas compatibles.`;
+  }catch(_){if(version===consultaBancoVersion)estadoBanco.textContent='No se pudo comprobar el banco. Puedes intentar la práctica.';}
+ }
+ $('#e2catalogo').onchange=()=>{actualizarEstadoE2();revisarBancoE2();};
  pintarRealizados();$('#e2catalogo').onchange();if(unicas.length===1)$('#e2mw').style.display='none';
  document.querySelectorAll('[data-e2t]').forEach(b=>{b.disabled=false;b.onclick=()=>iniciarE2(b.dataset.e2t);});
 }
