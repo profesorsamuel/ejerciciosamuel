@@ -155,10 +155,27 @@ async function tBanco(uid){
    if(e){estado.textContent=e.message;b.disabled=false;return;}
    const opciones=Array.isArray(p.distractores)?p.distractores:[];
    if(!confirm(`REVISIÓN DOCENTE\n\n${p.enunciado}\n\nCorrecta: ${p.correcta}\nDistractores: ${opciones.join(' | ')}\n\n¿Aprobar y publicar esta pregunta para prácticas rápidas?`)){b.disabled=false;return;}
-   const {data:r,error:re}=await sb.rpc('cia8_publicar_desde_banco',{p_origen:b.dataset.publicar});
-   if(re){estado.textContent='No se pudo publicar: '+re.message;b.disabled=false;return;}
-   estado.textContent=r?.publicada?'Pregunta publicada correctamente.':(r?.mensaje||'No se publicó la pregunta.');
-   if(r?.publicada||r?.ya_existia)b.closest('.row').remove();else b.disabled=false;
+   const origen=b.dataset.publicar;
+   try {
+    const {data:r,error:re}=await sb.rpc('cia8_publicar_desde_banco',{p_origen:origen});
+    if(re)throw new Error(re.message);
+    // Una respuesta RPC positiva por sí sola no confirma la persistencia.
+    const {data:v,error:ve}=await sb.from('cia8_origen_banco')
+      .select('pregunta_practica_id').eq('pregunta_origen_id',origen).limit(1);
+    if(ve)throw new Error('No se pudo verificar la publicación: '+ve.message);
+    const destino=v?.[0]?.pregunta_practica_id;
+    if(!destino){
+     estado.textContent='No se confirmó la publicación en cia8_origen_banco. La pregunta permanece pendiente. Resultado RPC: '+JSON.stringify(r??null);
+     b.disabled=false;return;
+    }
+    const {data:guardada,error:ge}=await sb.from('cia8_preguntas')
+      .select('id').eq('id',destino).maybeSingle();
+    if(ge)throw new Error('No se pudo verificar la pregunta publicada: '+ge.message);
+    if(!guardada){estado.textContent='La vinculación existe, pero falta la pregunta de práctica. Revise Supabase.';b.disabled=false;return;}
+    estado.textContent=r?.ya_existia?'Esta pregunta ya estaba publicada (verificada).':'Pregunta publicada y verificada en Supabase.';
+    b.closest('.row').remove();
+   }catch(err){estado.textContent='Publicación sin confirmar: '+err.message;b.disabled=false;}
+
   });
  };
  const visiblesBanco=()=>{const ids=new Set([...app.querySelectorAll('[data-item]')].filter(el=>!el.hidden).map(el=>el.querySelector('[data-e]').dataset.e));return pr.filter(p=>ids.has(String(p.id)));};
