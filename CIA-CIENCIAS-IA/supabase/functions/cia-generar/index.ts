@@ -55,6 +55,9 @@ Deno.serve(async (req) => {
     const tema = String(body.tema || "Ciencias Naturales").slice(0, 150);
     const grado = String(body.grado || "9").slice(0, 20);
     const cantidad = Math.min(80, Math.max(5, Number(body.cantidad) || 20));
+    const permitidas = ["seleccion_multiple", "verdadero_falso", "completar", "relacionar", "ordenar", "caso"];
+    const tecnicas = Array.isArray(body.tecnicas) ? body.tecnicas.filter((t: unknown) => typeof t === "string" && permitidas.includes(t)) : permitidas;
+    if (!tecnicas.length) return responder({ error: "Seleccione al menos una técnica" }, 400);
 
     if (texto.length < 100) return responder({ error: "El PDF no contiene suficiente texto" }, 400);
     if (texto.length > 100000) return responder({ error: "Documento demasiado extenso" }, 413);
@@ -66,7 +69,15 @@ GRADO: ${grado}
 CANTIDAD: ${cantidad}
 Genera hasta ${cantidad} preguntas educativas basadas exclusivamente en el texto.
 No inventes informacion. Lenguaje apropiado para el grado. Mezcla niveles facil, medio y dificil.
-Incluye seleccion multiple, verdadero/falso, completar, relacionar, ordenar y casos.
+Distribuye las preguntas entre las técnicas seleccionadas: ${tecnicas.join(", ")}.
+Cada pregunta debe tener un enunciado autónomo, una respuesta verificable y una explicación.
+Para selección múltiple y casos, da 4 opciones y una respuesta idéntica a una opción.
+Para verdadero_falso, usa opciones ["Verdadero", "Falso"] y respuesta exacta.
+Para completar, ofrece cuatro alternativas de palabras y una respuesta exacta.
+Para relacionar, plantea una relación única de concepto y definición con cuatro opciones de respuesta.
+Para ordenar, formula una pregunta sobre el paso que corresponde en una secuencia, con cuatro opciones.
+No inventes secuencias ni relaciones si el PDF no las permite.
+Devuelve siempre las opciones como cadenas, y la respuesta como una de ellas.
 Evita preguntas repetidas. Cada pregunta debe tener respuesta correcta y explicacion breve.
 Si no hay contenido suficiente, genera menos preguntas.
 Devuelve exclusivamente JSON valido con esta forma:
@@ -82,7 +93,7 @@ Devuelve exclusivamente JSON valido con esta forma:
     }
   ]
 }
-Tipos: seleccion_multiple, verdadero_falso, completar, relacionar, ordenar, caso.
+Tipos permitidos: ${tecnicas.join(", ")}. No uses otros tipos.
 Dificultades: facil, medio, dificil.
 CONTENIDO DEL PDF:
 ${texto}`;
