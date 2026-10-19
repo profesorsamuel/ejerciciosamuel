@@ -72,7 +72,7 @@ Genera hasta ${cantidad} preguntas educativas basadas exclusivamente en el texto
 No inventes informacion. Lenguaje apropiado para el grado. Mezcla niveles facil, medio y dificil.
 Distribuye las preguntas entre las técnicas seleccionadas: ${tecnicas.join(", ")}.
 Cada pregunta debe tener un enunciado autónomo, una respuesta verificable y una explicación.
-Para selección múltiple, casos, detective, quien, causa, mito y casos, da 3 opciones y una respuesta idéntica a una opción.
+Para selección múltiple, caso, detective, quien, causa, mito y casos, da exactamente 3 opciones DISTINTAS y una respuesta idéntica a una opción. Para las cinco técnicas del Enlace 2 nunca devuelvas solo dos opciones.
 Para detective, identifica un error conceptual y pregunta cómo corregirlo.
 Para quien, plantea pistas para reconocer un concepto.
 Para causa, pide identificar una causa o consecuencia.
@@ -84,7 +84,7 @@ Para relacionar, plantea una relación única de concepto y definición con cuat
 Para ordenar, formula una pregunta sobre el paso que corresponde en una secuencia, con cuatro opciones.
 No inventes secuencias ni relaciones si el PDF no las permite.
 Devuelve siempre las opciones como cadenas, y la respuesta como una de ellas.
-Evita preguntas repetidas. Cada pregunta debe tener respuesta correcta y explicacion breve.
+Evita preguntas repetidas, opciones duplicadas y respuestas ausentes de opciones. Cada pregunta debe tener respuesta correcta y explicacion breve. Si seleccionan exclusivamente técnicas del Enlace 2, usa solamente esos tipos.
 Si no hay contenido suficiente, genera menos preguntas.
 Devuelve exclusivamente JSON valido con esta forma:
 {
