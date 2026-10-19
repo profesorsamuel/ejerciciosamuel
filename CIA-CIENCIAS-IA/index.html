@@ -428,10 +428,11 @@ async function ciaResultadosPeriodos(uid){
  if(!periodos?.length){host.innerHTML='<p class=s>No hay periodos de práctica registrados.</p>';return;}
  host.innerHTML='<h2>Notas finales por periodo</h2><p class=s>Resultados reales consultados desde Supabase. Seleccione un periodo para revisar las notas de su salón y exportar el CSV. Si una consulta falla, no se inventan calificaciones.</p><label>Periodo<select id="cia-periodo-resultado">'+periodos.map(p=>'<option value="'+esc(p.id)+'">'+esc(p.titulo+' · '+p.grado+'° '+(p.seccion||'Todas')+' · '+(p.tecnica==='e2'?'Evaluación 2':'Evaluación 1'))+'</option>').join('')+'</select></label><p class=s id="cia-periodo-estado"></p><div class=wrap id="cia-periodo-tabla"></div><button id="cia-periodo-csv" disabled>Exportar periodo CSV</button>';
  const selector=host.querySelector('#cia-periodo-resultado'),estado=host.querySelector('#cia-periodo-estado'),tabla=host.querySelector('#cia-periodo-tabla'),boton=host.querySelector('#cia-periodo-csv');
+ const resumen=document.createElement('div');resumen.id='cia-estadisticas-salon';resumen.setAttribute('aria-live','polite');tabla.before(resumen);
  let exportRows=[],exportHeaders=[];
  async function cargar(){
   const id=selector.value,p=periodos.find(x=>String(x.id)===id);
-  estado.textContent='Cargando notas…';tabla.innerHTML='';boton.disabled=true;
+  estado.textContent='Cargando notas…';tabla.innerHTML='';resumen.innerHTML='';boton.disabled=true;
   try{
    /* La función SQL del docente debe aceptar p_periodo y verificar la identidad del docente. */
    const {data,error}=await sb.rpc('cia_periodo_resultados_v2',{p_periodo:id});
@@ -443,9 +444,15 @@ async function ciaResultadosPeriodos(uid){
    exportHeaders=['Nombre','Cédula','Grado','Sección',...nombres,'Nota final'];
    exportRows=filas.map(r=>{const ns=tipos.map((t,i)=>nota(r,t,i));const promedio=ns.reduce((a,n)=>a+(n==='—'?1:Number(n)),0)/5;return [r.nombres??r.nombre??'',r.cedula??'',r.grado??p.grado,r.seccion??p.seccion??'',...ns,Number(r.nota_final??r.final??promedio).toFixed(2)];});
    tabla.innerHTML='<table><thead><tr>'+exportHeaders.map(h=>'<th>'+esc(h)+'</th>').join('')+'</tr></thead><tbody>'+(exportRows.map(row=>'<tr>'+row.map(v=>'<td>'+esc(String(v))+'</td>').join('')+'</tr>').join('')||'<tr><td colspan="9">Sin estudiantes para este periodo</td></tr>')+'</tbody></table>';
+   const {data:estadisticas,error:errorEst}=await sb.rpc('cia_periodo_estadisticas_v2',{p_periodo:id});
+   if(errorEst){resumen.innerHTML='<p class=s role=alert>Estadísticas no disponibles: '+esc(errorEst.message)+'</p>';}
+   else {
+     const datos=Array.isArray(estadisticas)?estadisticas:[];
+     resumen.innerHTML='<h3>Estadísticas reales por salón</h3>'+(datos.length?'<div class=wrap><table><thead><tr><th>Grado</th><th>Salón</th><th>Estudiantes</th><th>Con entregas</th><th>Promedio</th></tr></thead><tbody>'+datos.map(r=>'<tr><td>'+esc(String(r.grado??''))+'</td><td>'+esc(String(r.seccion??''))+'</td><td>'+esc(String(r.estudiantes??0))+'</td><td>'+esc(String(r.con_entregas??0))+'</td><td>'+esc(r.promedio==null?'—':Number(r.promedio).toFixed(2))+'</td></tr>').join('')+'</tbody></table></div>':'<p class=s>Sin estadísticas para este periodo.</p>');
+   }
    estado.textContent=filas.length+' estudiante(s) · Notas sin entrega: — (cuentan como 1.00 para el promedio) · '+new Date(p.inicio).toLocaleString('es-PA')+' – '+new Date(p.fin).toLocaleString('es-PA');
    boton.disabled=!filas.length;
-  }catch(e){estado.textContent='No se pudieron obtener las notas del periodo: '+e.message+'. Verifique el nombre y parámetros de la función SQL del docente.';exportRows=[];}
+  }catch(e){resumen.innerHTML='';estado.textContent='No se pudieron obtener las notas del periodo: '+e.message+'. Verifique el nombre y parámetros de la función SQL del docente.';exportRows=[];}
  }
  selector.onchange=cargar;
  boton.onclick=()=>descargarArchivo('cia_periodo_'+selector.value+'.csv','\ufeff'+[exportHeaders,...exportRows].map(r=>r.map(csvCelda).join(',')).join('\r\n'),'text/csv;charset=utf-8');
