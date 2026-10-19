@@ -108,21 +108,23 @@ const csvCelda=v=>'"'+String(v??'').replace(/"/g,'""')+'"';
 const avisoError=(e)=>`<p class="err">Error de Supabase: ${esc(e.message)} (${esc(e.code||'')})</p>`;
 async function tInforme(uid){
  $('#v').innerHTML='<div class=card><h2>Resumen general</h2><p>Consultando datos del proyecto…</p></div>';
- const [p,e,i,x]=await Promise.all([
+ const [p,e,i,x,r]=await Promise.all([
   sb.from('cia_preguntas').select('id,tema,nivel').eq('docente_id',uid),
   sb.from('cia_estudiantes').select('id,nombres,grado,seccion').eq('docente_id',uid),
   sb.from('cia_intentos').select('id,nota,revision_pendiente,estudiante_id,creado_en').eq('docente_id',uid),
-  sb.from('cia_ejercicios').select('id,titulo').eq('docente_id',uid)]);
- const error=[p,e,i,x].find(r=>r.error)?.error;
+  sb.from('cia_ejercicios').select('id,titulo').eq('docente_id',uid),
+  sb.from('cia8_intentos').select('id,estudiante_id,tipo,nota,creado_en,enviado_en').eq('docente_id',uid).not('enviado_en','is',null)
+ ]);
+ const error=[p,e,i,x,r].find(v=>v.error)?.error;
  if(error){$('#v').innerHTML=`<div class=card>${avisoError(error)}</div>`;return;}
  const grupos=new Map();e.data.forEach(a=>{const k=`${a.grado||'Sin grado'} ${a.seccion||''}`.trim();grupos.set(k,(grupos.get(k)||0)+1);});
- const notas=i.data.map(r=>Number(r.nota)).filter(n=>Number.isFinite(n));
- const promedio=notas.length?(notas.reduce((a,b)=>a+b,0)/notas.length).toFixed(2):'Sin notas';
- const pendientes=i.data.filter(r=>r.revision_pendiente).length;
+ const intentos=[...i.data.map(v=>({...v,escala:Math.max(1,Math.min(5,Number(v.nota)||0)),tipo:'General'})),...r.data.map(v=>({...v,escala:1+4*Math.max(0,Math.min(8,Number(v.nota)||0))/8,tipo:TIPOS[v.tipo]||v.tipo,creado_en:v.enviado_en||v.creado_en}))];
+ const promedio=intentos.length?(intentos.reduce((a,v)=>a+v.escala,0)/intentos.length).toFixed(2):'Sin notas';
+ const pendientes=i.data.filter(v=>v.revision_pendiente).length;
  const porTema=new Map();p.data.forEach(q=>{const t=q.tema||'Sin tema';porTema.set(t,(porTema.get(t)||0)+1);});
- const ultimos=[...i.data].sort((a,b)=>String(b.creado_en).localeCompare(String(a.creado_en))).slice(0,5);
+ const ultimos=intentos.sort((a,b)=>String(b.creado_en).localeCompare(String(a.creado_en))).slice(0,5);
  const nombreEst=new Map(e.data.map(a=>[a.id,a.nombres||'Estudiante']));
- $('#v').innerHTML=`<div class=card><h2>Panel de seguimiento</h2><p><b>${p.data.length}</b> preguntas · <b>${e.data.length}</b> estudiantes · <b>${x.data.length}</b> ejercicios · <b>${i.data.length}</b> intentos</p><p>Promedio de notas registradas: <b>${promedio}</b> (escala original de la base de datos) · Revisiones pendientes: <b>${pendientes}</b></p><h3>Temas del banco</h3><p>${[...porTema.entries()].sort((a,b)=>b[1]-a[1]).map(([k,v])=>`${esc(k)}: <b>${v}</b>`).join(' · ')||'Sin preguntas'}</p><h3>Estudiantes por salón</h3><table><tr><th>Salón</th><th>Cantidad</th></tr>${[...grupos.entries()].sort((a,b)=>a[0].localeCompare(b[0])).map(([k,n])=>`<tr><td>${esc(k)}</td><td>${n}</td></tr>`).join('')||'<tr><td colspan=2>Sin matrícula</td></tr>'}</table><h3>Últimos cinco intentos</h3><table><tr><th>Estudiante</th><th>Nota</th><th>Fecha</th></tr>${ultimos.map(r=>`<tr><td>${esc(nombreEst.get(r.estudiante_id)||'ID '+r.estudiante_id)}</td><td>${esc(r.nota??'—')}</td><td>${esc(r.creado_en?.slice(0,10)||'')}</td></tr>`).join('')||'<tr><td colspan=3>Sin intentos</td></tr>'}</table><p class=s>Los resultados se obtienen de Supabase y se actualizan al volver a abrir este resumen.</p><button id=imprimir-resumen class=sec>Imprimir resumen</button></div>`;
+ $('#v').innerHTML=`<div class=card><h2>Panel de seguimiento</h2><p><b>${p.data.length}</b> preguntas generales · <b>${e.data.length}</b> estudiantes · <b>${x.data.length}</b> ejercicios generales · <b>${intentos.length}</b> intentos (${r.data.length} prácticas rápidas)</p><p>Promedio de notas: <b>${promedio}</b> / 5.00 · Revisiones pendientes: <b>${pendientes}</b></p><h3>Temas del banco</h3><p>${[...porTema.entries()].sort((a,b)=>b[1]-a[1]).map(([k,v])=>`${esc(k)}: <b>${v}</b>`).join(' · ')||'Sin preguntas'}</p><h3>Estudiantes por salón</h3><table><tr><th>Salón</th><th>Cantidad</th></tr>${[...grupos.entries()].sort((a,b)=>a[0].localeCompare(b[0])).map(([k,n])=>`<tr><td>${esc(k)}</td><td>${n}</td></tr>`).join('')||'<tr><td colspan=2>Sin matrícula</td></tr>'}</table><h3>Últimos cinco intentos</h3><table><tr><th>Estudiante</th><th>Ejercicio</th><th>Nota / 5</th><th>Fecha</th></tr>${ultimos.map(v=>`<tr><td>${esc(nombreEst.get(v.estudiante_id)||'ID '+v.estudiante_id)}</td><td>${esc(v.tipo)}</td><td>${v.escala.toFixed(2)}</td><td>${esc(v.creado_en?.slice(0,10)||'')}</td></tr>`).join('')||'<tr><td colspan=4>Sin intentos</td></tr>'}</table><p class=s>Prácticas rápidas y ejercicios generales; no incluye evaluaciones oficiales de otra tabla.</p><button id=imprimir-resumen class=sec>Imprimir resumen</button></div>`;
  $('#imprimir-resumen').onclick=()=>window.print();
 }
 async function tBanco(uid){
@@ -234,16 +236,15 @@ async function tEvaluaciones(uid){
 }
 
 async function tRes(uid){
- const [base,rapidos,est,est8,ej]=await Promise.all([
+ const [base,rapidos,est,ej]=await Promise.all([
   sb.from('cia_intentos').select('id,estudiante_id,ejercicio_id,nota,creado_en,revision_pendiente').eq('docente_id',uid).order('creado_en',{ascending:false}),
   sb.from('cia8_intentos').select('id,estudiante_id,tipo,nota,creado_en,enviado_en').eq('docente_id',uid).not('enviado_en','is',null).order('creado_en',{ascending:false}),
   sb.from('cia_estudiantes').select('id,nombres,cedula,grado,seccion').eq('docente_id',uid),
-  sb.from('cia8_estudiantes').select('id,nombres,cedula,grado,seccion').eq('docente_id',uid),
   sb.from('cia_ejercicios').select('id,titulo,max_nota').eq('docente_id',uid)
  ]);
- const error=base.error||rapidos.error||est.error||est8.error||ej.error;
+ const error=base.error||rapidos.error||est.error||ej.error;
  if(error){$('#v').innerHTML=`<div class=card><h2>Resultados</h2>${avisoError(error)}<p>Compruebe los permisos de lectura de los intentos de práctica.</p></div>`;return;}
- const alumnos=new Map([...(est.data||[]),...(est8.data||[])].map(a=>[a.id,a]));
+ const alumnos=new Map((est.data||[]).map(a=>[a.id,a]));
  const ejercicios=new Map((ej.data||[]).map(e=>[e.id,e]));
  const filas=[];
  for(const r of base.data||[]){const a=alumnos.get(r.estudiante_id)||{},e=ejercicios.get(r.ejercicio_id)||{};
