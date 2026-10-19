@@ -100,7 +100,7 @@ $('generarIA').onclick=async()=>{
    if(!crudas.length)break;
   }
   renderIA();
-  setEstadoIA(`Gemini devolvió ${recibidas} preguntas en ${rondas} lote(s); ${preguntasIA.length} de ${objetivo} compatibles para revisar. ${rechazos.length?'Se descartaron '+rechazos.length+' → '+Object.entries(rechazos.reduce((a,r)=>{const k=r.replace(/: .*/,'').slice(0,80);a[k]=(a[k]||0)+1;return a},{})).map(([k,v])=>k+' ('+v+')').join('; ')+'. ':''}No se guardó ninguna automáticamente.${preguntasIA.length<objetivo?' Puede intentar otra generación para completar las faltantes.':''}`);
+  setEstadoIA(`Gemini devolvió ${recibidas} preguntas en ${rondas} lote(s); ${preguntasIA.length} de ${objetivo} compatibles para revisar. ${rechazos.length?'Se descartaron '+rechazos.length+' → '+Object.entries(rechazos.reduce((a,r)=>{const k=r.slice(0,90);a[k]=(a[k]||0)+1;return a},{})).map(([k,v])=>k+' ('+v+')').join('; ')+'. ':''}No se guardó ninguna automáticamente.${preguntasIA.length<objetivo?' Puede intentar otra generación para completar las faltantes.':''}`);
  }catch(e){setEstadoIA('Error: '+e.message)}finally{btn.disabled=false}
 };
 </script><script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script></html>
