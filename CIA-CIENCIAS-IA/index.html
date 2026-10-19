@@ -856,7 +856,7 @@ async function matPreguntas(c,root){
 /* ======== ENLACE 2 · ESTUDIANTE (práctica de 8 preguntas) ======== */
 const E2_DESC={detective:'Encuentra el error en cada afirmación.',quien:'Adivina el concepto a partir de las pistas.',causa:'Relaciona cada causa con su efecto.',mito:'Distingue lo que es mito de lo que es ciencia.',casos:'Aplica lo aprendido a situaciones reales.'};
 const e2PanelHTML=()=>`<h3>Evaluación 2</h3><label id=e2mw>Materia<select id=e2m><option>Cargando…</option></select></label>
- <label>Evaluación<select id=e2catalogo><option value="">Evaluación 2 (original)</option></select></label><div class=matgrid>${Object.entries(E2_TECNICAS).map(([k,n])=>`<button class=big data-e2t="${k}" disabled style="text-align:left;display:block;width:100%;margin:6px 0"><b>${esc(n)}</b><br><span style="font-weight:400;font-size:.85rem">${esc(E2_DESC[k]||'')}</span></button>`).join('')}</div>`;
+ <label>Evaluación<select id=e2catalogo><option value="">Evaluación 2 (original)</option></select></label><div class=matgrid>${Object.entries(E2_TECNICAS).map(([k,n])=>`<button class=big data-e2t="${k}" disabled style="text-align:left;display:block;width:100%;margin:6px 0"><b>${esc(n)}</b><br><span style="font-weight:400;font-size:.85rem">${esc(E2_DESC[k]||'')}</span><span class=e2-estado style="display:block;font-size:.8rem"></span></button>`).join('')}</div>`;
 async function e2Cablear(){
  const {data,error}=await sb.rpc('cia14_materias',{p_cedula:est.cedula});
  if(error){$('#m').textContent=error.message;return;}
@@ -867,7 +867,18 @@ async function e2Cablear(){
  if(catError){$('#m').textContent='No se pudo cargar el catálogo: '+catError.message;return;}
  const lista=Array.isArray(cats)?cats:[];
  $('#e2catalogo').innerHTML='<option value="">Evaluación 2 (original)</option>'+lista.map(c=>`<option value="${esc(c.id)}">${esc(c.nombre)}</option>`).join('');
- $('#e2catalogo').onchange=()=>{document.querySelectorAll('[data-e2t]').forEach(b=>{const tipo=$('#e2catalogo').value?'e2:'+$('#e2catalogo').value+':'+b.dataset.e2t:'e2:'+b.dataset.e2t;try{b.classList.toggle('practica-hecha',localStorage.getItem(claveMarca(tipo))==='1')}catch(_){}})};
+ async function actualizarEstadoE2(){
+  const cat=$('#e2catalogo').value;
+  let resumen={};
+  try {const {data,error}=await sb.rpc('cia14_resumen_catalogo',{p_cedula:est.cedula,p_catalogo:cat?Number(cat):null});if(!error && Array.isArray(data))for(const x of data)resumen[x.tecnica]=x;else if(error)console.warn('Resumen E2:',error.message);}catch(e){console.warn(e)}
+  document.querySelectorAll('[data-e2t]').forEach(b=>{
+   const x=resumen[b.dataset.e2t];const tipo=cat?'e2:'+cat+':'+b.dataset.e2t:'e2:'+b.dataset.e2t;
+   let local=false;try{local=localStorage.getItem(claveMarca(tipo))==='1'}catch(_){}
+   b.classList.toggle('practica-hecha',Boolean(x)||local);
+   const t=b.querySelector('.e2-estado');if(t)t.textContent=x?' ✓ Realizado · Mejor nota: '+Number(x.mejor_nota).toFixed(2):local?' ✓ Realizado en este dispositivo':'';
+  });
+ }
+ $('#e2catalogo').onchange=actualizarEstadoE2;
  pintarRealizados();$('#e2catalogo').onchange();if(unicas.length===1)$('#e2mw').style.display='none';
  document.querySelectorAll('[data-e2t]').forEach(b=>{b.disabled=false;b.onclick=()=>iniciarE2(b.dataset.e2t);});
 }
@@ -892,7 +903,6 @@ async function iniciarE2(tec){
    $('#e2env').disabled=true;
    const {data:r,error:ee}=await sb.rpc('cia14_enviar',{p_cedula:est.cedula,p_intento:intento,p_respuestas:resp});
    if(ee){$('#m').textContent=ee.message;$('#e2env').disabled=false;return;}
-   // La marca de catálogo es local hasta que el servidor permita verificar cada envío por catálogo.
    if(catalogo){marcarRealizado('e2:'+catalogo+':'+tec);}else{marcarRealizado('e2:'+tec);await registrarRealizadoServidor('e2:'+tec);}
    draw(`<div class=card><h2>Resultado guardado</h2><p>Correctas: <b>${esc(r.aciertos)}</b> de <b>${esc(r.total)}</b></p><h3>Nota de práctica: ${esc(r.nota)} / 5.00</h3><p class=s>Esta calificación no corresponde a una evaluación oficial.</p><button id=e2otra>Hacer otra práctica</button><button class=sec id=e2menu>Volver al menú</button></div>`);
    $('#e2otra').onclick=()=>menu();$('#e2menu').onclick=()=>menu();
