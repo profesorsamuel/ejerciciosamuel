@@ -14,9 +14,10 @@ input,select,textarea{width:100%;padding:11px;border:1px solid #9fb09c;border-ra
 table{width:100%;border-collapse:collapse;font-size:.9rem}td,th{padding:6px;border-bottom:1px solid var(--linea);text-align:left}
 .tabs button.on{background:var(--ink)}.err{color:var(--mal);font-weight:600}.row{display:flex;gap:8px;align-items:center;justify-content:space-between}.s{font-size:.9rem;color:#4a625f}.wrap{overflow-x:auto}.editor-fondo{position:fixed;inset:0;background:#0009;display:flex;align-items:center;justify-content:center;padding:12px;z-index:1000}.editor-caja{width:min(680px,100%);max-height:94vh;overflow:auto;background:white;border-radius:12px;padding:22px;box-shadow:0 12px 40px #0004}.editor-caja label{display:block;font-weight:600;margin-top:8px}.editor-caja textarea{min-height:80px}.editor-acciones{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}.editor-caja .err{min-height:1em}
 .resumen-banco{display:grid;grid-template-columns:repeat(auto-fit,minmax(115px,1fr));gap:10px;margin:12px 0}.resumen-banco>div{padding:12px;background:#edf5ef;border-radius:10px;text-align:center}.resumen-banco b{display:block;font-size:1.7rem}.resumen-banco span{font-size:.85rem}
+.e2 input[type=checkbox]{width:auto;margin:0 6px 0 0}.e2 fieldset{padding:8px 12px}.e2-item{background:#f7faf8}.e2-lote{background:#0f5a3e}table.e2cob{border-collapse:collapse;width:100%;font-size:.9rem;margin:4px 0}table.e2cob th,table.e2cob td{border:1px solid var(--linea);padding:7px;text-align:center}table.e2cob td:first-child,table.e2cob th:first-child{text-align:left}table.e2cob th{background:#eef5f1}table.e2cob th.e2sel{background:#cfe6da}.e2ok{color:var(--ok);font-weight:600}.e2falta{color:#a15a00}.tabs{display:flex;flex-wrap:wrap}header h1{cursor:pointer}
 @media print{header,.tabs,button,input,select,.editor-fondo{display:none!important}body{background:#fff;color:#111}main{max-width:none;padding:0}.card{break-inside:avoid;border:0;padding:8px;margin:5px 0}table{font-size:11px}tr{break-inside:avoid}}
 </style></head><body>
-<header><h1>CIA · Ciencias IA</h1><p>C.E.B.G. El Jiral · Ciencias Naturales</p></header><main id="app"></main>
+<header><h1 onclick="location.hash='';location.reload()" title="Ir al inicio">CIA · Ciencias IA</h1><p>C.E.B.G. El Jiral · Ciencias Naturales</p></header><main id="app"></main>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <script type="module">
@@ -43,12 +44,12 @@ $('#go').onclick=async()=>{const c=$('#c').value.trim();if(!c)return $('#m').tex
  try{const {data,error}=await sb.rpc('cia_ingresar_cedula',{p_cedula:c});if(error){$('#m').textContent=error.code==='PGRST202'?'Primero ejecute cia_acceso_solo_cedula.sql en Supabase.':error.message;return;}
  if(!data||!data.id){$('#m').textContent='No se encontró una cédula única en la matrícula. Consulte al profesor.';return;}
  est={...data,cedula:c,nombreVerificacion:data.nombres};menu();}finally{boton.disabled=false;}};}
-async function menu(){draw(`<div class=card><h2>Hola, ${esc(est.nombres)}</h2><p>Elige un ejercicio. Cada intento trae 8 preguntas distintas. Responde todas antes de enviar.</p>${Object.entries(TIPOS).map(([k,v])=>`<button class=big data-t=${k}>${v}</button>`).join('')}<p class=err id=m></p><button class=sec id=s>Salir</button></div>`);
+async function menu(){draw(`<div class=card><h2>Hola, ${esc(est.nombres)}</h2><p>Elige un ejercicio. Cada intento trae 8 preguntas distintas. Responde todas antes de enviar.</p>${Object.entries(TIPOS).map(([k,v])=>`<button class=big data-t=${k}>${v}</button>`).join('')}<h3>Técnicas Enlace 2</h3><p class=s>Detective de errores, ¿Quién soy?, Causa y efecto, Mito o ciencia y Casos prácticos.</p><button class="big sec" id=e2p>Practicar técnicas Enlace 2</button><p class=err id=m></p><button class=sec id=s>Salir</button></div>`);
 const contenedor=document.createElement('div');contenedor.className='card';contenedor.innerHTML='<h2>Evaluaciones asignadas</h2><p id=ev-est-msg>Buscando evaluaciones vigentes…</p><div id=ev-est-list></div><button class=sec id=ev-est-recargar>Actualizar evaluaciones</button>';app.append(contenedor);
  const historial=document.createElement('div');historial.className='card';historial.innerHTML='<h2>Mi historial de evaluaciones</h2><p id=hist-estado>Consultando intentos…</p><div class=wrap id=hist-tabla></div><button class=sec id=hist-actualizar>Actualizar historial</button>';app.append(historial);
  const cargarHistorial=async()=>{const {data,error}=await sb.rpc('cia_eval_historial',{p_est:est.id,p_cedula:est.cedula,p_nombre:est.nombreVerificacion});const estado=$('#hist-estado'),tabla=$('#hist-tabla');if(!estado||!tabla)return;if(error){estado.textContent='Historial no disponible: '+error.message;return;}const filas=data||[];estado.textContent=filas.length?`${filas.length} intento(s) registrado(s). La mejor nota se calcula por evaluación y día.`:'Aún no hay intentos registrados.';tabla.innerHTML=filas.length?`<table><tr><th>Evaluación</th><th>Fecha</th><th>Estado</th><th>Nota</th><th>Mejor del día</th></tr>${filas.map(x=>`<tr><td>${esc(x.titulo)}</td><td>${esc(new Date(x.inicio).toLocaleString('es-PA'))}</td><td>${x.enviado_en?'Entregado':'Pendiente'}</td><td>${x.nota_5==null?'—':Number(x.nota_5).toFixed(2)}</td><td>${x.mejor_dia==null?'—':Number(x.mejor_dia).toFixed(2)}</td></tr>`).join('')}</table>`:'';};$('#hist-actualizar').onclick=cargarHistorial;await cargarHistorial();
  const cargarEvaluaciones=async()=>{const {data,error}=await sb.rpc('cia_eval_listar',{p_est:est.id,p_cedula:est.cedula,p_nombre:est.nombreVerificacion});const msg=$('#ev-est-msg'),lista=$('#ev-est-list');if(!msg||!lista)return;if(error){msg.textContent='No se pudieron consultar evaluaciones: '+error.message;return;}const a=data||[];msg.textContent=a.length?`${a.length} evaluación(es) disponible(s) o pendiente(s).`:'No hay evaluaciones activas para tu salón en este momento.';lista.innerHTML=a.map(v=>`<div class=card><b>${esc(v.titulo)}</b><p>${esc(v.estado)} · ${v.duracion_min} minutos · ${v.preguntas} preguntas</p><button data-ev-iniciar="${esc(v.id)}" ${v.estado!=='Disponible'?'disabled':''}>Iniciar evaluación</button></div>`).join('');lista.querySelectorAll('[data-ev-iniciar]').forEach(b=>b.onclick=async()=>{b.disabled=true;const {data:r,error:er}=await sb.rpc('cia_eval_iniciar',{p_est:est.id,p_cedula:est.cedula,p_nombre:est.nombreVerificacion,p_eval:b.dataset.evIniciar});if(er){alert(er.message);b.disabled=false;return;}quizEvaluacion(r);});};$('#ev-est-recargar').onclick=cargarEvaluaciones;await cargarEvaluaciones();
- app.querySelectorAll('[data-t]').forEach(b=>b.onclick=async()=>{const {data,error}=await sb.rpc('cia_iniciar',{p_est:est.id,p_tipo:b.dataset.t});if(error)return $('#m').textContent=error.message;quiz(data);});$('#s').onclick=()=>{est=null;inicio();};}
+ app.querySelectorAll('[data-t]').forEach(b=>b.onclick=async()=>{const {data,error}=await sb.rpc('cia_iniciar',{p_est:est.id,p_tipo:b.dataset.t});if(error)return $('#m').textContent=error.message;quiz(data);});$('#e2p').onclick=practicaE2;$('#s').onclick=()=>{est=null;inicio();};}
 // Mezcla Fisher-Yates: se aplica una sola vez por intento, nunca al volver atrás.
 function mezclarOpciones(valores){const a=[...valores];for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
 function quiz(d){
@@ -97,9 +98,9 @@ async function panel(){
   draw(`<div class=card><h2>No se pudo verificar el acceso docente</h2><p class=err>${detalle}</p><p class=s>Cuenta: ${esc(user.email||'sin correo')} · ID: ${esc(user.id)}</p><button id=x class=sec>Salir</button></div>`);
   $('#x').onclick=async()=>{await sb.auth.signOut();inicio();};return;
  }
- draw(`<div class="card tabs"><button data-p=informe>Resumen</button><button data-p=banco>Banco de preguntas</button><button data-p=est>Estudiantes</button><button data-p=eval>Evaluaciones</button><button data-p=res>Resultados</button><button class=sec id=x>Salir</button></div><div id=v></div>`);
- app.querySelectorAll('[data-p]').forEach(b=>b.onclick=()=>{app.querySelectorAll('[data-p]').forEach(o=>o.classList.toggle('on',o==b));({informe:tInforme,banco:tBanco,est:tEst,eval:tEvaluaciones,res:tRes})[b.dataset.p](user.id);});
- $('#x').onclick=async()=>{await sb.auth.signOut();inicio();};app.querySelector('[data-p=informe]').click();}
+ draw(`<div class="card tabs"><button data-p=informe>Resumen</button><button data-p=banco>Banco de preguntas</button><button data-p=e2>Técnicas Enlace 2</button><button data-p=mat>Materias</button><button data-p=est>Estudiantes</button><button data-p=eval>Evaluaciones</button><button data-p=res>Resultados</button><button class=sec id=x>Salir</button></div><div id=v></div>`);
+ app.querySelectorAll('[data-p]').forEach(b=>b.onclick=()=>{app.querySelectorAll('[data-p]').forEach(o=>o.classList.toggle('on',o==b));history.replaceState(null,'','#docente/'+b.dataset.p);({informe:tInforme,banco:tBanco,e2:tE2,mat:tMaterias,est:tEst,eval:tEvaluaciones,res:tRes})[b.dataset.p](user.id);});
+ $('#x').onclick=async()=>{await sb.auth.signOut();inicio();};const ini=(location.hash.match(/^#docente\/(\w+)/)||[])[1];(app.querySelector(`[data-p="${ini}"]`)||app.querySelector('[data-p=informe]')).click();}
 
 let texto='';
 const clavePregunta=s=>String(s||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]/g,'');
@@ -320,5 +321,272 @@ async function tRes(uid){
  $('#imprimir-resultados').onclick=()=>window.print();
 }
 
-inicio();
+/* ======== ENLACE 2 · DOCENTE (banco de técnicas con Gemini) ======== */
+const E2_TECNICAS={detective:'Detective de errores',quien:'¿Quién soy?',causa:'Causa y efecto',mito:'Mito o ciencia',casos:'Casos prácticos'};
+const E2_META=8,E2_GRADOS=['7','8','9','10','11','12'];
+const e2Sin=s=>String(s??'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().trim();
+const e2Clave=s=>e2Sin(s).replace(/[^a-z0-9]+/g,' ').trim();
+
+function e2Normalizar(p){
+ if(!p||typeof p!=='object')return{error:'Registro vacío o inválido'};
+ const clave=e2Sin(p.tipo??p.tecnica??p.tipo_pregunta).replace(/[^a-z0-9]+/g,'_');
+ const mapa={detective:'detective',detective_de_errores:'detective',error:'detective',quien:'quien',quien_soy:'quien',quien_soy_:'quien',causa:'causa',causa_efecto:'causa',causa_y_efecto:'causa',mito:'mito',mito_o_ciencia:'mito',caso:'casos',casos:'casos',casos_practicos:'casos',caso_practico:'casos'};
+ const tipo=mapa[clave];if(!tipo)return{error:'Técnica no reconocida: '+String(p.tipo??p.tecnica??'sin tipo')};
+ const pregunta=String(p.pregunta??p.enunciado??'').trim();if(!pregunta)return{error:'Enunciado vacío'};
+ const fuente=p.opciones??p.alternativas??[];
+ let opciones=Array.isArray(fuente)?fuente.map(x=>typeof x==='string'?x:String(x?.texto??x?.valor??'')).map(x=>x.trim()).filter(Boolean):[];
+ let respuesta=String(p.respuesta??p.respuesta_correcta??p.correcta??'').trim();
+ if(/^[A-D]$/i.test(respuesta)&&opciones.length>=respuesta.toUpperCase().charCodeAt(0)-64)respuesta=opciones[respuesta.toUpperCase().charCodeAt(0)-65];
+ const igual=(a,b)=>e2Sin(a).replace(/\s+/g,' ')===e2Sin(b).replace(/\s+/g,' ');
+ const existente=opciones.find(x=>igual(x,respuesta));if(existente)respuesta=existente;
+ if(!respuesta)return{error:'Sin respuesta correcta'};
+ if(!opciones.some(x=>igual(x,respuesta)))opciones.unshift(respuesta);
+ opciones=opciones.filter((x,i)=>opciones.findIndex(y=>igual(x,y))===i);
+ if(opciones.length<3)return{error:'Menos de tres alternativas distintas'};
+ opciones=[respuesta,...opciones.filter(x=>!igual(x,respuesta)).slice(0,2)];
+ for(let i=opciones.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[opciones[i],opciones[j]]=[opciones[j],opciones[i]]}
+ return{tipo,pregunta,opciones,respuesta,explicacion:String(p.explicacion??p.justificacion??'').trim(),guardada:false};
+}
+
+async function tE2(uid){
+ const v=$('#v');
+ v.innerHTML='<div class=card><h2>Técnicas Enlace 2</h2><p>Cargando materias…</p></div>';
+ const {data:mats,error:me}=await sb.from('cia_materias').select('id,nombre').eq('docente_id',uid).order('nombre');
+ if(me){v.innerHTML=`<div class=card>${avisoError(me)}</div>`;return;}
+ if(!(mats||[]).length){
+  v.innerHTML='<div class=card><h2>Técnicas Enlace 2</h2><p>Primero cree al menos una materia en la pestaña <b>Materias</b>.</p><button id=e2-irmat>Ir a Materias</button></div>';
+  $('#e2-irmat').onclick=()=>app.querySelector('[data-p=mat]').click();return;
+ }
+ const tipos=Object.keys(E2_TECNICAS);
+ const g=id=>document.getElementById('e2-'+id);
+ v.innerHTML=`
+<div class="card e2"><h2>Técnicas Enlace 2 · Banco</h2>
+<p class=s>Cree ocho o más preguntas por materia, grado y técnica. Las preguntas generadas con Gemini se revisan antes de guardarse; nada se publica automáticamente.</p>
+<label>Materia<select id=e2-materia>${mats.map(m=>`<option value="${esc(m.id)}">${esc(m.nombre)}</option>`).join('')}</select></label>
+<label>Grado<select id=e2-grado>${E2_GRADOS.map(x=>`<option value="${x}">${x}.º</option>`).join('')}</select></label></div>
+
+<div class="card e2"><h3>Generar desde PDF con Gemini</h3>
+<label>PDF de la clase<input id=e2-pdf type=file accept="application/pdf"></label>
+<label>Tema del PDF<input id=e2-tema placeholder="Ej. La célula animal y vegetal"></label>
+<label>Cantidad<select id=e2-cant><option>10</option><option>20</option><option selected>40</option><option>60</option><option>80</option></select></label>
+<p class=s>Con 5 técnicas, 40 preguntas dan 8 por técnica (la meta del banco).</p>
+<fieldset style="border:1px solid var(--linea);border-radius:8px;margin:8px 0"><legend>Técnicas</legend>${tipos.map(t=>`<label style="display:inline-flex;align-items:center;margin:4px 14px 4px 0"><input type=checkbox class=e2-tec value="${t}" checked> ${esc(E2_TECNICAS[t])}</label>`).join('')}</fieldset>
+<button id=e2-gen>Generar y revisar preguntas</button>
+<p id=e2-estado class=s role=status></p><p id=e2-destino class=s></p>
+<button id=e2-lote1 class=e2-lote style="display:none"></button>
+<div id=e2-rev></div>
+<button id=e2-lote2 class=e2-lote style="display:none"></button></div>
+
+<div class="card e2"><h3>Cobertura del banco</h3>
+<p class=s>Cuántas preguntas <b>guardadas y activas</b> tiene cada técnica por grado. La meta es <b>${E2_META} por técnica y grado</b>, lo que necesita el estudiante para practicar. Verde ✓ = completo; naranja = faltan.</p>
+<label style="display:flex;gap:8px;align-items:center"><input type=checkbox id=e2-todas> Ver todas mis materias</label>
+<button class=sec id=e2-cobbtn>Actualizar cobertura</button>
+<div class=wrap id=e2-cob></div></div>
+
+<div class="card e2"><h3>Preguntas guardadas</h3>
+<label>Técnica<select id=e2-ftec><option value="">Todas</option>${tipos.map(t=>`<option value="${t}">${esc(E2_TECNICAS[t])}</option>`).join('')}</select></label>
+<button class=sec id=e2-listar>Ver preguntas de esta materia y grado</button>
+<div id=e2-lista></div></div>
+
+<div class="card e2"><details><summary><b>Crear una pregunta manualmente</b></summary>
+<label>Técnica<select id=e2-mtec>${tipos.map(t=>`<option value="${t}">${esc(E2_TECNICAS[t])}</option>`).join('')}</select></label>
+<label>Enunciado<textarea id=e2-menun rows=3></textarea></label>
+<label>Alternativa A<input id=e2-ma></label><label>Alternativa B<input id=e2-mb></label><label>Alternativa C<input id=e2-mc></label>
+<label>Respuesta correcta<select id=e2-mcor><option value=a>A</option><option value=b>B</option><option value=c>C</option></select></label>
+<label>Explicación<textarea id=e2-mexp rows=2></textarea></label>
+<button id=e2-mguardar>Guardar pregunta</button><p id=e2-mmsg class=s role=status></p></details></div>`;
+
+ let pregs=[],ctx=null;
+ const setEstado=t=>{g('estado').textContent=t};
+ const pendientes=()=>pregs.filter(x=>!x.guardada);
+
+ /* --- guardado compartido --- */
+ const guardarPregunta=async(c,tipo,preg,vals,correcta,exp)=>{
+  if(!c?.materia)throw Error('Seleccione materia');
+  if(!preg||vals.some(x=>!x)||new Set(vals).size!==3)throw Error('Complete el enunciado y tres alternativas diferentes');
+  if(!vals.includes(correcta))throw Error('La respuesta correcta debe ser una de las alternativas');
+  const {data:ex,error:er}=await sb.from('cia14_preguntas').select('id').eq('docente_id',uid).eq('materia_id',c.materia).eq('grado',c.grado).eq('tecnica',tipo).eq('enunciado',preg).limit(1);
+  if(er)throw er;if(ex?.length)throw Error('Esta pregunta ya está registrada en el banco');
+  const {error}=await sb.from('cia14_preguntas').insert({docente_id:uid,materia_id:c.materia,grado:c.grado,tecnica:tipo,enunciado:preg,opciones:vals,correcta,explicacion:exp,activa:true});
+  if(error)throw error;
+ };
+
+ /* --- cobertura --- */
+ const cobertura=async()=>{
+  try{
+   const {data,error}=await sb.from('cia14_preguntas').select('materia_id,grado,tecnica,activa').eq('docente_id',uid).limit(5000);
+   if(error)throw error;
+   const sel=String(g('grado').value);
+   const lista=g('todas').checked?mats:mats.filter(m=>String(m.id)===String(g('materia').value));
+   g('cob').innerHTML=lista.map(m=>{
+    let faltan=0;
+    const filas=tipos.map(t=>`<tr><td>${esc(E2_TECNICAS[t])}</td>${E2_GRADOS.map(gr=>{
+     const n=(data||[]).filter(x=>String(x.materia_id)===String(m.id)&&String(x.grado)===gr&&x.tecnica===t&&x.activa!==false).length;
+     faltan+=Math.max(0,E2_META-n);
+     return `<td class="${n>=E2_META?'e2ok':'e2falta'}">${n}/${E2_META}${n>=E2_META?' ✓':''}</td>`}).join('')}</tr>`).join('');
+    const cab=E2_GRADOS.map(gr=>`<th class="${gr===sel?'e2sel':''}">${gr}.º</th>`).join('');
+    const estado=faltan===0?'<span class=e2ok>Banco completo ✓</span>':`<span class=e2falta>Faltan ${faltan} preguntas para completar esta materia (meta ${E2_META} por técnica y grado)</span>`;
+    return `<h4>${esc(m.nombre)}</h4><table class=e2cob><thead><tr><th>Técnica</th>${cab}</tr></thead><tbody>${filas}</tbody></table><p><b>${estado}</b></p>`;
+   }).join('');
+  }catch(e){g('cob').textContent=e.message}
+ };
+ g('cobbtn').onclick=cobertura;g('todas').onchange=cobertura;g('materia').onchange=()=>{cobertura();g('lista').innerHTML=''};g('grado').onchange=()=>{cobertura();g('lista').innerHTML=''};
+
+ /* --- listado y eliminación --- */
+ g('listar').onclick=async()=>{
+  const cont=g('lista');cont.textContent='Consultando…';
+  let q=sb.from('cia14_preguntas').select('id,enunciado,tecnica,correcta,activa').eq('docente_id',uid).eq('materia_id',g('materia').value).eq('grado',g('grado').value).order('creado_en',{ascending:false}).limit(200);
+  if(g('ftec').value)q=q.eq('tecnica',g('ftec').value);
+  const {data,error}=await q;
+  if(error){cont.innerHTML=avisoError(error);return;}
+  cont.innerHTML=(data||[]).length?`<p class=s>${data.length} pregunta(s) mostradas (máximo 200).</p>`+data.map(x=>`<div class=card data-e2q="${esc(x.id)}"><b>${esc(E2_TECNICAS[x.tecnica]||x.tecnica)}</b><p>${esc(x.enunciado)}</p><p class=s>Correcta: ${esc(x.correcta)}</p><button class=sec data-e2del="${esc(x.id)}">Eliminar</button></div>`).join(''):'<p class=s>No hay preguntas con estos filtros.</p>';
+  cont.querySelectorAll('[data-e2del]').forEach(b=>b.onclick=async()=>{
+   const fila=data.find(x=>String(x.id)===b.dataset.e2del);
+   if(!confirm(`¿Eliminar definitivamente esta pregunta?\n\n${fila?.enunciado||''}\n\nNo se puede deshacer.`))return;
+   b.disabled=true;
+   const {data:d,error:er}=await sb.from('cia14_preguntas').delete().eq('id',b.dataset.e2del).eq('docente_id',uid).select('id');
+   if(er||!d?.length){alert('No se pudo eliminar: '+(er?.message||'sin permiso. Revise las políticas (RLS) de delete en cia14_preguntas.'));b.disabled=false;return;}
+   cont.querySelector(`[data-e2q="${CSS.escape(b.dataset.e2del)}"]`)?.remove();cobertura();
+  });
+ };
+
+ /* --- pregunta manual --- */
+ g('mguardar').onclick=async()=>{try{
+  const vals=['a','b','c'].map(x=>g('m'+x).value.trim());
+  await guardarPregunta({materia:g('materia').value,grado:g('grado').value},g('mtec').value,g('menun').value.trim(),vals,vals[['a','b','c'].indexOf(g('mcor').value)],g('mexp').value.trim());
+  g('mmsg').textContent='Pregunta guardada';g('menun').value='';['a','b','c'].forEach(x=>g('m'+x).value='');g('mexp').value='';cobertura();
+ }catch(e){g('mmsg').textContent=e.message}};
+
+ /* --- revisión de preguntas generadas --- */
+ const refrescarLote=()=>{const n=pendientes().length;for(const id of ['lote1','lote2']){g(id).style.display=n?'inline-block':'none';g(id).textContent=`Aprobar y guardar todas las pendientes (${n})`}};
+ const render=()=>{
+  const root=g('rev');root.innerHTML='';
+  pregs.forEach((p,i)=>{
+   if(p.guardada)return;
+   const div=document.createElement('div');div.className='card e2-item';
+   const tit=document.createElement('b');tit.textContent=`Pregunta ${i+1} · ${E2_TECNICAS[p.tipo]}`;div.append(tit);
+   const en=document.createElement('textarea');en.value=p.pregunta;en.rows=3;en.setAttribute('aria-label','Enunciado');div.append(en);
+   const ops=[];for(let j=0;j<3;j++){const inp=document.createElement('input');inp.value=p.opciones[j]||'';inp.setAttribute('aria-label','Alternativa '+(j+1));ops.push(inp);div.append(inp)}
+   const sel=document.createElement('select');ops.forEach((_,j)=>{const o=document.createElement('option');o.value=String(j);o.textContent='Respuesta correcta: '+String.fromCharCode(65+j);sel.append(o)});
+   sel.value=String(Math.max(0,p.opciones.indexOf(p.respuesta)));div.append(sel);
+   const exp=document.createElement('textarea');exp.value=p.explicacion||'';exp.rows=2;exp.setAttribute('aria-label','Explicación');div.append(exp);
+   const err=document.createElement('p');err.className='err';div.append(err);
+   p.guardar=async()=>{err.textContent='';div.style.borderColor='';
+    try{const vals=ops.map(x=>x.value.trim());await guardarPregunta(ctx,p.tipo,en.value.trim(),vals,vals[Number(sel.value)],exp.value.trim());p.guardada=true;div.remove();return true}
+    catch(e){err.textContent=e.message;div.style.borderColor='var(--mal)';return false}};
+   const b1=document.createElement('button');b1.textContent='Aprobar y guardar';
+   b1.onclick=async()=>{b1.disabled=true;const ok=await p.guardar();b1.disabled=false;if(ok){setEstado('Pregunta guardada. Pendientes: '+pendientes().length);refrescarLote();cobertura()}};
+   const b2=document.createElement('button');b2.className='sec';b2.textContent='Descartar';b2.onclick=()=>{p.guardada=true;div.remove();refrescarLote()};
+   div.append(b1,b2);root.append(div);
+  });
+  refrescarLote();
+ };
+ const aprobarTodas=async()=>{
+  const lista=pendientes();if(!lista.length)return;
+  if(!confirm(`¿Guardar las ${lista.length} preguntas pendientes? Revise antes que las respuestas correctas sean las adecuadas.`))return;
+  const btns=[g('lote1'),g('lote2')];btns.forEach(b=>b.disabled=true);let ok=0,fallos=0;
+  try{for(const p of lista){if(!p.guardar)continue;(await p.guardar())?ok++:fallos++}
+   setEstado(`Lote terminado: ${ok} guardadas; ${fallos} requieren revisión (marcadas en rojo).`);refrescarLote();cobertura();
+  }finally{btns.forEach(b=>b.disabled=false)}
+ };
+ g('lote1').onclick=aprobarTodas;g('lote2').onclick=aprobarTodas;
+
+ /* --- generación con Gemini --- */
+ const invocar=async body=>{
+  const {data,error}=await sb.functions.invoke('cia-generar',{body});
+  if(error){let msg=error.message;try{const j=await error.context.json();if(j?.error)msg=j.error}catch{}throw Error(msg)}
+  if(data?.error)throw Error(data.error);return data;
+ };
+ g('gen').onclick=async()=>{
+  const btn=g('gen');btn.disabled=true;
+  try{
+   if(!g('materia').value)throw Error('Seleccione materia');
+   const f=g('pdf').files[0];
+   if(!f||f.type!=='application/pdf')throw Error('Seleccione un archivo PDF');
+   if(f.size>10*1024*1024)throw Error('El PDF supera 10 MB');
+   const tec=[...document.querySelectorAll('.e2-tec:checked')].map(x=>x.value);
+   if(!tec.length)throw Error('Seleccione una técnica');
+   if(pendientes().length&&!confirm('Hay preguntas pendientes sin guardar. Si genera de nuevo se perderán. ¿Continuar?'))return;
+   if(!window.pdfjsLib)throw Error('No se cargó el lector de PDF');
+   setEstado('Leyendo PDF...');
+   pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+   const doc=await pdfjsLib.getDocument({data:await f.arrayBuffer()}).promise;
+   const paginas=[];for(let n=1;n<=doc.numPages;n++){const c=await(await doc.getPage(n)).getTextContent();paginas.push(c.items.map(x=>x.str).join(' '))}
+   const textoPdf=paginas.join('\n').slice(0,45000);
+   if(textoPdf.trim().length<150)throw Error('PDF sin texto suficiente; los PDF escaneados requieren OCR');
+   ctx={materia:g('materia').value,grado:g('grado').value,nombre:g('materia').selectedOptions[0]?.textContent||''};
+   g('destino').textContent=`Se guardarán en: ${ctx.nombre} · grado ${ctx.grado}.º`;
+   const {data:previas,error:pe}=await sb.from('cia14_preguntas').select('enunciado').eq('docente_id',uid).eq('materia_id',ctx.materia).eq('grado',ctx.grado).in('tecnica',tec).limit(500);
+   if(pe)throw pe;
+   const enBanco=new Set((previas||[]).map(x=>e2Clave(x.enunciado)));
+   const evitar=(previas||[]).slice(-30).map(x=>x.enunciado);
+   const objetivo=Number(g('cant').value);
+   const vistos=new Set(),rechazos=[];let recibidas=0,rondas=0;pregs=[];
+   while(pregs.length<objetivo&&rondas<4){
+    rondas++;
+    const cantidadLote=Math.min(20,Math.max(5,objetivo-pregs.length));
+    setEstado(`Generando lote ${rondas} de 4 · ${pregs.length} de ${objetivo} preguntas válidas...`);
+    let data;
+    try{data=await invocar({texto:textoPdf,materia:ctx.nombre,tema:g('tema').value.trim()||f.name,grado:ctx.grado,cantidad:cantidadLote,tecnicas:tec,evitar:[...evitar,...pregs.slice(-30).map(x=>x.pregunta)].slice(-40)})}
+    catch(e){if(!pregs.length)throw e;rechazos.push('Lote '+rondas+' falló: '+e.message);break}
+    const crudas=Array.isArray(data?.preguntas)?data.preguntas:[];recibidas+=crudas.length;
+    if(data?.crudas>crudas.length)rechazos.push('El servidor descartó '+(data.crudas-crudas.length)+' (formato)');
+    for(const raw of crudas){
+     const p=e2Normalizar(raw);
+     if(p.error){rechazos.push(p.error);continue}
+     if(!tec.includes(p.tipo)){rechazos.push('Técnica no solicitada: '+p.tipo);continue}
+     const k=e2Clave(p.pregunta);
+     if(enBanco.has(k)){rechazos.push('Ya estaba en el banco');continue}
+     if(vistos.has(k)){rechazos.push('Pregunta repetida');continue}
+     vistos.add(k);pregs.push(p);if(pregs.length===objetivo)break;
+    }
+    if(!crudas.length)break;
+   }
+   render();
+   const resumen=Object.entries(rechazos.reduce((a,r)=>{const k=r.slice(0,90);a[k]=(a[k]||0)+1;return a},{})).map(([k,x])=>k+' ('+x+')').join('; ');
+   setEstado(`Gemini devolvió ${recibidas} preguntas en ${rondas} lote(s); ${pregs.length} de ${objetivo} listas para revisar.${rechazos.length?' Descartadas '+rechazos.length+': '+resumen+'.':''} No se guardó nada automáticamente.${pregs.length<objetivo?' Puede generar de nuevo para completar las faltantes.':''}`);
+  }catch(e){setEstado('Error: '+e.message)}
+  finally{btn.disabled=false}
+ };
+ cobertura();
+}
+
+/* ======== ENLACE 2 · ESTUDIANTE (práctica de 8 preguntas) ======== */
+async function practicaE2(){
+ draw(`<div class=card><h2>Técnicas Enlace 2</h2><p class=s>Ocho preguntas aleatorias. La nota es de práctica; no es una evaluación oficial.</p>
+ <label>Materia<select id=e2m><option>Cargando…</option></select></label>
+ <label>Técnica<select id=e2t>${Object.entries(E2_TECNICAS).map(([k,n])=>`<option value="${k}">${esc(n)}</option>`).join('')}</select></label>
+ <p class=err id=m></p><button id=e2go disabled>Iniciar ocho preguntas</button><button class=sec id=e2b>Volver al menú</button></div>`);
+ $('#e2b').onclick=menu;
+ const {data,error}=await sb.rpc('cia14_materias',{p_cedula:est.cedula});
+ if(error){$('#m').textContent=error.message;return;}
+ const unicas=[...new Map((data||[]).map(x=>[x.materia_id||x.id,x])).values()].filter(x=>x.materia_id||x.id);
+ if(!unicas.length){$('#e2m').innerHTML='';$('#m').textContent='Tu salón aún no tiene materias asignadas. Consulta al profesor.';return;}
+ $('#e2m').innerHTML=unicas.map(x=>`<option value="${esc(x.materia_id||x.id)}">${esc(x.materia)}</option>`).join('');
+ $('#e2go').disabled=false;
+ $('#e2go').onclick=async()=>{
+  $('#e2go').disabled=true;
+  const {data:d,error:er}=await sb.rpc('cia14_iniciar',{p_cedula:est.cedula,p_materia:$('#e2m').value,p_tecnica:$('#e2t').value});
+  if(er){$('#m').textContent=er.message;$('#e2go').disabled=false;return;}
+  const items=d.preguntas||[],intento=d.intento,tecnicaNombre=E2_TECNICAS[$('#e2t').value];
+  draw(`<div class=card><h2>${esc(tecnicaNombre)}</h2><p class=s>Responde las ${items.length} preguntas y pulsa Enviar.</p>${items.map((q,i)=>`<div class=card><b>${i+1}. ${esc(q.enunciado)}</b>${q.opciones.map((o,j)=>`<label style="display:block;margin:8px 0"><input style="width:auto;margin:0 8px 0 0" type=radio name="q${i}" value="${j}"> ${esc(o)}</label>`).join('')}</div>`).join('')}<p class=err id=m></p><button id=e2env>Enviar respuestas</button></div>`);
+  $('#e2env').onclick=async()=>{
+   const resp={};
+   for(let i=0;i<items.length;i++){const el=document.querySelector(`input[name="q${i}"]:checked`);if(!el)return $('#m').textContent='Responde la pregunta '+(i+1);resp[items[i].id]=items[i].opciones[Number(el.value)]}
+   $('#e2env').disabled=true;
+   const {data:r,error:ee}=await sb.rpc('cia14_enviar',{p_cedula:est.cedula,p_intento:intento,p_respuestas:resp});
+   if(ee){$('#m').textContent=ee.message;$('#e2env').disabled=false;return;}
+   draw(`<div class=card><h2>Resultado guardado</h2><p>Correctas: <b>${esc(r.aciertos)}</b> de <b>${esc(r.total)}</b></p><h3>Nota de práctica: ${esc(r.nota)} / 5.00</h3><p class=s>Esta calificación no corresponde a una evaluación oficial.</p><button id=e2otra>Hacer otra práctica</button><button class=sec id=e2menu>Volver al menú</button></div>`);
+   $('#e2otra').onclick=practicaE2;$('#e2menu').onclick=menu;
+  };
+ };
+}
+
+function tMaterias(){
+ $('#v').innerHTML='<div class=card style="padding:0;overflow:hidden"><iframe src="materias/?embed=1" title="Materias, salones y clasificación de preguntas" style="width:100%;height:80vh;border:0;display:block"></iframe></div>';
+}
+
+
+const hash0=location.hash;
+if(/^#docente/.test(hash0))loginDoc();else if(/^#estudiante/.test(hash0))loginEst();else inicio();
 </script></body></html>
