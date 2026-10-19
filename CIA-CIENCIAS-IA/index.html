@@ -828,7 +828,8 @@ function matGenerar(c,root){
 <div class=opts><label class=opt><input type=radio name=gtec value=banco checked><b>Evaluación 1</b><span>Selección múltiple, verdadero o falso y completar. Se guardan en el banco de esta materia y grado.</span></label><label class=opt><input type=radio name=gtec value=e2><b>Evaluación 2</b><span>Detective de errores, ¿Quién soy?, Causa y efecto, Mito o ciencia y Casos prácticos (3 alternativas).</span></label><label class=opt><input type=radio name=gtec value=e3><b>Evaluación 3</b><span>Misión científica, predicciones, clasificación, evidencias y detección de errores aplicada.</span></label></div>
 <fieldset id=gsub style="border:1px solid var(--linea);border-radius:8px;margin:8px 0"></fieldset>
 <label>Cantidad de preguntas<select id=gc><option>10</option><option>20</option><option>40</option><option>60</option><option selected>80</option></select></label><p id=gnota class=s></p>
-<button id=gen disabled>④ Generar preguntas para revisar</button><p id=ges class=s role=status></p></div><div id=grev></div>`;
+<label style="display:flex;gap:8px;align-items:center;margin:8px 0"><input type=checkbox id=gauto checked style="width:auto"> Guardar automáticamente al terminar de generar</label>
+<button id=gen disabled>④ Generar preguntas y guardar</button><p id=ges class=s role=status></p></div><div id=grev></div>`;
  const tipoSel=()=>root.querySelector('[name=gtec]:checked').value;
  const pintarSub=()=>{const e2=tipoSel()!=='banco';$('#gsub').innerHTML=`<legend>Tipos de pregunta</legend><div class=checks>${Object.entries(tipoSel()==='e3'?E3_TECNICAS:e2?E2_TECNICAS:BANCO_TIPOS).map(([k,n])=>`<label><input type=checkbox class=gs value=${k} checked> ${esc(n)}</label>`).join('')}</div>`;$('#gc').value='80';$('#gnota').textContent=e2?'Meta de 80 preguntas: Gemini genera por lotes y permite revisar los resultados. Si faltan, vuelve a generar hasta completar el banco.':'Las preguntas se revisan antes de guardarse.';};
  const guardarTec=async v=>{const {error}=await sb.from('cia_config').upsert({docente_id:c.uid,tecnica_activa:v,actualizado_en:new Date().toISOString()},{onConflict:'docente_id'});$('#ges').textContent=error?'No se pudo guardar la técnica activa: '+error.message:'Técnica guardada. Ahora los estudiantes ven: '+(v==='e3'?'Evaluación 3':v==='e2'?'Evaluación 2':'Evaluación 1')+'.';};
@@ -859,7 +860,7 @@ function matGenerar(c,root){
  const pintar=()=>{
   const cont=$('#grev');cont.innerHTML='';
   const T=gctx.modo==='e3'?E3_TECNICAS:gctx.e2?E2_TECNICAS:BANCO_TIPOS;
-  const cab=document.createElement('div');cab.className='card';cab.innerHTML=`<b>Se guardarán en:</b> ${esc(c.mat.nombre)} · ${esc(gctx.grado)}.º · ${gctx.modo==='e3'?'Evaluación 3':gctx.e2?'Evaluación 2':'Evaluación 1'}<br><span class=s>Revisa cada pregunta (puedes editarla), luego guárdala o descártala. Nada se guarda solo.</span><br><button data-lote></button>`;cont.append(cab);
+  const cab=document.createElement('div');cab.className='card';cab.innerHTML=`<b>Se guardarán en:</b> ${esc(c.mat.nombre)} · ${esc(gctx.grado)}.º · ${gctx.modo==='e3'?'Evaluación 3':gctx.e2?'Evaluación 2':'Evaluación 1'}<br><span class=s>${$('#gauto')&&$('#gauto').checked?'Se guardan automáticamente. Las que den error quedan aquí en rojo para corregirlas.':'Revisa cada pregunta (puedes editarla), luego guárdala o descártala. Nada se guarda solo.'}</span><br><button data-lote></button>`;cont.append(cab);
   pregs.forEach((p,i)=>{
    if(p.guardada)return;
    const d=document.createElement('div');d.className='card e2-item';
@@ -911,8 +912,12 @@ function matGenerar(c,root){
     if(!crudas.length)break;
    }
    pintar();
+   let autoMsg='';
+   if($('#gauto')&&$('#gauto').checked&&pend().length){let ok=0,mal=0;const total=pend().length;
+    for(const p of pend()){if(!p.guardar)continue;st.textContent=`Guardando ${ok+mal+1} de ${total}…`;(await p.guardar())?ok++:mal++;}
+    resumenPend();autoMsg=`✅ Guardadas automáticamente: ${ok}.${mal?` ⚠️ ${mal} con error (en rojo, corrígelas y pulsa Guardar).`:''} `;}
    const res=Object.entries(rech.reduce((a,x)=>{const k=x.slice(0,80);a[k]=(a[k]||0)+1;return a;},{})).map(([k,n])=>k+' ('+n+')').join('; ');
-   st.textContent=`Gemini devolvió ${recib} preguntas en ${rondas} lote(s); ${pregs.length} de ${objetivo} listas para revisar.${rech.length?' Descartadas '+rech.length+': '+res+'.':''}${pregs.length<objetivo?' No se alcanzó la meta: revisa las preguntas y vuelve a generar otro lote. No se garantiza llegar a 80 en una sola ejecución.':''}`;
+   st.textContent=`${autoMsg}Gemini devolvió ${recib} preguntas en ${rondas} lote(s); ${pregs.length} de ${objetivo} listas para revisar.${rech.length?' Descartadas '+rech.length+': '+res+'.':''}${pregs.length<objetivo?' No se alcanzó la meta: revisa las preguntas y vuelve a generar otro lote. No se garantiza llegar a 80 en una sola ejecución.':''}`;
   }catch(err){st.textContent='Error: '+(err.message||err);}
   finally{btn.disabled=!pdfCache;}
  };
