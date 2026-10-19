@@ -657,7 +657,22 @@ async function ciaAdministrarPeriodos(uid,box){
  cont.querySelector('#cia-nuevo-rapido').onclick=()=>{limpiar();const hoy=new Date();hoy.setMinutes(hoy.getMinutes()-1);campo('modalidad').value='abierta';cambiarModalidad();campo('inicio').value=localFecha(hoy);const fin=new Date(Date.now()+7*86400000);campo('fin').value=localFecha(fin);campo('titulo').value='Práctica '+new Date().toLocaleDateString('es-PA');form.scrollIntoView({behavior:'smooth',block:'center'});campo('grado').focus();};
  cont.querySelector('#cia-recargar-periodos').onclick=()=>cargar();
  const {data:materias,error:errMat}=await sb.from('cia_materias').select('id,nombre').eq('docente_id',uid).order('nombre');
+ const materiasDisponibles=errMat?[]:(materias||[]);
  if(!errMat)campo('materia_id').innerHTML='<option value="">Todas las materias</option>'+(materias||[]).map(m=>`<option value="${esc(String(m.id))}">${esc(m.nombre)}</option>`).join('');
+ // Cobertura real del banco E3 para una materia y grado (sin modificar datos).
+ async function coberturaE3(grado,materiaId){
+  const materias=materiaId?[{id:materiaId,nombre:'Materia seleccionada'}]:(materiasDisponibles||[]);
+  if(!materias.length)throw Error('No hay materias asignadas para comprobar.');
+  const tecnicas=Object.keys(E3_TECNICAS),faltas=[];
+  for(const m of materias){
+   const {data,error}=await sb.from('cia14_preguntas').select('tecnica,grado,activa,enunciado').eq('docente_id',uid).eq('materia_id',m.id).eq('grado',String(grado)).in('tecnica',tecnicas).eq('activa',true).limit(5000);
+   if(error)throw error;
+   for(const t of tecnicas){const n=new Set((data||[]).filter(x=>x.tecnica===t).map(x=>String(x.enunciado||'').trim().toLowerCase())).size;
+    if(n<E2_META)faltas.push(`${m.nombre} · ${E3_TECNICAS[t]}: ${n}/${E2_META} (faltan ${E2_META-n})`);
+   }
+  }
+  return faltas;
+ }
  const localFecha=fecha=>{if(!fecha)return '';const d=new Date(fecha);return new Date(d.getTime()-d.getTimezoneOffset()*60000).toISOString().slice(0,16)};
  const limpiar=()=>{editando=null;form.reset();campo('activo').checked=true;campo('modalidad').value='abierta';cambiarModalidad();cont.querySelector('#cia-avanzado').open=false;const g=box.querySelector('[name=ta]:checked');if(g)campo('tecnica').value=g.value;cont.querySelector('#cia-guardar-periodo').textContent='Guardar periodo';cont.querySelector('#cia-cancelar-periodo').hidden=true;};
  async function cargar(){
@@ -698,6 +713,7 @@ async function ciaAdministrarPeriodos(uid,box){
    const mismoSalon=p=>gradoNormal(p.grado)===gradoNormal(elegido.grado)&&(esTodas(p.seccion)||esTodas(elegido.seccion)||seccionNormal(p.seccion)===seccionNormal(elegido.seccion));
    const otros=periodos.filter(p=>p.id!==elegido.id&&mismoSalon(p)&&vigente(p));
    b.disabled=true;
+   if(elegido.tecnica==='e3'){try{const faltas=await coberturaE3(elegido.grado,elegido.materia_id);if(faltas.length){msg.textContent='No se activó Evaluación 3. Completa el banco en Paso 2: '+faltas.join(' | ');b.disabled=false;return;}}catch(e){msg.textContent='No se activó: no fue posible verificar las preguntas. '+e.message;b.disabled=false;return;}}
    const dur=Math.max(new Date(elegido.fin).getTime()-new Date(elegido.inicio).getTime(),86400000);
    const cambios={activo:true};
    if(!vigente(elegido)){if(!esSinInicio(elegido))cambios.inicio=new Date(ahora-60000).toISOString();if(!esSinFin(elegido))cambios.fin=new Date(ahora+dur).toISOString();}
@@ -717,6 +733,7 @@ async function ciaAdministrarPeriodos(uid,box){
  form.onsubmit=async ev=>{ev.preventDefault();const modo=campo('modalidad').value;const inicio=modo==='abierta'?new Date(FECHA_LIBRE_INICIO):new Date(campo('inicio').value),fin=modo!=='fechas'?new Date(FECHA_LIBRE_FIN):new Date(campo('fin').value);if(!Number.isFinite(+inicio)||!Number.isFinite(+fin)||fin<=inicio){msg.textContent='El cierre debe ser posterior al inicio.';return;}
  const payload={titulo:campo('titulo').value.trim(),materia_id:campo('materia_id').value||null,tecnica:['e2','e3'].includes(campo('tecnica').value)?campo('tecnica').value:'banco',grado:campo('grado').value,seccion:campo('seccion').value||null,inicio:inicio.toISOString(),fin:fin.toISOString(),activo:campo('activo').checked};
  if(!payload.titulo||!payload.grado){msg.textContent='Indica título y grado.';return;}
+ if(payload.activo&&payload.tecnica==='e3'){try{const faltas=await coberturaE3(payload.grado,payload.materia_id);if(faltas.length){msg.textContent='Periodo no activado: '+faltas.join(' | ');return;}}catch(e){msg.textContent='No se pudo verificar el banco: '+e.message;return;}}
  const boton=cont.querySelector('#cia-guardar-periodo');boton.disabled=true;
  const consulta=editando?sb.from('cia_periodos').update(payload).eq('id',editando).eq('docente_id',uid):sb.from('cia_periodos').insert({...payload,docente_id:uid});
  const {error}=await consulta;boton.disabled=false;msg.textContent=error?'No se pudo guardar: '+error.message:'Periodo guardado correctamente.';if(!error){limpiar();await cargar();}
@@ -938,7 +955,7 @@ async function matPreguntas(c,root){
  const items=[...(e.data||[]).map(x=>({k:'e2',dia:diaDe(x.creado_en),id:x.id,grado:(String(x.grado??'').match(/\d+/)||[''])[0],tec:String(x.tecnica||'').trim().toLowerCase(),et:ETQ(x.tecnica),enun:x.enunciado,cor:x.correcta,act:x.activa!==false})),...bq.map(x=>({k:'banco',dia:diaDe(x.creado_en),id:x.id,grado:gMap.get(String(x.id))||'',tec:'banco',et:'Banco de preguntas',enun:x.enunciado,cor:x.correcta,act:true}))];
  const gr=(c.grados.length?c.grados:[...new Set(items.map(i=>i.grado).filter(Boolean))]).sort(porGrado),tipos=[...Object.keys(E2_TECNICAS),...Object.keys(E3_TECNICAS)];
  const cnt=(t,g)=>items.filter(i=>i.tec===t&&i.grado===g&&i.act).length;
- const cob=gr.length?`<div class=wrap><table class=e2cob><thead><tr><th>Técnica</th>${gr.map(g=>`<th>${g}.º</th>`).join('')}</tr></thead><tbody><tr><td>Banco de preguntas</td>${gr.map(g=>`<td>${cnt('banco',g)}</td>`).join('')}</tr>${tipos.map(t=>`<tr><td>${esc(ETQ(t))}</td>${gr.map(g=>{const n=cnt(t,g);return `<td class="${n>=E2_META?'e2ok':'e2falta'}">${n}/${E2_META}${n>=E2_META?' ✓':''}</td>`}).join('')}</tr>`).join('')}</tbody></table></div><p class=s>Técnicas Enlace 2: meta de ${E2_META} preguntas por técnica y grado. El banco no tiene meta fija.</p>`:'<p class=s>Asigna salones en el paso 1 para ver la cobertura por grado.</p>';
+ const cob=gr.length?`<div class=wrap><table class=e2cob><thead><tr><th>Técnica</th>${gr.map(g=>`<th>${g}.º</th>`).join('')}</tr></thead><tbody><tr><td>Banco de preguntas</td>${gr.map(g=>`<td>${cnt('banco',g)}</td>`).join('')}</tr>${tipos.map(t=>`<tr><td>${esc(ETQ(t))}</td>${gr.map(g=>{const n=cnt(t,g);return `<td class="${n>=E2_META?'e2ok':'e2falta'}">${n}/${E2_META}${n>=E2_META?' ✓':''}</td>`}).join('')}</tr>`).join('')}</tbody></table></div><p class=s>Evaluaciones 2 y 3: meta de ${E2_META} preguntas activas por técnica y grado. El banco no tiene meta fija.</p>`:'<p class=s>Asigna salones en el paso 1 para ver la cobertura por grado.</p>';
  const grs=[...new Set([...gr,...items.map(i=>i.grado).filter(Boolean)])].sort(porGrado);
  const dias=Object.entries(items.reduce((a,i)=>{if(i.dia)a[i.dia]=(a[i.dia]||0)+1;return a;},{})).sort((x,y)=>y[0].localeCompare(x[0]));
  const sinContar=items.filter(i=>i.k==='e2'&&!(tipos.includes(i.tec)&&gr.includes(i.grado)&&i.act));
@@ -1083,7 +1100,7 @@ async function iniciarE2(tec){
   const {data:d,error:er}=catalogo
    ?await sb.rpc('cia14_iniciar_catalogo',{p_cedula:est.cedula,p_materia:$('#e2m').value,p_tecnica:tec,p_catalogo:catalogo})
    :await sb.rpc('cia14_iniciar',{p_cedula:est.cedula,p_materia:$('#e2m').value,p_tecnica:tec});
-  if(er){$('#m').textContent=er.message;document.querySelectorAll('[data-e2t]').forEach(b=>b.disabled=false);return;}
+  if(er){$('#m').textContent=/al menos ocho preguntas/i.test(er.message)?'Esta técnica todavía no tiene 8 preguntas activas para tu materia y grado. Avisa al profesor para que complete el banco de Evaluación 3.':er.message;document.querySelectorAll('[data-e2t]').forEach(b=>b.disabled=false);return;}
   if(!d||!Array.isArray(d.preguntas)||!d.preguntas.length||!d.intento){$('#m').textContent='No hay preguntas disponibles para esta evaluación y técnica.';document.querySelectorAll('[data-e2t]').forEach(b=>b.disabled=false);return;}
   const items=d.preguntas||[],intento=d.intento,tecnicaNombre=tecnicasDe(MODO_E)[tec];
   draw(`<div class=card><h2>${esc(tecnicaNombre)}</h2><p class=s>Responde las ${items.length} preguntas y pulsa Enviar.</p>${items.map((q,i)=>`<div class=card><b>${i+1}. ${esc(q.enunciado)}</b>${q.opciones.map((o,j)=>`<label style="display:block;margin:8px 0"><input style="width:auto;margin:0 8px 0 0" type=radio name="q${i}" value="${j}"> ${esc(o)}</label>`).join('')}</div>`).join('')}<p class=err id=m></p><button id=e2env>Enviar respuestas</button></div>`);
