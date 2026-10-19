@@ -344,6 +344,39 @@ async function tEvaluaciones(uid){
  app.querySelectorAll('[data-ev-toggle]').forEach(b=>b.onclick=async()=>{b.disabled=true;const {error}=await sb.from('cia_evaluaciones').update({activa:b.dataset.activa!=='true'}).eq('id',b.dataset.evToggle).eq('docente_id',uid);if(error){alert(error.message);b.disabled=false;}else await tEvaluaciones(uid);});
 }
 
+/* Resultados por periodo: módulo independiente de los resultados históricos. */
+async function ciaResultadosPeriodos(uid){
+ const host=document.querySelector('#cia-resultados-periodos');
+ if(!host)return;
+ const {data:periodos,error}=await sb.from('cia_periodos').select('id,titulo,tecnica,grado,seccion,inicio,fin').eq('docente_id',uid).order('inicio',{ascending:false});
+ if(error){host.innerHTML='<p class=s>No se pudieron cargar los periodos: '+esc(error.message)+'</p>';return;}
+ if(!periodos?.length){host.innerHTML='<p class=s>No hay periodos de práctica registrados.</p>';return;}
+ host.innerHTML='<h2>Notas finales por periodo</h2><label>Periodo<select id="cia-periodo-resultado">'+periodos.map(p=>'<option value="'+esc(p.id)+'">'+esc(p.titulo+' · '+p.grado+'° '+(p.seccion||'Todas')+' · '+(p.tecnica==='e2'?'Enlace 2':'Banco'))+'</option>').join('')+'</select></label><p class=s id="cia-periodo-estado"></p><div class=wrap id="cia-periodo-tabla"></div><button id="cia-periodo-csv" disabled>Exportar periodo CSV</button>';
+ const selector=host.querySelector('#cia-periodo-resultado'),estado=host.querySelector('#cia-periodo-estado'),tabla=host.querySelector('#cia-periodo-tabla'),boton=host.querySelector('#cia-periodo-csv');
+ let exportRows=[],exportHeaders=[];
+ async function cargar(){
+  const id=selector.value,p=periodos.find(x=>String(x.id)===id);
+  estado.textContent='Cargando notas…';tabla.innerHTML='';boton.disabled=true;
+  try{
+   /* La función SQL del docente debe aceptar p_periodo y verificar la identidad del docente. */
+   const {data,error}=await sb.rpc('cia_periodo_resultados',{p_periodo:id});
+   if(error)throw error;
+   const filas=Array.isArray(data)?data:(Array.isArray(data?.estudiantes)?data.estudiantes:[]);
+   const tipos=p.tecnica==='e2'?['detective','quien','causa','mito','casos']:['multiple','verdadero_falso','completar','relacionar','ordenar'];
+   const nombres=p.tecnica==='e2'?['Detective','Quién soy','Causa','Mito','Casos']:['Selección múltiple','Verdadero/Falso','Completar','Relacionar','Ordenar'];
+   const nota=(r,t,i)=>{const x=r[t]??r['nota_'+t]??r['nota'+(i+1)]??r.notas?.[t]??r.notas?.[i];return x===undefined||x===null?'1.00':Number(x).toFixed(2);};
+   exportHeaders=['Nombre','Cédula','Grado','Sección',...nombres,'Nota final'];
+   exportRows=filas.map(r=>{const ns=tipos.map((t,i)=>nota(r,t,i));const promedio=ns.reduce((a,n)=>a+Number(n),0)/5;return [r.nombres??r.nombre??'',r.cedula??'',r.grado??p.grado,r.seccion??p.seccion??'',...ns,Number(r.nota_final??r.final??promedio).toFixed(2)];});
+   tabla.innerHTML='<table><thead><tr>'+exportHeaders.map(h=>'<th>'+esc(h)+'</th>').join('')+'</tr></thead><tbody>'+(exportRows.map(row=>'<tr>'+row.map(v=>'<td>'+esc(String(v))+'</td>').join('')+'</tr>').join('')||'<tr><td colspan="9">Sin estudiantes para este periodo</td></tr>')+'</tbody></table>';
+   estado.textContent=filas.length+' estudiante(s) · '+new Date(p.inicio).toLocaleString('es-PA')+' – '+new Date(p.fin).toLocaleString('es-PA');
+   boton.disabled=!filas.length;
+  }catch(e){estado.textContent='No se pudieron obtener las notas del periodo: '+e.message+'. Verifique el nombre y parámetros de la función SQL del docente.';exportRows=[];}
+ }
+ selector.onchange=cargar;
+ boton.onclick=()=>descargarArchivo('cia_periodo_'+selector.value+'.csv','\ufeff'+[exportHeaders,...exportRows].map(r=>r.map(csvCelda).join(',')).join('\r\n'),'text/csv;charset=utf-8');
+ await cargar();
+}
+
 async function tRes(uid){
  const [base,rapidos,est,ej]=await Promise.all([
   sb.from('cia_intentos').select('id,estudiante_id,ejercicio_id,nota,creado_en,revision_pendiente').eq('docente_id',uid).order('creado_en',{ascending:false}),
@@ -352,7 +385,7 @@ async function tRes(uid){
   sb.from('cia_ejercicios').select('id,titulo,max_nota').eq('docente_id',uid)
  ]);
  const error=base.error||rapidos.error||est.error||ej.error;
- if(error){$('#v').innerHTML=`<div class=card><h2>Resultados</h2>${avisoError(error)}<p>Compruebe los permisos de lectura de los intentos de práctica.</p></div>`;return;}
+ if(error){$('#v').innerHTML=`<div class=card id=cia-resultados-periodos></div><div class=card><h2>Resultados</h2>${avisoError(error)}<p>Compruebe los permisos de lectura de los intentos de práctica.</p></div>`;await ciaResultadosPeriodos(uid);return;}
  const alumnos=new Map((est.data||[]).map(a=>[a.id,a]));
  const ejercicios=new Map((ej.data||[]).map(e=>[e.id,e]));
  const filas=[];
@@ -364,7 +397,7 @@ async function tRes(uid){
  }
  filas.sort((a,b)=>b.fecha.localeCompare(a.fecha));
  const escala=r=>Number.isFinite(r.nota)&&r.max>0?(1+4*Math.max(0,Math.min(1,r.nota/r.max))).toFixed(2):'—';
- $('#v').innerHTML=`<div class=card><h2>Resultados: ${filas.length}</h2><p class=s>Estudiantes con resultados: ${new Set(filas.map(r=>r.estudiante)).size} · Prácticas rápidas: ${rapidos.data.length} · Ejercicios generales: ${base.data.length} · Revisiones pendientes: ${filas.filter(r=>r.revision==='Pendiente').length}</p>
+ $('#v').innerHTML=`<div class=card id=cia-resultados-periodos></div><div class=card><h2>Resultados: ${filas.length}</h2><p class=s>Estudiantes con resultados: ${new Set(filas.map(r=>r.estudiante)).size} · Prácticas rápidas: ${rapidos.data.length} · Ejercicios generales: ${base.data.length} · Revisiones pendientes: ${filas.filter(r=>r.revision==='Pendiente').length}</p>
  <label>Buscar estudiante o ejercicio<input id=buscar-resultado placeholder="Nombre, cédula o ejercicio"></label>
  <label>Tipo<select id=tipo-resultado><option value="">Todos</option><option>Práctica rápida</option><option>Ejercicio general</option></select></label>
  <label>Salón<select id=salon-resultado><option value="">Todos los salones</option>${[...new Set(filas.map(r=>r.salon).filter(Boolean))].sort().map(t=>`<option>${esc(t)}</option>`).join('')}</select></label>
@@ -383,6 +416,7 @@ async function tRes(uid){
  $('#exportar-resultados-json').onclick=()=>descargarArchivo('cia_resultados.json',JSON.stringify({fecha:new Date().toISOString(),resultados:visibles().map(r=>({...r,nota_5:escala(r)}))},null,2),'application/json');
  $('#exportar-mejores').onclick=()=>{const m=new Map();for(const r of visibles()){const k=r.estudiante+'|'+r.tipo+'|'+r.ejercicio;if(!m.has(k)||Number(escala(r))>Number(escala(m.get(k))))m.set(k,r);}descargarArchivo('cia_mejores_notas.csv',csv([...m.values()]),'text/csv;charset=utf-8');};
  $('#imprimir-resultados').onclick=()=>window.print();
+ await ciaResultadosPeriodos(uid);
 }
 
 /* ======== ENLACE 2 · DOCENTE (banco de técnicas con Gemini) ======== */
