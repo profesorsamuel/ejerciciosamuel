@@ -5,14 +5,16 @@
 h1,h2,h3{font-family:Georgia,serif;line-height:1.2;margin:.2em 0 .5em}
 header{background:var(--ink);color:#fff;padding:18px 20px}header h1{margin:0;font-size:1.5rem}header p{margin:0;opacity:.8;font-size:.9rem}
 main{max-width:860px;margin:0 auto;padding:16px}.card{background:#fff;border:1px solid var(--linea);border-radius:12px;padding:20px;margin:14px 0}
-button,select,input{font:inherit}button{background:var(--hoja);color:#fff;border:0;border-radius:10px;padding:12px 18px;margin:4px;cursor:pointer;font-weight:600}
+button,select,input,textarea{font:inherit}button{background:var(--hoja);color:#fff;border:0;border-radius:10px;padding:12px 18px;margin:4px;cursor:pointer;font-weight:600}
 button.sec{background:#e4ebe1;color:var(--ink)}button.big{padding:18px 24px;font-size:1.1rem}button:disabled{opacity:.5}
 :focus-visible{outline:3px solid var(--sol);outline-offset:2px}
-input,select{width:100%;padding:11px;border:1px solid #9fb09c;border-radius:8px;margin:4px 0 12px;background:#fff}
+input,select,textarea{width:100%;padding:11px;border:1px solid #9fb09c;border-radius:8px;margin:4px 0 12px;background:#fff}
 .op{display:block;width:100%;text-align:left;background:#fff;color:var(--ink);border:2px solid var(--linea)}.op.sel{border-color:var(--hoja);background:#e8f4ec}
 .bien{border-left:6px solid var(--ok)}.mal{border-left:6px solid var(--mal)}.bar{height:10px;background:#dde6da;border-radius:9px;overflow:hidden}.bar i{display:block;height:100%;background:var(--sol)}
 table{width:100%;border-collapse:collapse;font-size:.9rem}td,th{padding:6px;border-bottom:1px solid var(--linea);text-align:left}
-.tabs button.on{background:var(--ink)}.err{color:var(--mal);font-weight:600}.row{display:flex;gap:8px;align-items:center;justify-content:space-between}.s{font-size:.9rem;color:#4a625f}.wrap{overflow-x:auto}
+.tabs button.on{background:var(--ink)}.err{color:var(--mal);font-weight:600}.row{display:flex;gap:8px;align-items:center;justify-content:space-between}.s{font-size:.9rem;color:#4a625f}.wrap{overflow-x:auto}.editor-fondo{position:fixed;inset:0;background:#0009;display:flex;align-items:center;justify-content:center;padding:12px;z-index:1000}.editor-caja{width:min(680px,100%);max-height:94vh;overflow:auto;background:white;border-radius:12px;padding:22px;box-shadow:0 12px 40px #0004}.editor-caja label{display:block;font-weight:600;margin-top:8px}.editor-caja textarea{min-height:80px}.editor-acciones{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}.editor-caja .err{min-height:1em}
+.resumen-banco{display:grid;grid-template-columns:repeat(auto-fit,minmax(115px,1fr));gap:10px;margin:12px 0}.resumen-banco>div{padding:12px;background:#edf5ef;border-radius:10px;text-align:center}.resumen-banco b{display:block;font-size:1.7rem}.resumen-banco span{font-size:.85rem}
+@media print{header,.tabs,button,input,select,.editor-fondo{display:none!important}body{background:#fff;color:#111}main{max-width:none;padding:0}.card{break-inside:avoid;border:0;padding:8px;margin:5px 0}table{font-size:11px}tr{break-inside:avoid}}
 </style></head><body>
 <header><h1>CIA · Ciencias IA</h1><p>C.E.B.G. El Jiral · Ciencias Naturales</p></header><main id="app"></main>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
@@ -37,7 +39,7 @@ function loginEst(){draw(`<div class=card><h2>Ingreso de estudiante</h2><label>N
 $('#b').onclick=inicio;
 $('#go').onclick=async()=>{const n=$('#n').value.trim(),c=$('#c').value.trim();if(!n||!c)return $('#m').textContent='Escribe tu nombre y tu cédula.';
  const {data,error}=await sb.rpc('cia_ingresar',{p_cedula:c,p_nombre:n});if(error)return $('#m').textContent=error.message;est=data;menu();};}
-function menu(){draw(`<div class=card><h2>Hola, ${esc(est.nombres)}</h2><p>Elige un ejercicio. Cada intento trae 8 preguntas distintas.</p>${Object.entries(TIPOS).map(([k,v])=>`<button class=big data-t=${k}>${v}</button>`).join('')}<p class=err id=m></p><button class=sec id=s>Salir</button></div>`);
+function menu(){draw(`<div class=card><h2>Hola, ${esc(est.nombres)}</h2><p>Elige un ejercicio. Cada intento trae 8 preguntas distintas. Responde todas antes de enviar.</p>${Object.entries(TIPOS).map(([k,v])=>`<button class=big data-t=${k}>${v}</button>`).join('')}<p class=err id=m></p><button class=sec id=s>Salir</button></div>`);
 app.querySelectorAll('[data-t]').forEach(b=>b.onclick=async()=>{const {data,error}=await sb.rpc('cia_iniciar',{p_est:est.id,p_tipo:b.dataset.t});if(error)return $('#m').textContent=error.message;quiz(data);});$('#s').onclick=()=>{est=null;inicio();};}
 function quiz(d){let i=0;const R={};
  const paso=()=>{const q=d.preguntas[i],x=q.datos;let cu='';
@@ -45,72 +47,148 @@ function quiz(d){let i=0;const R={};
   else if(q.tipo=='verdadero_falso')cu=['Verdadero','Falso'].map(o=>`<button class=op data-v="${o}">${o}</button>`).join('');
   else if(q.tipo=='relacionar')cu=x.izq.map(a=>`<label>${esc(a)}<select data-a="${esc(a)}"><option value="">Elige…</option>${x.der.map(b=>`<option>${esc(b)}</option>`).join('')}</select></label>`).join('');
   else{R[q.id]=R[q.id]||[...x.items];cu='<div id=lst></div>';}
-  draw(`<div class=card><div class=bar><i style="width:${i/8*100}%"></i></div><p class=s>Pregunta ${i+1} de 8</p><h3>${esc(q.enunciado)}</h3>${cu}<p class=err id=m></p><button id=nx>${i<7?'Siguiente':'Terminar y calificar'}</button></div>`);
+  draw(`<div class=card><div class=bar><i style="width:${i/d.preguntas.length*100}%"></i></div><p class=s>Pregunta ${i+1} de ${d.preguntas.length}</p><h3>${esc(q.enunciado)}</h3>${cu}<p class=err id=m></p><button id=nx>${i<d.preguntas.length-1?'Siguiente':'Terminar y calificar'}</button></div>`);
   app.querySelectorAll('.op').forEach(b=>b.onclick=()=>{R[q.id]=b.dataset.v;app.querySelectorAll('.op').forEach(o=>o.classList.toggle('sel',o==b));});
   app.querySelectorAll('select').forEach(s=>s.onchange=()=>{(R[q.id]=R[q.id]||{})[s.dataset.a]=s.value;});
   if(q.tipo=='ordenar'){const L=()=>{$('#lst').innerHTML=R[q.id].map((o,k)=>`<div class=row><span>${k+1}. ${esc(o)}</span><span><button class=sec data-m="${k}:-1" aria-label="Subir">▲</button><button class=sec data-m="${k}:1" aria-label="Bajar">▼</button></span></div>`).join('');
    $('#lst').querySelectorAll('[data-m]').forEach(b=>b.onclick=()=>{const [k,s]=b.dataset.m.split(':').map(Number),a=R[q.id];if(a[k+s]===undefined)return;[a[k],a[k+s]]=[a[k+s],a[k]];L();});};L();}
   $('#nx').onclick=async()=>{const r=R[q.id];
    if(q.tipo=='relacionar'?(!r||x.izq.some(a=>!r[a])):!r)return $('#m').textContent='Responde antes de continuar.';
-   if(i<7){i++;return paso();}
-   $('#nx').disabled=true;const {data,error}=await sb.rpc('cia_enviar',{p_est:est.id,p_intento:d.intento,p_resp:R});if(error)return $('#m').textContent=error.message;resultado(data);};};
+   if(i<d.preguntas.length-1){i++;return paso();}
+   $('#nx').disabled=true;const {data,error}=await sb.rpc('cia_enviar',{p_est:est.id,p_intento:d.intento,p_resp:R});if(error){$('#m').textContent=error.message;$('#nx').disabled=false;return;}resultado(data);};};
  paso();}
-function resultado(r){draw(`<div class=card><h2>Nota: ${r.nota} / ${r.total} (${Math.round(r.nota/r.total*100)}%)</h2><button id=o>Hacer otro ejercicio</button></div>${r.detalle.map((q,k)=>`<div class="card ${q.ok?'bien':'mal'}"><b>${k+1}. ${esc(q.enunciado)}</b><p>${q.ok?'Correcta':'Incorrecta'}. Respuesta: <b>${esc(fmt(q.correcta))}</b></p><p class=s>${esc(q.explicacion)}</p></div>`).join('')}`);$('#o').onclick=menu;}
+function resultado(r){draw(`<div class=card><h2>Nota: ${r.nota} / ${r.total} (${r.total?Math.round(r.nota/r.total*100):0}%)</h2><button id=o>Hacer otro ejercicio</button></div>${r.detalle.map((q,k)=>`<div class="card ${q.ok?'bien':'mal'}"><b>${k+1}. ${esc(q.enunciado)}</b><p>${q.ok?'Correcta':'Incorrecta'}. Respuesta: <b>${esc(fmt(q.correcta))}</b></p><p class=s>${esc(q.explicacion)}</p></div>`).join('')}`);$('#o').onclick=menu;}
 
 /* ---------- DOCENTE ---------- */
 async function loginDoc(){const {data:{session}}=await sb.auth.getSession();if(session)return panel();
  draw(`<div class=card><h2>Ingreso docente</h2><label>Correo<input id=em type=email></label><label>Contraseña<input id=pw type=password></label><p class=err id=m></p><button id=go>Entrar</button><button class=sec id=b>Volver</button></div>`);$('#b').onclick=inicio;
  $('#go').onclick=async()=>{const {error}=await sb.auth.signInWithPassword({email:$('#em').value.trim(),password:$('#pw').value});if(error)return $('#m').textContent=error.message;panel();};}
-async function panel(){const {data:{user}}=await sb.auth.getUser();const {data:dc}=await sb.from('cia_docentes').select('id').eq('id',user.id).maybeSingle();
- if(!dc){draw(`<div class=card><p class=err>Tu usuario no está autorizado en cia_docentes. Ejecuta el INSERT del final del archivo SQL.</p><button id=x class=sec>Salir</button></div>`);return $('#x').onclick=async()=>{await sb.auth.signOut();inicio();};}
- draw(`<div class="card tabs"><button data-p=banco>Banco de preguntas</button><button data-p=est>Estudiantes</button><button data-p=res>Resultados</button><button class=sec id=x>Salir</button></div><div id=v></div>`);
- app.querySelectorAll('[data-p]').forEach(b=>b.onclick=()=>{app.querySelectorAll('[data-p]').forEach(o=>o.classList.toggle('on',o==b));({banco:tBanco,est:tEst,res:tRes})[b.dataset.p](user.id);});
- $('#x').onclick=async()=>{await sb.auth.signOut();inicio();};app.querySelector('[data-p=banco]').click();}
+async function panel(){
+ const {data:ud,error:ue}=await sb.auth.getUser();
+ const user=ud?.user;
+ if(ue||!user){draw(`<div class=card><p class=err>No se pudo verificar la sesión: ${esc(ue?.message||'sesión no disponible')}.</p><button id=x>Volver</button></div>`);$('#x').onclick=loginDoc;return;}
+ const {data:dc,error:de}=await sb.from('cia_docentes').select('id').eq('id',user.id).maybeSingle();
+ if(de||!dc){
+  const detalle=de?`Error de consulta (${esc(de.code||'sin código')}): ${esc(de.message)}. ${esc(de.details||'')}`:'La consulta no devolvió el registro. Compruebe que la sesión pertenezca al mismo proyecto Supabase que contiene el docente.';
+  draw(`<div class=card><h2>No se pudo verificar el acceso docente</h2><p class=err>${detalle}</p><p class=s>Cuenta: ${esc(user.email||'sin correo')} · ID: ${esc(user.id)}</p><button id=x class=sec>Salir</button></div>`);
+  $('#x').onclick=async()=>{await sb.auth.signOut();inicio();};return;
+ }
+ draw(`<div class="card tabs"><button data-p=informe>Resumen</button><button data-p=banco>Banco de preguntas</button><button data-p=est>Estudiantes</button><button data-p=res>Resultados</button><button class=sec id=x>Salir</button></div><div id=v></div>`);
+ app.querySelectorAll('[data-p]').forEach(b=>b.onclick=()=>{app.querySelectorAll('[data-p]').forEach(o=>o.classList.toggle('on',o==b));({informe:tInforme,banco:tBanco,est:tEst,res:tRes})[b.dataset.p](user.id);});
+ $('#x').onclick=async()=>{await sb.auth.signOut();inicio();};app.querySelector('[data-p=informe]').click();}
 
 let texto='';
-async function tBanco(uid){const {data:pr=[]}=await sb.from('cia_preguntas').select('id,tipo,enunciado').order('creado_en');
- const cnt=t=>pr.filter(p=>p.tipo==t).length;
- $('#v').innerHTML=`<div class=card><h2>Banco: ${pr.length} preguntas</h2><p class=s>${Object.entries(TIPOS).map(([k,v])=>`${v}: ${cnt(k)}`).join(' · ')}</p>
- <label>PDF de la clase<input id=pdf type=file accept=application/pdf></label><p class=s id=fu></p><button id=gen>Generar banco de preguntas</button><p id=st class=s role=status></p></div>
- <div class=card>${pr.map(p=>`<div class=row><span><b class=s>${TIPOS[p.tipo]}</b><br>${esc(p.enunciado)}</span><span><button class=sec data-e="${p.id}">Editar</button><button class=sec data-d="${p.id}">Borrar</button></span></div><hr>`).join('')||'<p>Aún no hay preguntas. Sube un PDF y genera el banco.</p>'}</div>`;
- $('#pdf').onchange=async e=>{try{pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
-  const doc=await pdfjsLib.getDocument({data:await e.target.files[0].arrayBuffer()}).promise;const t=[];
-  for(let i=1;i<=doc.numPages;i++){const c=await(await doc.getPage(i)).getTextContent();t.push(c.items.map(x=>x.str).join(' '));}
-  texto=t.join('\n').trim();$('#fu').textContent=texto.length>80?`Texto leído: ${texto.length} caracteres.`:'El PDF no tiene texto legible (¿escaneado?). Aplícale OCR antes.';}catch(err){texto='';$('#fu').textContent=err.message;}};
- app.querySelectorAll('[data-d]').forEach(b=>b.onclick=async()=>{if(confirm('¿Borrar esta pregunta?')){await sb.from('cia_preguntas').delete().eq('id',b.dataset.d);tBanco(uid);}});
- app.querySelectorAll('[data-e]').forEach(b=>b.onclick=async()=>{const p=pr.find(x=>x.id==b.dataset.e),n=prompt('Editar enunciado:',p.enunciado);if(n&&n.trim()){await sb.from('cia_preguntas').update({enunciado:n.trim()}).eq('id',p.id);tBanco(uid);}});
- $('#gen').onclick=async()=>{if(texto.length<80)return $('#st').textContent='Primero sube un PDF con texto.';$('#gen').disabled=true;
-  const tr=[];for(let i=0;i<texto.length;i+=12000)tr.push(texto.slice(i,i+12000));
-  const vistos=pr.map(p=>p.enunciado);const set=new Set(vistos.map(norm));
-  for(const t of Object.keys(TIPOS)){let n=cnt(t),ron=0;
-   while(n<META&&ron<8){$('#st').textContent=`Generando ${TIPOS[t]}: ${n}/${META}…`;
-    const {data,error}=await sb.functions.invoke('cia-generar',{body:{texto_pdf:tr[ron%tr.length],tipo:t,cantidad:8,excluir:vistos}});
-    if(error||data?.error){$('#st').textContent='Error: '+(data?.error||error.message);$('#gen').disabled=false;return;}
-    const filas=(data.preguntas||[]).map(p=>fila(p,t,uid)).filter(f=>f&&!set.has(norm(f.enunciado)));
-    if(filas.length){const {error:e2}=await sb.from('cia_preguntas').insert(filas);if(e2){$('#st').textContent='Error al guardar: '+e2.message;$('#gen').disabled=false;return;}
-     filas.forEach(f=>{set.add(norm(f.enunciado));vistos.push(f.enunciado);});n+=filas.length;}
-    ron++;}}
-  tBanco(uid);};}
-function fila(p,t,uid){const e=String(p.enunciado||'').trim();if(e.length<8)return;let datos={},c=p.correcta;
- if(t=='multiple'||t=='completar'){const o=p.opciones;if(!Array.isArray(o)||new Set(o).size!=4||!o.includes(c))return;datos={opciones:o};}
- else if(t=='verdadero_falso'){if(!['Verdadero','Falso'].includes(c))return;}
- else if(t=='relacionar'){const r=p.pares;if(!Array.isArray(r)||r.length<3||r.some(x=>!Array.isArray(x)||x.length!=2)||new Set(r.map(x=>x[0])).size!=r.length||new Set(r.map(x=>x[1])).size!=r.length)return;datos={pares:r};c=r;}
- else{const r=p.items;if(!Array.isArray(r)||r.length<3||new Set(r).size!=r.length)return;datos={items:r};c=r;}
- return{docente_id:uid,tipo:t,enunciado:e,datos,correcta:c,explicacion:String(p.explicacion||''),tema:String(p.tema||'')};}
+const clavePregunta=s=>String(s||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]/g,'');
+const descargarArchivo=(nombre,contenido,tipo)=>{const url=URL.createObjectURL(new Blob([contenido],{type:tipo}));const a=document.createElement('a');a.href=url;a.download=nombre;a.click();setTimeout(()=>URL.revokeObjectURL(url),1500);};
+const csvCelda=v=>'"'+String(v??'').replace(/"/g,'""')+'"';
+const avisoError=(e)=>`<p class="err">Error de Supabase: ${esc(e.message)} (${esc(e.code||'')})</p>`;
+async function tInforme(uid){
+ $('#v').innerHTML='<div class=card><h2>Resumen general</h2><p>Consultando datos del proyecto…</p></div>';
+ const [p,e,i,x]=await Promise.all([
+  sb.from('cia_preguntas').select('id,tema,nivel').eq('docente_id',uid),
+  sb.from('cia_estudiantes').select('id,nombres,grado,seccion').eq('docente_id',uid),
+  sb.from('cia_intentos').select('id,nota,revision_pendiente,estudiante_id,creado_en').eq('docente_id',uid),
+  sb.from('cia_ejercicios').select('id,titulo').eq('docente_id',uid)]);
+ const error=[p,e,i,x].find(r=>r.error)?.error;
+ if(error){$('#v').innerHTML=`<div class=card>${avisoError(error)}</div>`;return;}
+ const grupos=new Map();e.data.forEach(a=>{const k=`${a.grado||'Sin grado'} ${a.seccion||''}`.trim();grupos.set(k,(grupos.get(k)||0)+1);});
+ const notas=i.data.map(r=>Number(r.nota)).filter(n=>Number.isFinite(n));
+ const promedio=notas.length?(notas.reduce((a,b)=>a+b,0)/notas.length).toFixed(2):'Sin notas';
+ const pendientes=i.data.filter(r=>r.revision_pendiente).length;
+ const porTema=new Map();p.data.forEach(q=>{const t=q.tema||'Sin tema';porTema.set(t,(porTema.get(t)||0)+1);});
+ const ultimos=[...i.data].sort((a,b)=>String(b.creado_en).localeCompare(String(a.creado_en))).slice(0,5);
+ const nombreEst=new Map(e.data.map(a=>[a.id,a.nombres||'Estudiante']));
+ $('#v').innerHTML=`<div class=card><h2>Panel de seguimiento</h2><p><b>${p.data.length}</b> preguntas · <b>${e.data.length}</b> estudiantes · <b>${x.data.length}</b> ejercicios · <b>${i.data.length}</b> intentos</p><p>Promedio de notas registradas: <b>${promedio}</b> (escala original de la base de datos) · Revisiones pendientes: <b>${pendientes}</b></p><h3>Temas del banco</h3><p>${[...porTema.entries()].sort((a,b)=>b[1]-a[1]).map(([k,v])=>`${esc(k)}: <b>${v}</b>`).join(' · ')||'Sin preguntas'}</p><h3>Estudiantes por salón</h3><table><tr><th>Salón</th><th>Cantidad</th></tr>${[...grupos.entries()].sort((a,b)=>a[0].localeCompare(b[0])).map(([k,n])=>`<tr><td>${esc(k)}</td><td>${n}</td></tr>`).join('')||'<tr><td colspan=2>Sin matrícula</td></tr>'}</table><h3>Últimos cinco intentos</h3><table><tr><th>Estudiante</th><th>Nota</th><th>Fecha</th></tr>${ultimos.map(r=>`<tr><td>${esc(nombreEst.get(r.estudiante_id)||'ID '+r.estudiante_id)}</td><td>${esc(r.nota??'—')}</td><td>${esc(r.creado_en?.slice(0,10)||'')}</td></tr>`).join('')||'<tr><td colspan=3>Sin intentos</td></tr>'}</table><p class=s>Los resultados se obtienen de Supabase y se actualizan al volver a abrir este resumen.</p><button id=imprimir-resumen class=sec>Imprimir resumen</button></div>`;
+ $('#imprimir-resumen').onclick=()=>window.print();
+}
+async function tBanco(uid){
+ const {data:pr,error}=await sb.from('cia_preguntas').select('id,enunciado,tema,nivel,creado_en').eq('docente_id',uid).order('creado_en',{ascending:false});
+ if(error){$('#v').innerHTML=`<div class=card>${avisoError(error)}</div>`;return;}
+ const niveles={facil:0,medio:0,dificil:0};const temas=new Map();
+ pr.forEach(p=>{if(p.nivel in niveles)niveles[p.nivel]++;const tema=(p.tema||'Sin tema').trim();temas.set(tema,(temas.get(tema)||0)+1);});
+ const temasOrdenados=[...temas.entries()].sort((a,b)=>b[1]-a[1]);
+ const conteos=new Map();pr.forEach(p=>{const k=clavePregunta(p.enunciado);conteos.set(k,(conteos.get(k)||0)+1);});
+ const repetidas=pr.filter(p=>conteos.get(clavePregunta(p.enunciado))>1).length;
+ $('#v').innerHTML=`<div class=card><h2>Banco de preguntas: ${pr.length}</h2><p class=s>Suba un PDF con texto y genere preguntas mediante Gemini (plan gratuito sujeto a límites).</p><label>PDF de la clase<input id=pdf type=file accept="application/pdf"></label><p id=fu class=s></p><label>Nombre del banco<input id=bn placeholder="Ej. La célula, 9.º grado"></label><label>Cantidad<select id=cant><option selected>20</option><option>40</option><option>60</option><option>80</option></select></label><button id=gen disabled>Generar preguntas con IA</button><p class=s id=st role=status>Primero seleccione un PDF. Revise las preguntas antes de guardarlas.</p><div id=prev></div></div><div class=card><h3>Resumen del banco</h3><div class="resumen-banco"><div><b>${pr.length}</b><span>Total</span></div><div><b>${niveles.facil}</b><span>Fáciles</span></div><div><b>${niveles.medio}</b><span>Medias</span></div><div><b>${niveles.dificil}</b><span>Difíciles</span></div></div><p class=s><b>Temas:</b> ${temasOrdenados.map(([tema,cantidad])=>`${esc(tema)} (${cantidad})`).join(' · ')||'Sin preguntas'}</p><button id=exportar-csv class=sec ${pr.length?'':'disabled'}>Exportar CSV</button><button id=exportar-json class=sec ${pr.length?'':'disabled'}>Respaldar JSON completo</button><p class=s>Las exportaciones contienen únicamente preguntas del docente conectado. El JSON incluye respuestas y explicaciones: no lo comparta con estudiantes.</p><p id=estado-exportacion class=s role=status></p></div><div class=card><h3>Preguntas guardadas</h3><p class=s>${repetidas} preguntas pertenecen a grupos con enunciados repetidos (revisión manual; no se elimina nada automáticamente).</p><label>Buscar pregunta o tema<input id=buscar-pregunta placeholder="Escriba para filtrar"></label><label>Filtrar por tema<select id=filtro-tema><option value="">Todos los temas</option>${temasOrdenados.map(([t])=>`<option value="${esc(t)}">${esc(t)}</option>`).join('')}</select></label><label>Filtrar por dificultad<select id=filtro-nivel><option value="">Todas</option><option value="facil">Fácil</option><option value="medio">Medio</option><option value="dificil">Difícil</option></select></label><label><input type=checkbox id=solo-repetidas> Mostrar solo repetidas</label><p id=contador-preguntas class=s></p><div id=lista-preguntas>${pr.map(p=>`<div class=row data-item data-busca="${esc((p.enunciado+' '+(p.tema||'')).toLowerCase())}" data-tema="${esc((p.tema||'Sin tema').trim())}" data-nivel="${esc(p.nivel||'')}" data-duplicada="${conteos.get(clavePregunta(p.enunciado))>1?'si':'no'}"><span><b>${esc(p.tema||'Sin tema')}</b> · ${esc(p.nivel||'Sin nivel')}<p>${esc(p.enunciado)}</p></span><span><button class=sec data-ver="${p.id}">Vista previa</button><button class=sec data-e="${p.id}">Editar</button><button class=sec data-del="${p.id}">Eliminar</button></span></div><hr>`).join('')||'<p>Aún no hay preguntas.</p>'}</div></div>`;
+ $('#exportar-csv').onclick=()=>{const cab=['tema','nivel','enunciado'];const filas=pr.map(p=>[p.tema,p.nivel,p.enunciado]);descargarArchivo('cia_preguntas_resumen.csv','\ufeff'+[cab,...filas].map(f=>f.map(csvCelda).join(',')).join('\r\n'),'text/csv;charset=utf-8');$('#estado-exportacion').textContent='Resumen CSV descargado.';};
+ $('#exportar-json').onclick=async()=>{const b=$('#exportar-json');b.disabled=true;$('#estado-exportacion').textContent='Preparando respaldo...';try{const {data,error}=await sb.from('cia_preguntas').select('enunciado,correcta,distractores,explicacion,tema,nivel,metadatos').eq('docente_id',uid).order('creado_en',{ascending:false});if(error)throw error;descargarArchivo('cia_banco_respaldo.json',JSON.stringify({version:1,fecha:new Date().toISOString(),preguntas:data},null,2),'application/json');$('#estado-exportacion').textContent=`Respaldo descargado: ${data.length} preguntas.`;}catch(e){$('#estado-exportacion').textContent='Error al exportar: '+e.message;}finally{b.disabled=false;}};
+ const filtrar=()=>{const bus=$('#buscar-pregunta').value.toLowerCase().trim(),nivel=$('#filtro-nivel').value,tema=$('#filtro-tema').value,solo=$('#solo-repetidas').checked;let visibles=0;app.querySelectorAll('[data-item]').forEach(el=>{const mostrar=el.dataset.busca.includes(bus)&&(!nivel||el.dataset.nivel===nivel)&&(!tema||el.dataset.tema===tema)&&(!solo||el.dataset.duplicada==='si');el.hidden=!mostrar;if(mostrar)visibles++;});$('#contador-preguntas').textContent=`Mostrando ${visibles} de ${pr.length} preguntas`;};
+ $('#buscar-pregunta').oninput=filtrar;$('#filtro-nivel').onchange=filtrar;$('#filtro-tema').onchange=filtrar;$('#solo-repetidas').onchange=filtrar;filtrar();
+ app.querySelectorAll('[data-ver]').forEach(b=>b.onclick=async()=>{const {data:p,error}=await sb.from('cia_preguntas').select('enunciado,correcta,distractores,explicacion,tema,nivel').eq('id',b.dataset.ver).eq('docente_id',uid).single();if(error){alert(error.message);return;}const fondo=document.createElement('div');fondo.className='editor-fondo';const opts=[p.correcta,...(Array.isArray(p.distractores)?p.distractores:[])];fondo.innerHTML=`<section class="editor-caja" role="dialog" aria-modal="true"><h2>Vista previa para el docente</h2><p class=s>${esc(p.tema||'')} · ${esc(p.nivel||'')}</p><h3>${esc(p.enunciado)}</h3>${opts.map((x,i)=>`<p>${i+1}. ${esc(typeof x==='string'?x:JSON.stringify(x))}</p>`).join('')}<hr><p><b>Respuesta correcta:</b> ${esc(typeof p.correcta==='string'?p.correcta:JSON.stringify(p.correcta))}</p><p><b>Explicación:</b> ${esc(p.explicacion||'Sin explicación')}</p><button id=cerrar-vista>Cerrar</button></section>`;document.body.appendChild(fondo);fondo.querySelector('#cerrar-vista').onclick=()=>fondo.remove();fondo.onclick=e=>{if(e.target===fondo)fondo.remove();};});
+ app.querySelectorAll('[data-del]').forEach(b=>b.onclick=async()=>{const p=pr.find(x=>x.id===b.dataset.del);if(!p)return;if(!confirm(`¿Eliminar definitivamente esta pregunta?\\n\\n${p.enunciado}\\n\\nEsta acción no se puede deshacer.`))return;b.disabled=true;const {data,error}=await sb.from('cia_preguntas').delete().eq('id',p.id).eq('docente_id',uid).select('id');if(error||!data?.length){alert('No se pudo eliminar: '+(error?.message||'Revise los permisos de Supabase.'));b.disabled=false;return;}await tBanco(uid);});
+ $('#pdf').onchange=async e=>{try{const file=e.target.files[0];if(!file)return;if(file.size>10*1024*1024)throw Error('El PDF supera 10 MB');pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';const doc=await pdfjsLib.getDocument({data:await file.arrayBuffer()}).promise;let t=[];for(let i=1;i<=doc.numPages;i++){const c=await(await doc.getPage(i)).getTextContent();t.push(c.items.map(x=>x.str).join(' '));}texto=t.join('\n').slice(0,45000);if(texto.trim().length<150)throw Error('No se detectó texto suficiente. Para PDF escaneado se requiere OCR.');$('#fu').textContent=`PDF leído: ${doc.numPages} páginas, ${texto.length} caracteres.`;$('#gen').disabled=false;}catch(err){$('#fu').textContent=err.message;$('#gen').disabled=true;}};
+ $('#gen').onclick=async()=>{const st=$('#st'),gen=$('#gen');gen.disabled=true;st.textContent='Generando preguntas. Puede tardar varios minutos...';try{const {data,error}=await sb.functions.invoke('cia-generar',{body:{texto,tema:$('#bn').value.trim()||'Ciencias Naturales',grado:'9',cantidad:Number($('#cant').value)}});if(error){let detalle=data?.error||error.message;try{if(error.context){const j=await error.context.json();detalle=j.error||detalle;}}catch{}throw Error(detalle);}if(data?.error)throw Error(data.error);const qs=(data.preguntas||[]).map(q=>({enunciado:String(q.enunciado||q.pregunta||'').trim(),correcta:String(q.correcta||q.respuesta||'').trim(),distractores:Array.isArray(q.distractores)?q.distractores:(Array.isArray(q.opciones)?q.opciones.filter(o=>o!==q.respuesta).slice(0,3):[]),explicacion:q.explicacion||'',tema:q.tema||$('#bn').value.trim()||'Ciencias Naturales',nivel:({facil:'facil',medio:'medio',dificil:'dificil'})[q.nivel||q.dificultad]||'medio',tipo:q.tipo||'multiple'})).filter(q=>q.enunciado&&q.correcta);if(!qs.length)throw Error('La IA no devolvió preguntas');st.textContent=`${qs.length} preguntas generadas. Revise, edite o descarte antes de guardar. No se han guardado todavía.`;$('#prev').innerHTML=qs.map((q,i)=>`<div class=card><label><input type=checkbox data-keep="${i}" checked> Guardar pregunta ${i+1}</label><textarea data-q="${i}" rows=3 style="width:100%;font:inherit;padding:10px">${esc(q.enunciado)}</textarea><p class=s>Respuesta: ${esc(q.correcta)} · ${esc(q.nivel)}</p><p class=s>${esc(q.explicacion)}</p></div>`).join('')+'<button id=save>Guardar preguntas seleccionadas</button>';
+ $('#save').onclick=async()=>{const nombre=$('#bn').value.trim()||'Banco generado desde PDF';const selected=qs.map((q,i)=>({...q,enunciado:app.querySelector(`[data-q="${i}"]`).value.trim(),keep:app.querySelector(`[data-keep="${i}"]`).checked})).filter(q=>q.keep&&q.enunciado);if(!selected.length)return st.textContent='Seleccione al menos una pregunta.';const existentes=new Set(pr.map(p=>clavePregunta(p.enunciado)));const vistos=new Set();const nuevos=selected.filter(q=>{const k=clavePregunta(q.enunciado);if(existentes.has(k)||vistos.has(k))return false;vistos.add(k);return true;});if(!nuevos.length)return st.textContent='Todas las preguntas seleccionadas ya existen o están repetidas. No se guardó ningún duplicado.';if(nuevos.length<selected.length&&!confirm(`Se detectaron ${selected.length-nuevos.length} preguntas repetidas. Se guardarán solo ${nuevos.length} nuevas. ¿Continuar?`))return;$('#save').disabled=true;try{const {data:b,error:be}=await sb.from('cia_bancos').insert({docente_id:uid,nombre,fuente:'PDF / Gemini'}).select('id').single();if(be)throw be;const filas=nuevos.map(q=>({docente_id:uid,banco_id:b.id,enunciado:q.enunciado,correcta:q.correcta,explicacion:q.explicacion,distractores:q.distractores||[],tema:q.tema||nombre,nivel:q.nivel||'medio',metadatos:{origen:'gemini_pdf',tipo:q.tipo||'multiple'}}));const {error:pe}=await sb.from('cia_preguntas').insert(filas);if(pe)throw pe;await tBanco(uid);}catch(e){st.textContent='No se pudo guardar: '+e.message;$('#save').disabled=false;}};
+ }catch(e){st.textContent='Error de generación: '+e.message;gen.disabled=false;}};
+ app.querySelectorAll('[data-e]').forEach(b=>b.onclick=async()=>{
+  const id=b.dataset.e;
+  const {data:p,error:consultaError}=await sb.from('cia_preguntas')
+    .select('id,enunciado,correcta,explicacion,distractores,tema,nivel,metadatos')
+    .eq('id',id).eq('docente_id',uid).single();
+  if(consultaError){alert('No se pudo abrir la pregunta: '+consultaError.message);return;}
+  const fondo=document.createElement('div');fondo.className='editor-fondo';
+  fondo.innerHTML=`<section class="editor-caja" role="dialog" aria-modal="true" aria-labelledby="editor-titulo">
+    <h2 id="editor-titulo">Editar pregunta</h2>
+    <p class="s">Cambie los datos y pulse Guardar. Las modificaciones se guardan en Supabase.</p>
+    <label for="ed-enunciado">Enunciado</label><textarea id="ed-enunciado" rows="3" required>${esc(p.enunciado)}</textarea>
+    <label for="ed-correcta">Respuesta correcta</label><textarea id="ed-correcta" rows="2" required>${esc(typeof p.correcta==='string'?p.correcta:JSON.stringify(p.correcta??''))}</textarea>
+    <label for="ed-distractores">Opciones incorrectas (una por línea)</label><textarea id="ed-distractores" rows="4">${esc(Array.isArray(p.distractores)?p.distractores.map(x=>typeof x==='string'?x:JSON.stringify(x)).join('\n'):'')}</textarea>
+    <label for="ed-explicacion">Explicación</label><textarea id="ed-explicacion" rows="3">${esc(p.explicacion||'')}</textarea>
+    <label for="ed-tema">Tema</label><input id="ed-tema" value="${esc(p.tema||'')}">
+    <label for="ed-nivel">Dificultad</label><select id="ed-nivel"><option value="facil">Fácil</option><option value="medio">Medio</option><option value="dificil">Difícil</option></select>
+    <p id="ed-error" class="err" role="alert"></p>
+    <div class="editor-acciones"><button class="sec" id="ed-cancelar">Cancelar</button><button id="ed-guardar">Guardar cambios</button></div>
+  </section>`;
+  document.body.appendChild(fondo);
+  const get=x=>fondo.querySelector(x);
+  get('#ed-nivel').value=['facil','medio','dificil'].includes(p.nivel)?p.nivel:'medio';
+  const cerrar=()=>fondo.remove();
+  get('#ed-cancelar').onclick=cerrar;
+  fondo.addEventListener('click',e=>{if(e.target===fondo)cerrar();});
+  get('#ed-enunciado').focus();
+  get('#ed-guardar').onclick=async()=>{
+    const enunciado=get('#ed-enunciado').value.trim();
+    const correcta=get('#ed-correcta').value.trim();
+    const distractores=get('#ed-distractores').value.split('\n').map(x=>x.trim()).filter(Boolean);
+    const explicacion=get('#ed-explicacion').value.trim();
+    const tema=get('#ed-tema').value.trim();
+    if(!enunciado||!correcta){get('#ed-error').textContent='El enunciado y la respuesta correcta son obligatorios.';return;}
+    if(distractores.some(x=>x.toLowerCase()===correcta.toLowerCase())){get('#ed-error').textContent='La respuesta correcta no debe repetirse entre las incorrectas.';return;}
+    const guardar=get('#ed-guardar');guardar.disabled=true;
+    get('#ed-error').textContent='Guardando...';
+    const {data:actualizada,error}=await sb.from('cia_preguntas').update({enunciado,correcta,distractores,explicacion,tema,nivel:get('#ed-nivel').value})
+      .eq('id',p.id).eq('docente_id',uid).select('id');
+    if(error||!actualizada?.length){get('#ed-error').textContent='No se pudo guardar: '+(error?.message||'Sin permiso para modificar esta pregunta.');guardar.disabled=false;return;}
+    cerrar();await tBanco(uid);
+  };
+});
+}
+async function tEst(uid){
+ const {data:L,error}=await sb.from('cia_estudiantes').select('id,nombres,cedula,grado,seccion,creado_en').eq('docente_id',uid).order('nombres');
+ if(error){$('#v').innerHTML=`<div class=card>${avisoError(error)}</div>`;return;}
+ $('#v').innerHTML=`<div class=card><h2>Estudiantes: ${L.length}</h2><p class=s>Importar Excel/CSV con nombres, cedula, grado, seccion. Las filas existentes con la misma cédula se actualizarán.</p><button class=sec id=plantilla>Descargar plantilla CSV</button><button class=sec id=exportar-alumnos>Exportar matrícula</button><button class=sec id=exportar-alumnos-json>Respaldo matrícula JSON</button><label>Buscar por nombre o cédula<input id=buscar-alumno placeholder="Buscar estudiante"></label><label>Filtrar salón<select id=salon-alumno><option value="">Todos los salones</option>${[...new Set(L.map(a=>(a.grado||'')+' '+(a.seccion||'')))].sort().map(t=>`<option>${esc(t)}</option>`).join('')}</select></label><p class=s id=cuenta-alumnos></p><input id=f type=file accept=".xlsx,.xls,.csv"><p id=st class=s role=status></p></div><div class="card wrap"><table><tr><th>Nombre</th><th>Cédula</th><th>Grado</th><th>Creado</th></tr>${L.map(s=>`<tr data-alumno data-texto="${esc((s.nombres+' '+s.cedula).toLowerCase())}" data-salon="${esc((s.grado||'')+' '+(s.seccion||''))}"><td>${esc(s.nombres)}</td><td>${esc(s.cedula)}</td><td>${esc((s.grado||'')+' '+(s.seccion||''))}</td><td>${esc(s.creado_en?.slice(0,10)||'')}</td></tr>`).join('')}</table></div>`;
+ $('#exportar-alumnos-json').onclick=()=>descargarArchivo('matricula_cia.json',JSON.stringify({fecha:new Date().toISOString(),estudiantes:L.map(({nombres,cedula,grado,seccion})=>({nombres,cedula,grado,seccion}))},null,2),'application/json');
+ $('#plantilla').onclick=()=>descargarArchivo('plantilla_estudiantes_cia.csv','\ufeffnombres,cedula,grado,seccion\r\n','text/csv;charset=utf-8');
+ $('#exportar-alumnos').onclick=()=>descargarArchivo('matricula_cia.csv','\ufeff'+[['nombres','cedula','grado','seccion'],...L.map(a=>[a.nombres,a.cedula,a.grado,a.seccion])].map(r=>r.map(csvCelda).join(',')).join('\r\n'),'text/csv;charset=utf-8');
+ const filtrarAlumnos=()=>{const q=$('#buscar-alumno').value.toLowerCase().trim(),salon=$('#salon-alumno').value;let n=0;app.querySelectorAll('[data-alumno]').forEach(tr=>{tr.hidden=!(tr.dataset.texto.includes(q)&&(!salon||tr.dataset.salon===salon));if(!tr.hidden)n++;});$('#cuenta-alumnos').textContent=`Mostrando ${n} de ${L.length} estudiantes`;};
+ $('#buscar-alumno').oninput=filtrarAlumnos;$('#salon-alumno').onchange=filtrarAlumnos;filtrarAlumnos();
+ $('#f').onchange=async e=>{const st=$('#st');try{const wb=XLSX.read(await e.target.files[0].arrayBuffer());const rows=XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]],{defval:''});const g=(r,k)=>{const key=Object.keys(r).find(x=>norm(x)===k);return key?String(r[key]).trim():'';};const filas=rows.map(r=>({docente_id:uid,nombres:g(r,'nombres')||g(r,'nombre'),cedula:g(r,'cedula'),grado:g(r,'grado'),seccion:g(r,'seccion')})).filter(f=>f.nombres&&f.cedula);if(!filas.length){st.textContent='No hay nombres y cédulas válidos.';return;}
+ const ids=new Map(L.filter(x=>x.cedula).map(x=>[x.cedula,x.id]));const repetidosArchivo=filas.filter((f,i)=>filas.findIndex(g=>g.cedula===f.cedula)!==i);if(repetidosArchivo.length){st.textContent=`El archivo contiene ${repetidosArchivo.length} cédulas repetidas. Corríjalas antes de importar.`;return;}let ok=0;for(const f of filas){const id=ids.get(f.cedula);const q=id?sb.from('cia_estudiantes').update(f).eq('id',id).eq('docente_id',uid):sb.from('cia_estudiantes').insert(f);const {error}=await q;if(error)throw Error(`Fila ${ok+1}: ${error.message}`);ok++;}await tEst(uid);$('#st').textContent=`${ok} filas procesadas.`;}catch(err){st.textContent='Error: '+err.message;}};
+}
+async function tRes(uid){
+ const {data:R,error}=await sb.from('cia_intentos').select('id,estudiante_id,ejercicio_id,nota,creado_en,revision_pendiente').eq('docente_id',uid).order('creado_en',{ascending:false});
+ if(error){$('#v').innerHTML=`<div class=card>${avisoError(error)}</div>`;return;}
+ const [er,ex]=await Promise.all([sb.from('cia_estudiantes').select('id,nombres,cedula').eq('docente_id',uid),sb.from('cia_ejercicios').select('id,titulo,max_nota').eq('docente_id',uid)]);
+ if(er.error||ex.error){$('#v').innerHTML=`<div class=card>${avisoError(er.error||ex.error)}</div>`;return;}
+ const alumnos=new Map(er.data.map(x=>[x.id,x])),ejercicios=new Map(ex.data.map(x=>[x.id,x]));
+ const mejores=new Map();R.forEach(r=>{const k=`${r.estudiante_id}|${r.ejercicio_id}`,e=ejercicios.get(r.ejercicio_id);const nota=Number(r.nota),max=Number(e?.max_nota);if(!Number.isFinite(nota)||!Number.isFinite(max)||max<=0)return;const pct=nota/max*100;const ant=mejores.get(k);if(!ant||pct>ant.pct)mejores.set(k,{pct,nota,max,estudiante_id:r.estudiante_id,ejercicio_id:r.ejercicio_id});});
+ const f=R.map(r=>{const a=alumnos.get(r.estudiante_id)||{},e=ejercicios.get(r.ejercicio_id)||{};return[a.nombres||'Sin estudiante',a.cedula||'',e.titulo||'Sin ejercicio',`${r.nota??'—'} / ${e.max_nota??'—'}`,r.creado_en?new Date(r.creado_en).toLocaleString('es-PA'):'',r.revision_pendiente?'Pendiente':'—'];});
+ $('#v').innerHTML=`<div class=card><h2>Resultados: ${f.length}</h2><p class=s>Estudiantes con resultados: ${new Set(R.map(r=>r.estudiante_id)).size} · Revisiones pendientes: ${R.filter(r=>r.revision_pendiente).length}</p><label>Buscar estudiante o ejercicio<input id=buscar-resultado placeholder="Nombre, cédula o ejercicio"></label><label>Ejercicio<select id=filtro-ejercicio><option value=''>Todos los ejercicios</option>${[...new Set(f.map(r=>r[2]))].sort().map(t=>`<option>${esc(t)}</option>`).join('')}</select></label><label>Estado<select id=estado-resultado><option value="">Todos</option><option value="Pendiente">Pendiente de revisión</option><option value="—">Sin revisión pendiente</option></select></label><p id=cuenta-resultados class=s></p><button class=sec id=imprimir-resultados>Imprimir resultados</button><button class=sec id=exportar-mejores>Exportar mejores notas CSV</button> <button id=ex ${f.length?'':'disabled'}>Exportar CSV</button></div><div class="card wrap"><table><tr><th>Nombre</th><th>Cédula</th><th>Ejercicio</th><th>Nota</th><th>Fecha</th><th>Revisión</th></tr>${f.map(r=>`<tr data-resultado data-texto="${esc((r[0]+' '+r[1]+' '+r[2]).toLowerCase())}" data-estado="${esc(r[5])}">`+r.map(c=>`<td>${esc(c)}</td>`).join('')+'</tr>').join('')}</table></div>`;
+ const filtrarResultados=()=>{const q=$('#buscar-resultado').value.toLowerCase().trim(),estado=$('#estado-resultado').value,ej=$('#filtro-ejercicio').value;let n=0;app.querySelectorAll('[data-resultado]').forEach(tr=>{tr.hidden=!(tr.dataset.texto.includes(q)&&(!estado||tr.dataset.estado===estado)&&(!ej||tr.children[2].textContent===ej));if(!tr.hidden)n++;});$('#cuenta-resultados').textContent=`Mostrando ${n} de ${f.length} resultados`;};$('#buscar-resultado').oninput=filtrarResultados;$('#estado-resultado').onchange=filtrarResultados;$('#filtro-ejercicio').onchange=filtrarResultados;filtrarResultados();
+ $('#exportar-mejores').onclick=()=>{const filas=[['estudiante','cedula','ejercicio','mejor_nota','nota_maxima','porcentaje'],...[...mejores.values()].map(m=>{const a=alumnos.get(m.estudiante_id)||{},e=ejercicios.get(m.ejercicio_id)||{};return[a.nombres||'',a.cedula||'',e.titulo||'',m.nota,m.max,m.pct.toFixed(1)+'%'];})];descargarArchivo('cia_mejores_notas.csv','\ufeff'+filas.map(r=>r.map(csvCelda).join(',')).join('\r\n'),'text/csv;charset=utf-8');};
+ $('#imprimir-resultados').onclick=()=>window.print();
+ $('#ex').onclick=()=>{const csv='\ufeffnombre,cedula,ejercicio,nota,fecha,revision\n'+f.filter((r,i)=>!app.querySelectorAll('[data-resultado]')[i].hidden).map(r=>r.map(c=>csvCelda(c)).join(',')).join('\n');const a=document.createElement('a');const url=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));a.href=url;a.download='resultados.csv';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);};
+}
 
-async function tEst(uid){const {data:L=[]}=await sb.from('cia_estudiantes').select('nombres,cedula,grado,seccion,registrado_en').order('nombres');
- $('#v').innerHTML=`<div class=card><h2>Estudiantes: ${L.length}</h2><p class=s>Sube la plantilla Excel o CSV (columnas: nombres, cedula, grado, seccion).</p><input id=f type=file accept=".xlsx,.xls,.csv"><p id=st class=s role=status></p></div>
- <div class="card wrap"><table><tr><th>Nombre<th>Cédula<th>Grado<th>Ingresó</tr>${L.map(s=>`<tr><td>${esc(s.nombres)}<td>${esc(s.cedula)}<td>${esc((s.grado||'')+' '+(s.seccion||''))}<td>${s.registrado_en?'Sí':'—'}</tr>`).join('')}</table></div>`;
- $('#f').onchange=async e=>{try{const wb=XLSX.read(await e.target.files[0].arrayBuffer());const rows=XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]],{defval:''});
-  const g=(r,k)=>{const key=Object.keys(r).find(x=>norm(x)==k);return key?String(r[key]).trim():'';};
-  const filas=rows.map(r=>({docente_id:uid,nombres:g(r,'nombres')||g(r,'nombre'),cedula:g(r,'cedula'),grado:g(r,'grado'),seccion:g(r,'seccion')})).filter(f=>f.nombres&&f.cedula);
-  if(!filas.length)return $('#st').textContent='No se encontraron filas con nombres y cedula.';
-  const {error}=await sb.from('cia_estudiantes').upsert(filas,{onConflict:'docente_id,cedula'});if(error)throw error;tEst(uid);}catch(err){$('#st').textContent='Error: '+err.message;}};}
-
-async function tRes(){const {data:R=[]}=await sb.from('cia_intentos').select('tipo,nota,enviado_en,cia_estudiantes(nombres,cedula)').not('enviado_en','is',null).order('enviado_en',{ascending:false});
- const f=R.map(r=>[r.cia_estudiantes?.nombres,r.cia_estudiantes?.cedula,TIPOS[r.tipo]||r.tipo,r.nota+'/8',new Date(r.enviado_en).toLocaleString('es-PA')]);
- $('#v').innerHTML=`<div class=card><h2>Resultados: ${f.length}</h2><button id=ex ${f.length?'':'disabled'}>Exportar CSV</button></div><div class="card wrap"><table><tr><th>Nombre<th>Cédula<th>Ejercicio<th>Nota<th>Fecha</tr>${f.map(r=>'<tr>'+r.map(c=>`<td>${esc(c)}`).join('')+'</tr>').join('')}</table></div>`;
- $('#ex').onclick=()=>{const csv='\ufeffnombre,cedula,ejercicio,nota,fecha\n'+f.map(r=>r.map(c=>`"${String(c).replace(/"/g,'""')}"`).join(',')).join('\n');
-  const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));a.download='resultados.csv';a.click();};}
 inicio();
 </script></body></html>
