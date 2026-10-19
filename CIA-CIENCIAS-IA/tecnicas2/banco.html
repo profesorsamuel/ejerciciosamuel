@@ -24,6 +24,7 @@ function normalizarIA(p){
  opciones=opciones.filter((x,i)=>opciones.findIndex(y=>igual(x,y))===i);
  if(opciones.length<3)return {error:'Menos de tres alternativas distintas'};
  opciones=opciones.slice(0,3).some(x=>igual(x,respuesta))?opciones.slice(0,3):[respuesta,...opciones.filter(x=>!igual(x,respuesta)).slice(0,2)];
+ for(let i=opciones.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[opciones[i],opciones[j]]=[opciones[j],opciones[i]]}
  return {tipo,pregunta,opciones,respuesta,explicacion:String(p.explicacion??p.justificacion??'').trim(),guardada:false};
 }
 function resumenIA(){const pendientes=preguntasIA.filter(x=>!x.guardada);const conteo=Object.fromEntries(tiposIA.map(t=>[t,pendientes.filter(x=>x.tipo===t).length]));return `Pendientes: ${pendientes.length} · `+Object.entries(conteo).map(([k,v])=>`${k}: ${v}`).join(' · ')}
