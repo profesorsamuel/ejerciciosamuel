@@ -631,7 +631,7 @@ async function ciaAdministrarPeriodos(uid,box){
  const cont=document.createElement('section');cont.id='cia-administrar-periodos';
  cont.innerHTML=`<hr><h3>Periodos de práctica</h3><p class=s><b>Último paso:</b> guarda la programación sin publicarla; después pulsa «Activar para estudiantes» cuando el banco esté completo.</p>
  <div class="s" style="padding:9px;border:1px solid #d6e6d9;border-radius:8px;margin:10px 0">Para elegir cuál ve el estudiante, pulsa <b>Activar para estudiantes</b> en el periodo deseado: ese queda visible y los otros periodos vigentes de su salón se desactivan (puedes reactivarlos después). Para reordenar fechas usa <b>↑ Primero</b> o <b>↓ Después</b>. Se intercambian las fechas de los dos periodos, sin cambiar sus técnicas ni sus notas.</div>
- <div class="cia-accesos"><button type="button" id="cia-ver-tecnicas">📋 Ver técnicas</button><button type="button" id="cia-nuevo-rapido">➕ Nueva práctica</button><button type="button" id="cia-recargar-periodos">🔄 Actualizar estados</button></div>
+ <div class="cia-accesos"><button type="button" id="cia-comprobar-cobertura">✅ Comprobar banco E3</button><button type="button" id="cia-ver-tecnicas">📋 Ver técnicas</button><button type="button" id="cia-nuevo-rapido">➕ Nueva práctica</button><button type="button" id="cia-recargar-periodos">🔄 Actualizar estados</button></div>
  <form id="cia-form-periodo"><label>Título del periodo<input name="titulo" maxlength="120" required placeholder="Ej.: Evaluación actual"></label>
  <label>Evaluación que verán los estudiantes<select name="tecnica" required><option value="banco">Evaluación 1</option><option value="e2">Evaluación 2</option><option value="e3">Evaluación 3</option></select></label>
  <label>Grado<select name="grado" required><option value="">Seleccionar grado</option><option value="7">7.º</option><option value="8">8.º</option><option value="9">9.º</option></select></label>
@@ -642,7 +642,7 @@ async function ciaAdministrarPeriodos(uid,box){
  <input type="checkbox" name="activo" hidden>
  </div></details>
  <button type="submit" id="cia-guardar-periodo">Guardar periodo</button><button type="button" class="sec" id="cia-cancelar-periodo" hidden>Cancelar edición</button>
- <p id="cia-periodo-mensaje" role="status" class=s></p></form><h3>Periodos existentes</h3><p id="cia-lista-msg" role="status" style="font-weight:700;margin:6px 0"></p><div id="cia-lista-periodos">Cargando…</div>`;
+ <p id="cia-periodo-mensaje" role="status" class=s></p><div id="cia-cobertura-visible" role="status" aria-live="polite" class="s" style="padding:10px;border:1px solid #d3e2ef;border-radius:8px;margin:8px 0">Selecciona materia y grado; pulsa «Comprobar banco E3» antes de activar.</div></form><h3>Periodos existentes</h3><p id="cia-lista-msg" role="status" style="font-weight:700;margin:6px 0"></p><div id="cia-lista-periodos">Cargando…</div>`;
  box.appendChild(cont);
  const form=cont.querySelector('form'),msg=cont.querySelector('#cia-periodo-mensaje'),list=cont.querySelector('#cia-lista-periodos');
  const campo=n=>form.elements.namedItem(n);
@@ -673,6 +673,21 @@ async function ciaAdministrarPeriodos(uid,box){
   }
   return faltas;
  }
+ const mostrarCobertura=async()=>{
+  const panel=cont.querySelector('#cia-cobertura-visible');
+  const grado=campo('grado').value,materia=campo('materia_id').value;
+  if(!grado||!materia){panel.textContent='Selecciona primero una materia y un grado.';return false;}
+  panel.textContent='Consultando las cinco técnicas…';
+  try{
+   const faltas=await coberturaE3(grado,materia);
+   if(faltas.length){panel.textContent='⚠️ Evaluación 3 todavía no está lista: '+faltas.join(' | ');return false;}
+   panel.textContent='✅ Evaluación 3 lista: las cinco técnicas tienen al menos '+E2_META+' preguntas activas y distintas para esta materia y grado.';
+   return true;
+  }catch(e){panel.textContent='No se pudo verificar el banco: '+e.message;return false;}
+ };
+ cont.querySelector('#cia-comprobar-cobertura').onclick=mostrarCobertura;
+ campo('grado').addEventListener('change',()=>{cont.querySelector('#cia-cobertura-visible').textContent='Grado cambiado: comprueba de nuevo el banco.'});
+ campo('materia_id').addEventListener('change',()=>{cont.querySelector('#cia-cobertura-visible').textContent='Materia cambiada: comprueba de nuevo el banco.'});
  const localFecha=fecha=>{if(!fecha)return '';const d=new Date(fecha);return new Date(d.getTime()-d.getTimezoneOffset()*60000).toISOString().slice(0,16)};
  const limpiar=()=>{editando=null;form.reset();campo('activo').checked=false;campo('modalidad').value='abierta';cambiarModalidad();cont.querySelector('#cia-avanzado').open=true;const g=box.querySelector('[name=ta]:checked');if(g)campo('tecnica').value=g.value;cont.querySelector('#cia-guardar-periodo').textContent='Guardar periodo';cont.querySelector('#cia-cancelar-periodo').hidden=true;};
  async function cargar(){
@@ -713,7 +728,7 @@ async function ciaAdministrarPeriodos(uid,box){
    const mismoSalon=p=>gradoNormal(p.grado)===gradoNormal(elegido.grado)&&(esTodas(p.seccion)||esTodas(elegido.seccion)||seccionNormal(p.seccion)===seccionNormal(elegido.seccion));
    const otros=periodos.filter(p=>p.id!==elegido.id&&mismoSalon(p)&&vigente(p));
    b.disabled=true;
-   if(elegido.tecnica==='e3'){try{const faltas=await coberturaE3(elegido.grado,elegido.materia_id);if(faltas.length){msg.textContent='No se activó Evaluación 3. Completa el banco en Paso 2: '+faltas.join(' | ');b.disabled=false;return;}}catch(e){msg.textContent='No se activó: no fue posible verificar las preguntas. '+e.message;b.disabled=false;return;}}
+   if(elegido.tecnica==='e3'){try{if(!elegido.materia_id)throw Error('Este periodo no tiene materia asignada. Edita el periodo y selecciona Ciencias Naturales.');const faltas=await coberturaE3(elegido.grado,elegido.materia_id);if(faltas.length){msg.textContent='No se activó Evaluación 3. Completa el banco en Paso 2: '+faltas.join(' | ');b.disabled=false;return;}}catch(e){msg.textContent='No se activó: no fue posible verificar las preguntas. '+e.message;b.disabled=false;return;}}
    const dur=Math.max(new Date(elegido.fin).getTime()-new Date(elegido.inicio).getTime(),86400000);
    const cambios={activo:true};
    if(!vigente(elegido)){if(!esSinInicio(elegido))cambios.inicio=new Date(ahora-60000).toISOString();if(!esSinFin(elegido))cambios.fin=new Date(ahora+dur).toISOString();}
@@ -1118,8 +1133,8 @@ async function iniciarE2(tec){
   const {data:d,error:er}=catalogo
    ?await sb.rpc('cia14_iniciar_catalogo',{p_cedula:est.cedula,p_materia:$('#e2m').value,p_tecnica:tec,p_catalogo:catalogo})
    :await sb.rpc('cia14_iniciar',{p_cedula:est.cedula,p_materia:$('#e2m').value,p_tecnica:tec});
-  if(er){$('#m').textContent=/al menos ocho preguntas/i.test(er.message)?'Esta técnica todavía no tiene 8 preguntas activas para tu materia y grado. Avisa al profesor para que complete el banco de Evaluación 3.':er.message;document.querySelectorAll('[data-e2t]').forEach(b=>b.disabled=false);return;}
-  if(!d||!Array.isArray(d.preguntas)||!d.preguntas.length||!d.intento){$('#m').textContent='No hay preguntas disponibles para esta evaluación y técnica.';document.querySelectorAll('[data-e2t]').forEach(b=>b.disabled=false);return;}
+  if(er){$('#m').textContent=/al menos ocho preguntas/i.test(er.message)?'Esta técnica aún no está lista: faltan preguntas activas para tu materia y grado. Informa al profesor; tus notas anteriores se conservan.':er.message;document.querySelectorAll('[data-e2t]').forEach(b=>b.disabled=false);return;}
+  if(!d||!Array.isArray(d.preguntas)||d.preguntas.length!==8||!d.intento){$('#m').textContent='La evaluación no devolvió exactamente ocho preguntas. Informa al profesor; no se iniciará una evaluación incompleta.';document.querySelectorAll('[data-e2t]').forEach(b=>b.disabled=false);return;}
   const items=d.preguntas||[],intento=d.intento,tecnicaNombre=tecnicasDe(MODO_E)[tec];
   draw(`<div class=card><h2>${esc(tecnicaNombre)}</h2><p class=s>Responde las ${items.length} preguntas y pulsa Enviar.</p>${items.map((q,i)=>`<div class=card><b>${i+1}. ${esc(q.enunciado)}</b>${q.opciones.map((o,j)=>`<label style="display:block;margin:8px 0"><input style="width:auto;margin:0 8px 0 0" type=radio name="q${i}" value="${j}"> ${esc(o)}</label>`).join('')}</div>`).join('')}<p class=err id=m></p><button id=e2env>Enviar respuestas</button></div>`);
   $('#e2env').onclick=async()=>{
