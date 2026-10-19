@@ -946,7 +946,12 @@ function matGenerar(c,root){
     for(const p of pend()){if(!p.guardar)continue;st.textContent=`Guardando ${ok+mal+1} de ${total}…`;(await p.guardar())?ok++:mal++;}
     resumenPend();autoMsg=`✅ Guardadas automáticamente: ${ok}.${mal?` ⚠️ ${mal} con error (en rojo, corrígelas y pulsa Guardar).`:''} `;}
    const res=Object.entries(rech.reduce((a,x)=>{const k=x.slice(0,80);a[k]=(a[k]||0)+1;return a;},{})).map(([k,n])=>k+' ('+n+')').join('; ');
-   const resumenE3=gctx.modo==='e3'?' Cobertura prevista: '+tec.map(t=>`${E3_TECNICAS[t]} ${coberturaActual[t]+nuevasPorTecnica[t]}/${E2_META}`).join(' · ')+'. Verifica las guardadas en Paso 3. ':'';
+   let resumenE3='';
+   if(gctx.modo==='e3'){
+    const {data:finales,error:errFinal}=await sb.from('cia14_preguntas').select('tecnica,enunciado').eq('docente_id',c.uid).eq('materia_id',c.mat.id).eq('grado',gctx.grado).eq('activa',true).in('tecnica',tec).limit(5000);
+    if(errFinal)resumenE3=' No se pudo verificar la cobertura guardada: '+errFinal.message+'. ';
+    else resumenE3=' Cobertura REAL guardada: '+tec.map(t=>{const n=new Set((finales||[]).filter(q=>q.tecnica===t).map(q=>e2Clave(q.enunciado))).size;return `${E3_TECNICAS[t]} ${n}/${E2_META}${n<E2_META?' (faltan '+(E2_META-n)+')':''}`}).join(' · ')+'. ';
+   }
    st.textContent=`${autoMsg}${resumenE3}Gemini devolvió ${recib} preguntas en ${rondas} lote(s); ${pregs.length} de ${objetivo} listas para revisar.${rech.length?' Descartadas '+rech.length+': '+res+'.':''}${pregs.length<objetivo?' No se alcanzó la meta: revisa las preguntas y vuelve a generar otro lote. No se garantiza llegar a 80 en una sola ejecución.':''}`;
   }catch(err){st.textContent='Error: '+(err.message||err);}
   finally{btn.disabled=!pdfCache;}
