@@ -958,8 +958,8 @@ async function iniciarE2(tec){
    if(ee){$('#m').textContent=ee.message;$('#e2env').disabled=false;return;}
    const tipoE2=catalogo?'e2:'+catalogo+':'+tec:'e2:'+tec;
    const marcaSincronizada=await registrarRealizadoServidor(tipoE2);
-   if(!marcaSincronizada)console.warn('La nota fue enviada, pero no se confirmó la marca de realizado.');
-   draw(`<div class=card><h2>Resultado guardado</h2><p>Correctas: <b>${esc(r.aciertos)}</b> de <b>${esc(r.total)}</b></p><h3>Nota de práctica: ${esc(r.nota)} / 5.00</h3><p class=s>Esta calificación no corresponde a una evaluación oficial.</p><button id=e2otra>Hacer otra práctica</button><button class=sec id=e2menu>Volver al menú</button></div>`);
+   if(!marcaSincronizada){console.warn('La nota fue enviada, pero no se confirmó la marca de realizado.');}
+   draw(`<div class=card><h2>Resultado guardado</h2><p>Correctas: <b>${esc(r.aciertos)}</b> de <b>${esc(r.total)}</b></p><h3>Nota de práctica: ${esc(r.nota)} / 5.00</h3><p class=s>Esta calificación no corresponde a una evaluación oficial.</p>${marcaSincronizada?'':'<p role=alert class=s>La nota se guardó, pero no se pudo confirmar la marca de realizado. Vuelve a consultar el seguimiento.</p>'}<button id=e2otra>Hacer otra práctica</button><button class=sec id=e2menu>Volver al menú</button></div>`);
    $('#e2otra').onclick=()=>practicaE2({catalogo,materia:materiaElegida});$('#e2menu').onclick=()=>menu();
   };
  }
