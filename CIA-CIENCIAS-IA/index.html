@@ -526,7 +526,7 @@ async function tecnicaDocente(uid){
 async function ciaAdministrarPeriodos(uid,box){
  const cont=document.createElement('section');cont.id='cia-administrar-periodos';
  cont.innerHTML=`<hr><h3>Periodos de práctica</h3><p class=s>Programa las cinco prácticas del Banco o de Enlace 2 para un salón.</p>
- <div class="s" style="padding:9px;border:1px solid #d6e6d9;border-radius:8px;margin:10px 0">Para cambiar cuál ve el estudiante ahora, pulsa <b>Mostrar ahora</b> en el periodo deseado. Para reordenar fechas usa <b>↑ Primero</b> o <b>↓ Después</b>. Se intercambian las fechas de los dos periodos, sin cambiar sus técnicas ni sus notas.</div>
+ <div class="s" style="padding:9px;border:1px solid #d6e6d9;border-radius:8px;margin:10px 0">Para elegir cuál ve el estudiante, pulsa <b>Mostrar ahora</b> en el periodo deseado: ese queda visible y los otros periodos vigentes de su salón se desactivan (puedes reactivarlos después). Para reordenar fechas usa <b>↑ Primero</b> o <b>↓ Después</b>. Se intercambian las fechas de los dos periodos, sin cambiar sus técnicas ni sus notas.</div>
  <form id="cia-form-periodo"><label>Título del periodo<input name="titulo" maxlength="120" required placeholder="Ej.: Prácticas de octubre"></label>
  <label>Materia (opcional)<select name="materia_id"><option value="">Todas las materias</option></select></label>
  <label>Técnica de este periodo<select name="tecnica" required><option value="banco">Banco de preguntas</option><option value="e2">Técnicas Enlace 2</option></select></label>
@@ -573,17 +573,18 @@ async function ciaAdministrarPeriodos(uid,box){
   list.querySelectorAll('[data-ahora]').forEach(b=>b.onclick=async()=>{
    const elegido=periodos.find(p=>String(p.id)===b.dataset.ahora);
    if(!elegido)return;
-   const ahora=Date.now();
-   const actual=periodos.find(p=>p.id!==elegido.id&&p.activo&&new Date(p.inicio).getTime()<=ahora&&new Date(p.fin).getTime()>ahora&&String(p.grado)===String(elegido.grado)&&(p.seccion||'')===(elegido.seccion||''));
-   if(!actual){msg.textContent='No hay otro periodo vigente del mismo salón para intercambiar. Usa Editar para asignar a este periodo las fechas actuales.';return;}
-   if(!confirm('¿Mostrar «'+elegido.titulo+'» ahora? Se intercambiarán sus fechas con «'+actual.titulo+'».'))return;
+   const ahora=Date.now(),vigente=p=>p.activo&&new Date(p.inicio).getTime()<=ahora&&new Date(p.fin).getTime()>ahora;
+   const mismoSalon=p=>String(p.grado)===String(elegido.grado)&&(!p.seccion||!elegido.seccion||p.seccion===elegido.seccion);
+   const otros=periodos.filter(p=>p.id!==elegido.id&&mismoSalon(p)&&vigente(p));
+   if(!confirm('¿Mostrar «'+elegido.titulo+'» ('+(elegido.tecnica==='e2'?'Enlace 2':'Banco')+') a los estudiantes ahora?'+(otros.length?' Se ocultarán: '+otros.map(o=>'«'+o.titulo+'»').join(', ')+'.':'')))return;
    b.disabled=true;
-   const guardar=(p,ini,fin)=>sb.from('cia_periodos').update({inicio:ini,fin:fin,activo:true}).eq('id',p.id).eq('docente_id',uid);
-   const primero=await guardar(elegido,actual.inicio,actual.fin);
-   if(primero.error){msg.textContent='Error: '+primero.error.message;b.disabled=false;return;}
-   const segundo=await guardar(actual,elegido.inicio,elegido.fin);
-   if(segundo.error){await guardar(elegido,elegido.inicio,elegido.fin);msg.textContent='No se completó el intercambio: '+segundo.error.message;await cargar();return;}
-   msg.textContent='Listo. «'+elegido.titulo+'» corresponde ahora a las fechas vigentes. Actualiza la pantalla del estudiante.';
+   const dur=Math.max(new Date(elegido.fin).getTime()-new Date(elegido.inicio).getTime(),86400000);
+   const cambios={activo:true};
+   if(!vigente(elegido)){cambios.inicio=new Date(ahora-60000).toISOString();cambios.fin=new Date(ahora+dur).toISOString();}
+   const r1=await sb.from('cia_periodos').update(cambios).eq('id',elegido.id).eq('docente_id',uid);
+   if(r1.error){msg.textContent='Error: '+r1.error.message;b.disabled=false;return;}
+   for(const o of otros){const r=await sb.from('cia_periodos').update({activo:false}).eq('id',o.id).eq('docente_id',uid);if(r.error){msg.textContent='No se pudo ocultar «'+o.titulo+'»: '+r.error.message;await cargar();return;}}
+   msg.textContent='Listo. Los estudiantes ven ahora «'+elegido.titulo+'». Que actualicen su pantalla.';
    await cargar();
   });
   list.querySelectorAll('[data-up]').forEach(b=>b.onclick=()=>moverPeriodo(b.dataset.up,-1));
