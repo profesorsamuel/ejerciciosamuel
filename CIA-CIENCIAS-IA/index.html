@@ -69,7 +69,7 @@ const fmt=c=>Array.isArray(c)?(Array.isArray(c[0])?c.map(p=>p.join(' = ')).join(
 function inicio(){draw(`<div class=card><h2>¿Quién eres?</h2>${CONFIG.url?'':'<p class=err>Falta configurar Supabase en index.html (CONFIG).</p>'}<button class=big id=e>Soy estudiante</button><button class="big sec" id=d>Soy docente</button></div>`);$('#e').onclick=loginEst;$('#d').onclick=loginDoc;}
 
 /* ---------- ESTUDIANTE ---------- */
-function loginEst(){draw(`<div class=card><h2>Ingreso de estudiante</h2><p>Escribe tu cédula tal como aparece en la matrícula de Portal 2027.</p><label>Cédula<input id=c inputmode=text autocomplete=off placeholder="Ejemplo: 3-123-456"></label><p class=err id=m></p><button id=go>Entrar</button><button class=sec id=b>Volver</button></div>`);
+function loginEst(){draw(`<div class=card><h2>Ingreso de estudiante</h2><p>Escribe tu cédula tal como aparece en la matrícula. El sistema identifica tu grado y salón automáticamente.</p><label>Cédula<input id=c inputmode=text autocomplete=off placeholder="Ejemplo: 3-123-456"></label><p class=err id=m></p><button id=go>Entrar</button><button class=sec id=b>Volver</button></div>`);
 $('#b').onclick=inicio;
 $('#c').onkeydown=e=>{if(e.key==='Enter')$('#go').click();};
 $('#go').onclick=async()=>{const c=$('#c').value.trim();if(!c)return $('#m').textContent='Escribe tu cédula.';
@@ -890,7 +890,12 @@ async function e2Cablear(seleccionAnterior){
  if(error){$('#m').textContent=error.message;return;}
  const unicas=[...new Map((data||[]).map(x=>[x.materia_id||x.id,x])).values()].filter(x=>x.materia_id||x.id);
  if(!unicas.length){$('#e2m').innerHTML='';$('#m').textContent='Tu salón aún no tiene materias asignadas. Consulta al profesor.';return;}
- $('#e2m').innerHTML=unicas.map(x=>`<option value="${esc(x.materia_id||x.id)}">${esc(x.materia)}</option>`).join('');
+ // El grado y el salón provienen de la matrícula; la materia se elige solo cuando hay varias.
+ $('#e2m').innerHTML=unicas.map(x=>`<option value="${esc(x.materia_id||x.id)}">${esc(x.materia||x.nombre||'Materia asignada')}</option>`).join('');
+ const selectorMateria=$('#e2m');
+ const avisoMateria=document.createElement('p');avisoMateria.className='s';avisoMateria.id='cia-aviso-materia';
+ selectorMateria.insertAdjacentElement('afterend',avisoMateria);
+ avisoMateria.textContent=unicas.length>1?'Tienes varias materias. Elige la que deseas practicar.':'Materia asignada automáticamente según tu matrícula.';
  const {data:cats,error:catError}=await sb.rpc('cia14_catalogos_estudiante',{p_cedula:est.cedula});
  if(catError){$('#m').textContent='No se pudo cargar el catálogo: '+catError.message;return;}
  const lista=Array.isArray(cats)?cats:[];
@@ -937,6 +942,8 @@ async function e2Cablear(seleccionAnterior){
   }catch(_){if(version===consultaBancoVersion)estadoBanco.textContent='No se pudo comprobar el banco. Puedes intentar la práctica.';}
  }
  $('#e2catalogo').onchange=()=>{actualizarEstadoE2();revisarBancoE2();};
+ // Evitar conservar marcas de otra materia en pantalla al cambiar la selección.
+ $('#e2m').onchange=()=>{actualizarEstadoE2();revisarBancoE2();};
  pintarRealizados();$('#e2catalogo').onchange();if(unicas.length===1)$('#e2mw').style.display='none';
  document.querySelectorAll('[data-e2t]').forEach(b=>{b.disabled=false;b.onclick=()=>iniciarE2(b.dataset.e2t);});
 }
