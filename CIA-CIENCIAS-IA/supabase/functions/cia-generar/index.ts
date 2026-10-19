@@ -56,7 +56,7 @@ Deno.serve(async (req) => {
     const grado = String(body.grado || "9").slice(0, 20);
     const cantidad = Math.min(80, Math.max(5, Number(body.cantidad) || 20));
     const permitidas = ["seleccion_multiple", "verdadero_falso", "completar", "relacionar", "ordenar", "caso", "detective", "quien", "causa", "mito", "casos"];
-    const tecnicas = Array.isArray(body.tecnicas) ? body.tecnicas.filter((t: unknown) => typeof t === "string" && permitidas.includes(t)) : permitidas;
+    const tecnicas = Array.isArray(body.tecnicas) ? body.tecnicas.filter((t: unknown) => typeof t === "string" && permitidas.includes(t)) : ["seleccion_multiple"];
     if (!tecnicas.length) return responder({ error: "Seleccione al menos una técnica" }, 400);
 
     if (texto.length < 100) return responder({ error: "El PDF no contiene suficiente texto" }, 400);
@@ -68,9 +68,9 @@ MATERIA: ${String(body.materia || "Ciencias Naturales").slice(0,100)}
 TEMA: ${tema}
 GRADO: ${grado}
 CANTIDAD: ${cantidad}
-Genera hasta ${cantidad} preguntas educativas basadas exclusivamente en el texto. Para técnicas del Enlace 2, cada pregunta debe tener exactamente tres alternativas distintas y una respuesta literal incluida en ellas.
+Genera EXACTAMENTE ${cantidad} preguntas educativas basadas exclusivamente en el texto, siempre que el contenido lo permita. Para técnicas del Enlace 2, cada pregunta debe tener exactamente tres alternativas distintas y una respuesta literal incluida en ellas.
 No inventes informacion. Lenguaje apropiado para el grado. Mezcla niveles facil, medio y dificil.
-Distribuye las preguntas entre las técnicas seleccionadas: ${tecnicas.join(", ")}. El campo tipo DEBE ser uno de esos identificadores exactos, no el nombre descriptivo.
+REGLA OBLIGATORIA: SOLO puedes utilizar los identificadores JSON siguientes para el campo tipo: ${tecnicas.map(t=>`"${t}"`).join(", ")}. Quedan PROHIBIDOS "seleccion_multiple", "verdadero_falso" y cualquier otro identificador que NO esté en esta lista. Reparte equitativamente las preguntas entre los tipos autorizados.
 Cada pregunta debe tener un enunciado autónomo, una respuesta verificable y una explicación.
 Para selección múltiple, caso, detective, quien, causa, mito y casos, da exactamente 3 opciones DISTINTAS y una respuesta idéntica a una opción. Para las cinco técnicas del Enlace 2 nunca devuelvas solo dos opciones.
 Para detective, identifica un error conceptual y pregunta cómo corregirlo.
@@ -140,8 +140,12 @@ ${texto}`;
     }
 
     const preguntas = datos.preguntas.filter((p: Record<string, unknown>) =>
+      tecnicas.includes(String(p.tipo)) &&
       typeof p.pregunta === "string" &&
       typeof p.respuesta === "string" &&
+      Array.isArray(p.opciones) && p.opciones.length >= (tecnicas.some(t => ["detective","quien","causa","mito","casos"].includes(t)) ? 3 : 2) &&
+      p.opciones.every((o: unknown) => typeof o === "string") &&
+      p.opciones.includes(p.respuesta) &&
       typeof p.explicacion === "string"
     ).slice(0, cantidad);
 
