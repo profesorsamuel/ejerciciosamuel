@@ -607,12 +607,36 @@ async function ciaCatalogoEvaluaciones(uid,box){
  };await cargar();
 }
 
+<style id="cia-periodos-mejora">
+#cia-administrar-periodos{background:#f1f6ff;border:2px solid #b7d0fa;border-radius:16px;padding:18px;margin-top:18px;color:#18345b}
+#cia-administrar-periodos>h3{color:#153b81;font-size:1.35rem}
+#cia-administrar-periodos #cia-form-periodo{background:white;border:1px solid #cad9ef;border-radius:14px;padding:16px;display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:12px;align-items:end}
+#cia-administrar-periodos #cia-form-periodo>label{font-weight:700;color:#254574;display:flex;flex-direction:column;gap:5px}
+#cia-administrar-periodos #cia-form-periodo input:not([type=checkbox]),#cia-administrar-periodos #cia-form-periodo select{border:2px solid #c8d8ed;border-radius:9px;min-height:43px;padding:8px;background:#fff;width:100%}
+#cia-administrar-periodos #cia-form-periodo input:focus,#cia-administrar-periodos #cia-form-periodo select:focus{outline:2px solid #3b82f6}
+#cia-administrar-periodos #cia-guardar-periodo{background:#167447;color:white;font-weight:800;padding:12px;border-radius:10px}
+#cia-administrar-periodos #cia-periodo-mensaje:not(:empty){background:#e4f5ea;border-left:5px solid #198754;padding:12px;border-radius:8px;grid-column:1/-1}
+#cia-administrar-periodos #cia-lista-periodos{background:white;border-radius:12px;padding:8px;overflow-x:auto}
+#cia-administrar-periodos #cia-lista-periodos table{width:100%;border-collapse:separate;border-spacing:0 6px}
+#cia-administrar-periodos #cia-lista-periodos th{background:#234b83;color:white;padding:9px}
+#cia-administrar-periodos #cia-lista-periodos td{background:#f3f7fd;padding:9px;border-bottom:1px solid #d9e3f2}
+#cia-administrar-periodos #cia-lista-periodos button{margin:3px;padding:8px;border-radius:8px}
+#cia-administrar-periodos #cia-lista-periodos [data-ahora]{background:#126d42;color:white;font-weight:bold}
+#cia-administrar-periodos #cia-lista-periodos [data-pb]{background:#fff0f0;color:#a62020;border:1px solid #efb4b4}
+#cia-administrar-periodos .cia-estado-periodo{font-weight:800;border-radius:999px;padding:5px 9px;display:inline-block;white-space:nowrap}
+#cia-administrar-periodos .cia-estado-periodo.ok{background:#d7f5e4;color:#086538}
+#cia-administrar-periodos .cia-estado-periodo.off{background:#ffe8dc;color:#9a3a12}
+#cia-administrar-periodos .cia-estado-periodo.futuro{background:#e1edff;color:#204b9b}
+#cia-administrar-periodos .cia-accesos{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0}
+#cia-administrar-periodos .cia-accesos button{padding:10px;border-radius:10px;background:#225eae;color:white;font-weight:bold}
+@media(max-width:600px){#cia-administrar-periodos{padding:10px}#cia-administrar-periodos #cia-form-periodo{grid-template-columns:1fr}}
+</style>
 /* Periodos de práctica: administración desde Materias, sin alterar otras pantallas. */
 async function ciaAdministrarPeriodos(uid,box){
  const cont=document.createElement('section');cont.id='cia-administrar-periodos';
  cont.innerHTML=`<hr><h3>Periodos de práctica</h3><p class=s>Programa las prácticas de Evaluación 1, 2 o 3 para un salón.</p>
  <div class="s" style="padding:9px;border:1px solid #d6e6d9;border-radius:8px;margin:10px 0">Para elegir cuál ve el estudiante, pulsa <b>Mostrar ahora</b> en el periodo deseado: ese queda visible y los otros periodos vigentes de su salón se desactivan (puedes reactivarlos después). Para reordenar fechas usa <b>↑ Primero</b> o <b>↓ Después</b>. Se intercambian las fechas de los dos periodos, sin cambiar sus técnicas ni sus notas.</div>
- <div style="margin:8px 0"><button type="button" class="sec" id="cia-ver-tecnicas">📋 Ver técnicas de cada evaluación</button></div>
+ <div class="cia-accesos"><button type="button" id="cia-ver-tecnicas">📋 Ver técnicas</button><button type="button" id="cia-nuevo-rapido">➕ Nueva práctica</button><button type="button" id="cia-recargar-periodos">🔄 Actualizar estados</button></div>
  <form id="cia-form-periodo"><label>Título del periodo<input name="titulo" maxlength="120" required placeholder="Ej.: Prácticas de octubre"></label>
  <label>Materia (opcional)<select name="materia_id"><option value="">Todas las materias</option></select></label>
  <label>Técnica de este periodo<select name="tecnica" required><option value="banco">Evaluación 1</option><option value="e2">Evaluación 2</option><option value="e3">Evaluación 3</option></select></label>
@@ -627,6 +651,8 @@ async function ciaAdministrarPeriodos(uid,box){
  const campo=n=>form.elements.namedItem(n);
  let editando=null,periodos=[];
  cont.querySelector('#cia-ver-tecnicas').onclick=()=>ciaVerTecnicas(uid,periodos);
+ cont.querySelector('#cia-nuevo-rapido').onclick=()=>{limpiar();const hoy=new Date();hoy.setMinutes(hoy.getMinutes()-1);campo('inicio').value=localFecha(hoy);const fin=new Date(Date.now()+7*86400000);campo('fin').value=localFecha(fin);campo('titulo').value='Práctica '+new Date().toLocaleDateString('es-PA');form.scrollIntoView({behavior:'smooth',block:'center'});campo('grado').focus();};
+ cont.querySelector('#cia-recargar-periodos').onclick=()=>cargar();
  const {data:materias,error:errMat}=await sb.from('cia_materias').select('id,nombre').eq('docente_id',uid).order('nombre');
  if(!errMat)campo('materia_id').innerHTML='<option value="">Todas las materias</option>'+(materias||[]).map(m=>`<option value="${esc(String(m.id))}">${esc(m.nombre)}</option>`).join('');
  const localFecha=fecha=>{if(!fecha)return '';const d=new Date(fecha);return new Date(d.getTime()-d.getTimezoneOffset()*60000).toISOString().slice(0,16)};
@@ -638,7 +664,7 @@ async function ciaAdministrarPeriodos(uid,box){
   {const ahoraMs=Date.now(),vig=periodos.filter(p=>p.activo&&new Date(p.inicio).getTime()<=ahoraMs&&new Date(p.fin).getTime()>ahoraMs);const el=document.querySelector('#cia-vigente');if(el)el.textContent=vig.length?'Ahora mismo los estudiantes ven: '+vig.map(p=>'«'+p.titulo+'» → '+etiquetaEval(p.tecnica)+' ('+p.grado+'.º '+(p.seccion||'Todas')+')').join(' · '):'No hay periodo vigente: los estudiantes ven la técnica por defecto.';}
   if(!editando&&!campo('inicio').value&&periodos.length){const ult=periodos[periodos.length-1];const siguiente=new Date(new Date(ult.fin).getTime()+60000);campo('inicio').value=localFecha(siguiente);}
   if(!periodos.length){list.textContent='Todavía no hay periodos registrados.';return;}
-  list.innerHTML='<div class="wrap"><table><thead><tr><th>Orden</th><th>Periodo</th><th>Salón</th><th>Técnica</th><th>Inicio</th><th>Cierre</th><th>Estado</th><th>Acciones</th></tr></thead><tbody>'+periodos.map((p,i)=>`<tr><td><b>${i+1}.º</b></td><td>${esc(p.titulo)}</td><td>${esc(String(p.grado))}.º ${esc(p.seccion||'Todas')}</td><td>${p.tecnica==='e3'?'Evaluación 3':p.tecnica==='e2'?'Evaluación 2':'Evaluación 1'}</td><td>${esc(new Date(p.inicio).toLocaleString('es-PA'))}</td><td>${esc(new Date(p.fin).toLocaleString('es-PA'))}</td><td>${p.activo?'Activo':'Inactivo'}</td><td><button type="button" class="sec" data-up="${esc(String(p.id))}" ${i===0?'disabled':''} title="Poner antes de la práctica anterior">↑ Primero</button><button type="button" class="sec" data-down="${esc(String(p.id))}" ${i===periodos.length-1?'disabled':''} title="Poner después de la siguiente práctica">↓ Después</button><button type="button" data-ahora="${esc(String(p.id))}">Mostrar ahora</button><button type="button" data-pe="${esc(String(p.id))}">Editar</button><button type="button" class="sec" data-pt="${esc(String(p.id))}">${p.activo?'Desactivar':'Activar'}</button><button type="button" class="sec" data-pb="${esc(String(p.id))}">Borrar</button></td></tr>`).join('')+'</tbody></table></div>';
+  list.innerHTML='<div class="wrap"><table><thead><tr><th>Orden</th><th>Periodo</th><th>Salón</th><th>Técnica</th><th>Inicio</th><th>Cierre</th><th>Estado</th><th>Acciones</th></tr></thead><tbody>'+periodos.map((p,i)=>`<tr><td><b>${i+1}.º</b></td><td>${esc(p.titulo)}</td><td>${esc(String(p.grado))}.º ${esc(p.seccion||'Todas')}</td><td>${p.tecnica==='e3'?'Evaluación 3':p.tecnica==='e2'?'Evaluación 2':'Evaluación 1'}</td><td>${esc(new Date(p.inicio).toLocaleString('es-PA'))}</td><td>${esc(new Date(p.fin).toLocaleString('es-PA'))}</td><td><span class="cia-estado-periodo ${!p.activo?'off':new Date(p.inicio).getTime()>Date.now()?'futuro':new Date(p.fin).getTime()<=Date.now()?'off':'ok'}">${!p.activo?'⛔ Desactivado':new Date(p.inicio).getTime()>Date.now()?'🕒 Programado':new Date(p.fin).getTime()<=Date.now()?'⌛ Vencido':'🟢 Abierto'}</span></td><td><button type="button" class="sec" data-up="${esc(String(p.id))}" ${i===0?'disabled':''} title="Poner antes de la práctica anterior">↑ Primero</button><button type="button" class="sec" data-down="${esc(String(p.id))}" ${i===periodos.length-1?'disabled':''} title="Poner después de la siguiente práctica">↓ Después</button><button type="button" data-ahora="${esc(String(p.id))}">Mostrar ahora</button><button type="button" data-pe="${esc(String(p.id))}">Editar</button><button type="button" class="sec" data-pt="${esc(String(p.id))}">${p.activo?'Desactivar':'Activar'}</button><button type="button" class="sec" data-pb="${esc(String(p.id))}">Borrar</button></td></tr>`).join('')+'</tbody></table></div>';
   // Orden cronológico: intercambia exclusivamente inicio/fin entre periodos.
   // No exige columnas nuevas en Supabase y conserva título, técnica y notas.
   async function moverPeriodo(id,direccion){
