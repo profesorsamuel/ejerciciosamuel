@@ -68,9 +68,9 @@ MATERIA: ${String(body.materia || "Ciencias Naturales").slice(0,100)}
 TEMA: ${tema}
 GRADO: ${grado}
 CANTIDAD: ${cantidad}
-Genera hasta ${cantidad} preguntas educativas basadas exclusivamente en el texto.
+Genera hasta ${cantidad} preguntas educativas basadas exclusivamente en el texto. Para técnicas del Enlace 2, cada pregunta debe tener exactamente tres alternativas distintas y una respuesta literal incluida en ellas.
 No inventes informacion. Lenguaje apropiado para el grado. Mezcla niveles facil, medio y dificil.
-Distribuye las preguntas entre las técnicas seleccionadas: ${tecnicas.join(", ")}.
+Distribuye las preguntas entre las técnicas seleccionadas: ${tecnicas.join(", ")}. El campo tipo DEBE ser uno de esos identificadores exactos, no el nombre descriptivo.
 Cada pregunta debe tener un enunciado autónomo, una respuesta verificable y una explicación.
 Para selección múltiple, caso, detective, quien, causa, mito y casos, da exactamente 3 opciones DISTINTAS y una respuesta idéntica a una opción. Para las cinco técnicas del Enlace 2 nunca devuelvas solo dos opciones.
 Para detective, identifica un error conceptual y pregunta cómo corregirlo.
@@ -90,9 +90,9 @@ Devuelve exclusivamente JSON valido con esta forma:
 {
   "preguntas": [
     {
-      "tipo": "seleccion_multiple",
+      "tipo": "${tecnicas[0]}",
       "pregunta": "Texto de la pregunta",
-      "opciones": ["Opcion A", "Opcion B", "Opcion C", "Opcion D"],
+      "opciones": ["Opcion A", "Opcion B", "Opcion C"],
       "respuesta": "Opcion A",
       "explicacion": "Explicacion breve",
       "dificultad": "facil"
