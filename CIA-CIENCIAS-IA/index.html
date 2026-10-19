@@ -53,7 +53,7 @@ async function recuperarRealizados(){
  }catch(e){console.warn('Marcas de servidor no disponibles; se mantienen las locales:',e.message)}
 }
 async function registrarRealizadoServidor(tipo){
- try{await sb.rpc('cia_registrar_marca',{p_cedula:est.cedula,p_periodo:window.__ciaPeriodoActual?.id||null,p_tipo:tipo});}catch(e){console.warn('No se pudo sincronizar marca:',e)}
+ try{const {error}=await sb.rpc('cia_registrar_marca',{p_cedula:est.cedula,p_periodo:window.__ciaPeriodoActual?.id||null,p_tipo:tipo});if(error)throw error;}catch(e){console.warn('No se pudo sincronizar marca:',e.message||e)}
 }
 function pintarRealizados(){document.querySelectorAll('[data-t],[data-e2t]').forEach(b=>{const tipo=b.dataset.t?'banco:'+b.dataset.t:'e2:'+b.dataset.e2t;try{b.classList.toggle('practica-hecha',localStorage.getItem(claveMarca(tipo))==='1');}catch(e){}});}
 const META=18; // 18 por tipo x 5 tipos = 90 preguntas (mínimo pedido: 80)
@@ -895,6 +895,7 @@ async function iniciarE2(tec){
    ?await sb.rpc('cia14_iniciar_catalogo',{p_cedula:est.cedula,p_materia:$('#e2m').value,p_tecnica:tec,p_catalogo:catalogo})
    :await sb.rpc('cia14_iniciar',{p_cedula:est.cedula,p_materia:$('#e2m').value,p_tecnica:tec});
   if(er){$('#m').textContent=er.message;document.querySelectorAll('[data-e2t]').forEach(b=>b.disabled=false);return;}
+  if(!d||!Array.isArray(d.preguntas)||!d.preguntas.length||!d.intento){$('#m').textContent='No hay preguntas disponibles para esta evaluación y técnica.';document.querySelectorAll('[data-e2t]').forEach(b=>b.disabled=false);return;}
   const items=d.preguntas||[],intento=d.intento,tecnicaNombre=E2_TECNICAS[tec];
   draw(`<div class=card><h2>${esc(tecnicaNombre)}</h2><p class=s>Responde las ${items.length} preguntas y pulsa Enviar.</p>${items.map((q,i)=>`<div class=card><b>${i+1}. ${esc(q.enunciado)}</b>${q.opciones.map((o,j)=>`<label style="display:block;margin:8px 0"><input style="width:auto;margin:0 8px 0 0" type=radio name="q${i}" value="${j}"> ${esc(o)}</label>`).join('')}</div>`).join('')}<p class=err id=m></p><button id=e2env>Enviar respuestas</button></div>`);
   $('#e2env').onclick=async()=>{
@@ -903,9 +904,11 @@ async function iniciarE2(tec){
    $('#e2env').disabled=true;
    const {data:r,error:ee}=await sb.rpc('cia14_enviar',{p_cedula:est.cedula,p_intento:intento,p_respuestas:resp});
    if(ee){$('#m').textContent=ee.message;$('#e2env').disabled=false;return;}
-   if(catalogo){marcarRealizado('e2:'+catalogo+':'+tec);}else{marcarRealizado('e2:'+tec);await registrarRealizadoServidor('e2:'+tec);}
+   const tipoE2=catalogo?'e2:'+catalogo+':'+tec:'e2:'+tec;
+   marcarRealizado(tipoE2);
+   await registrarRealizadoServidor(tipoE2);
    draw(`<div class=card><h2>Resultado guardado</h2><p>Correctas: <b>${esc(r.aciertos)}</b> de <b>${esc(r.total)}</b></p><h3>Nota de práctica: ${esc(r.nota)} / 5.00</h3><p class=s>Esta calificación no corresponde a una evaluación oficial.</p><button id=e2otra>Hacer otra práctica</button><button class=sec id=e2menu>Volver al menú</button></div>`);
-   $('#e2otra').onclick=()=>menu();$('#e2menu').onclick=()=>menu();
+   $('#e2otra').onclick=()=>practicaE2();$('#e2menu').onclick=()=>menu();
   };
  }
 }
