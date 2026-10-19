@@ -1,6 +1,7 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "jsr:@supabase/supabase-js@2";
 
+const VERSION = "cia-enlace2-20261019-v3";
 const headers = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, apikey, content-type, x-client-info",
@@ -70,7 +71,7 @@ GRADO: ${grado}
 CANTIDAD: ${cantidad}
 Genera EXACTAMENTE ${cantidad} preguntas educativas basadas exclusivamente en el texto, siempre que el contenido lo permita. Para técnicas del Enlace 2, cada pregunta debe tener exactamente tres alternativas distintas y una respuesta literal incluida en ellas.
 No inventes informacion. Lenguaje apropiado para el grado. Mezcla niveles facil, medio y dificil.
-REGLA OBLIGATORIA: SOLO puedes utilizar los identificadores JSON siguientes para el campo tipo: ${tecnicas.map(t=>`"${t}"`).join(", ")}. Quedan PROHIBIDOS "seleccion_multiple", "verdadero_falso" y cualquier otro identificador que NO esté en esta lista. Reparte equitativamente las preguntas entre los tipos autorizados.
+REGLA OBLIGATORIA: SOLO puedes utilizar los identificadores JSON siguientes para el campo tipo: ${tecnicas.map(t=>`"${t}"`).join(", ")}. Queda PROHIBIDO cualquier identificador que NO esté en esta lista. Reparte equitativamente las preguntas entre los tipos autorizados.
 Cada pregunta debe tener un enunciado autónomo, una respuesta verificable y una explicación.
 Para selección múltiple, caso, detective, quien, causa, mito y casos, da exactamente 3 opciones DISTINTAS y una respuesta idéntica a una opción. Para las cinco técnicas del Enlace 2 nunca devuelvas solo dos opciones.
 Para detective, identifica un error conceptual y pregunta cómo corregirlo.
@@ -139,19 +140,39 @@ ${texto}`;
       return responder({ error: "Formato de preguntas incorrecto" }, 502);
     }
 
-    const preguntas = datos.preguntas.filter((p: Record<string, unknown>) =>
-      tecnicas.includes(String(p.tipo)) &&
-      typeof p.pregunta === "string" &&
-      typeof p.respuesta === "string" &&
-      Array.isArray(p.opciones) && p.opciones.length >= (tecnicas.some(t => ["detective","quien","causa","mito","casos"].includes(t)) ? 3 : 2) &&
-      p.opciones.every((o: unknown) => typeof o === "string") &&
-      p.opciones.includes(p.respuesta) &&
-      typeof p.explicacion === "string"
-    ).slice(0, cantidad);
-
+    const alias: Record<string, string> = {
+      detective_de_errores: "detective", detective: "detective",
+      quien_soy: "quien", quien: "quien",
+      causa_y_efecto: "causa", causa_efecto: "causa", causa: "causa",
+      mito_o_ciencia: "mito", mito: "mito",
+      casos_practicos: "casos", caso_practico: "casos", casos: "casos",
+    };
+    const normalizar = (v: unknown) => String(v ?? "").normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "").toLowerCase().trim().replace(/[^a-z0-9]+/g, "_");
+    const rechazos: string[] = [];
+    const preguntas: Record<string, unknown>[] = [];
+    for (const raw of datos.preguntas) {
+      if (!raw || typeof raw !== "object") { rechazos.push("Pregunta no es objeto"); continue; }
+      const p = raw as Record<string, unknown>;
+      const recibido = String(p.tipo ?? p.tecnica ?? "");
+      const tipo = alias[normalizar(recibido)] ?? normalizar(recibido);
+      if (!tecnicas.includes(tipo)) { rechazos.push("Técnica no solicitada: " + recibido); continue; }
+      const opciones = Array.isArray(p.opciones) ? p.opciones : [];
+      const respuesta = String(p.respuesta ?? "").trim();
+      if (typeof p.pregunta !== "string" || !p.pregunta.trim() ||
+          opciones.length < (["detective", "quien", "causa", "mito", "casos"].includes(tipo) ? 3 : 2) ||
+          !opciones.every((o: unknown) => typeof o === "string") ||
+          !opciones.includes(respuesta)) {
+        rechazos.push("Formato de opciones/respuesta inválido: " + tipo); continue;
+      }
+      preguntas.push({ ...p, tipo, respuesta, opciones });
+      if (preguntas.length >= cantidad) break;
+    }
     return responder({
-      correcto: true, tema, grado, cantidad: preguntas.length, preguntas,
-      mensaje: "Preguntas generadas para revision",
+      version: VERSION, correcto: true, tema, grado,
+      cantidad: preguntas.length, preguntas,
+      rechazadas: rechazos.length, motivos: rechazos.slice(0, 8),
+      mensaje: "Preguntas generadas para revisión",
     });
   } catch (error) {
     console.error("cia-generar:", error);
