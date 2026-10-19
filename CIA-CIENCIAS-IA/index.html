@@ -71,9 +71,21 @@ function iniciarReloj(p){if(periodoReloj)clearInterval(periodoReloj);if(!p)retur
 async function mostrarNotasPeriodo(){const el=$('#periodo-notas');if(!el)return;const {data,error}=await sb.rpc('cia_periodo_notas',{p_est:est.id});if(!$('#periodo-notas'))return;if(error){el.textContent='No se pudieron consultar las notas: '+error.message;return;}
  const filas=Array.isArray(data)?data:(data?.practicas||data?.notas||[]);if(!Array.isArray(filas)||!filas.length){el.innerHTML='<p class="s">Todavía no hay notas para este periodo.</p>';return;}
  const nota=x=>{const n=Number(x);return Number.isFinite(n)?n.toFixed(2):'1.00'};
- el.innerHTML=`<table><thead><tr><th>Práctica</th><th>Mejor nota</th></tr></thead><tbody>${filas.map(f=>`<tr><td>${esc(f.practica||f.tipo||f.tecnica||f.nombre||'Práctica')}</td><td>${nota(f.mejor_nota??f.nota_5??f.nota??1)}</td></tr>`).join('')}</tbody></table>${data?.nota_final!=null?`<p><b>Nota final: ${nota(data.nota_final)} / 5.00</b></p>`:''}`;
+ const periodoActual=window.__ciaPeriodoActual;
+ const tipos=periodoActual?.tecnica==='e2'?{detective:'Detective de errores',quien:'¿Quién soy?',causa:'Causa y efecto',mito:'Mito o ciencia',casos:'Casos prácticos'}:TIPOS;
+ const detalle=filas.filter(f=>tipos[f.practica||f.tipo||f.tecnica||f.nombre]);
+ const completas=detalle.length===5;
+ const items=Object.entries(tipos).map(([clave,nombre])=>{
+   const f=detalle.find(x=>(x.practica||x.tipo||x.tecnica||x.nombre)===clave);
+   return `<tr><td>${esc(nombre)}</td><td>${nota(f?.mejor_nota??f?.nota_5??f?.nota??1)}</td></tr>`;
+ });
+ const promedio=Object.keys(tipos).reduce((suma,k)=>{
+   const f=detalle.find(x=>(x.practica||x.tipo||x.tecnica||x.nombre)===k);
+   return suma+Number(f?.mejor_nota??f?.nota_5??f?.nota??1);
+ },0)/5;
+ el.innerHTML=`<table><thead><tr><th>Práctica</th><th>Mejor nota</th></tr></thead><tbody>${items.join('')}</tbody></table><p><b>Nota final: ${nota(promedio)} / 5.00</b></p>${!completas?'<p class="s">Aviso: Supabase no está devolviendo el detalle de las cinco prácticas; las notas faltantes aparecen como 1.00 hasta corregir la función SQL.</p>':''}`;
 }
-async function menu(auto){const consulta=await obtenerPeriodo(),periodo=consulta.periodo;const activa=periodo?(periodo.tecnica==='e2'?'e2':'banco'):await tecnicaActiva();const cerrado=periodo&&new Date(periodo.fin||periodo.cierre).getTime()<=Date.now();draw(`<div class=card><h2>Hola, ${esc(est.nombres)}</h2>${activa==='e2'?`<p>Elige tu ejercicio. Cada intento trae 8 preguntas. Responde todas antes de enviar.</p>${e2PanelHTML()}`:`<p>Elige un ejercicio. Cada intento trae 8 preguntas distintas. Responde todas antes de enviar.</p>${Object.entries(TIPOS).map(([k,v])=>`<button class=big data-t=${k}>${v}</button>`).join('')}`}<p class=err id=m></p><button class=sec id=s>Salir</button></div>${periodoHtml(periodo)}`);if(periodo){iniciarReloj(periodo);await mostrarNotasPeriodo();}if(cerrado)app.querySelectorAll('[data-t],[data-e2t]').forEach(b=>b.disabled=true);
+async function menu(auto){const consulta=await obtenerPeriodo(),periodo=consulta.periodo;window.__ciaPeriodoActual=periodo;const activa=periodo?(periodo.tecnica==='e2'?'e2':'banco'):await tecnicaActiva();const cerrado=periodo&&new Date(periodo.fin||periodo.cierre).getTime()<=Date.now();draw(`<div class=card><h2>Hola, ${esc(est.nombres)}</h2>${activa==='e2'?`<p>Elige tu ejercicio. Cada intento trae 8 preguntas. Responde todas antes de enviar.</p>${e2PanelHTML()}`:`<p>Elige un ejercicio. Cada intento trae 8 preguntas distintas. Responde todas antes de enviar.</p>${Object.entries(TIPOS).map(([k,v])=>`<button class=big data-t=${k}>${v}</button>`).join('')}`}<p class=err id=m></p><button class=sec id=s>Salir</button></div>${periodoHtml(periodo)}`);if(periodo){iniciarReloj(periodo);await mostrarNotasPeriodo();}if(cerrado)app.querySelectorAll('[data-t],[data-e2t]').forEach(b=>b.disabled=true);
 const contenedor=document.createElement('div');contenedor.className='card';contenedor.innerHTML='<h2>Evaluaciones asignadas</h2><p id=ev-est-msg>Buscando evaluaciones vigentes…</p><div id=ev-est-list></div><button class=sec id=ev-est-recargar>Actualizar evaluaciones</button>';app.append(contenedor);
  const historial=document.createElement('div');historial.className='card';historial.innerHTML='<h2>Mi historial de evaluaciones</h2><p id=hist-estado>Consultando intentos…</p><div class=wrap id=hist-tabla></div><button class=sec id=hist-actualizar>Actualizar historial</button>';app.append(historial);
  const cargarHistorial=async()=>{const {data,error}=await sb.rpc('cia_eval_historial',{p_est:est.id,p_cedula:est.cedula,p_nombre:est.nombreVerificacion});const estado=$('#hist-estado'),tabla=$('#hist-tabla');if(!estado||!tabla)return;if(error){estado.textContent='Historial no disponible: '+error.message;return;}const filas=data||[];estado.textContent=filas.length?`${filas.length} intento(s) registrado(s). La mejor nota se calcula por evaluación y día.`:'Aún no hay intentos registrados.';tabla.innerHTML=filas.length?`<table><tr><th>Evaluación</th><th>Fecha</th><th>Estado</th><th>Nota</th><th>Mejor del día</th></tr>${filas.map(x=>`<tr><td>${esc(x.titulo)}</td><td>${esc(new Date(x.inicio).toLocaleString('es-PA'))}</td><td>${x.enviado_en?'Entregado':'Pendiente'}</td><td>${x.nota_5==null?'—':Number(x.nota_5).toFixed(2)}</td><td>${x.mejor_dia==null?'—':Number(x.mejor_dia).toFixed(2)}</td></tr>`).join('')}</table>`:'';};$('#hist-actualizar').onclick=cargarHistorial;await cargarHistorial();
@@ -514,7 +526,7 @@ async function tecnicaDocente(uid){
 async function ciaAdministrarPeriodos(uid,box){
  const cont=document.createElement('section');cont.id='cia-administrar-periodos';
  cont.innerHTML=`<hr><h3>Periodos de práctica</h3><p class=s>Programa las cinco prácticas del Banco o de Enlace 2 para un salón.</p>
- <div class="s" style="padding:9px;border:1px solid #d6e6d9;border-radius:8px;margin:10px 0">Para cambiar cuál va primero, usa <b>↑ Primero</b> o <b>↓ Después</b> en la lista. Se intercambian las fechas de los dos periodos, sin cambiar sus técnicas ni sus notas.</div>
+ <div class="s" style="padding:9px;border:1px solid #d6e6d9;border-radius:8px;margin:10px 0">Para cambiar cuál ve el estudiante ahora, pulsa <b>Mostrar ahora</b> en el periodo deseado. Para reordenar fechas usa <b>↑ Primero</b> o <b>↓ Después</b>. Se intercambian las fechas de los dos periodos, sin cambiar sus técnicas ni sus notas.</div>
  <form id="cia-form-periodo"><label>Título del periodo<input name="titulo" maxlength="120" required placeholder="Ej.: Prácticas de octubre"></label>
  <label>Materia (opcional)<select name="materia_id"><option value="">Todas las materias</option></select></label>
  <label>Grado<select name="grado" required><option value="">Seleccionar grado</option><option value="7">7.º</option><option value="8">8.º</option><option value="9">9.º</option></select></label>
@@ -537,7 +549,7 @@ async function ciaAdministrarPeriodos(uid,box){
   periodos=data||[];
   if(!editando&&!campo('inicio').value&&periodos.length){const ult=periodos[periodos.length-1];const siguiente=new Date(new Date(ult.fin).getTime()+60000);campo('inicio').value=localFecha(siguiente);}
   if(!periodos.length){list.textContent='Todavía no hay periodos registrados.';return;}
-  list.innerHTML='<div class="wrap"><table><thead><tr><th>Orden</th><th>Periodo</th><th>Salón</th><th>Técnica</th><th>Inicio</th><th>Cierre</th><th>Estado</th><th>Acciones</th></tr></thead><tbody>'+periodos.map((p,i)=>`<tr><td><b>${i+1}.º</b></td><td>${esc(p.titulo)}</td><td>${esc(String(p.grado))}.º ${esc(p.seccion||'Todas')}</td><td>${p.tecnica==='e2'?'Enlace 2':'Banco'}</td><td>${esc(new Date(p.inicio).toLocaleString('es-PA'))}</td><td>${esc(new Date(p.fin).toLocaleString('es-PA'))}</td><td>${p.activo?'Activo':'Inactivo'}</td><td><button type="button" class="sec" data-up="${esc(String(p.id))}" ${i===0?'disabled':''} title="Poner antes de la práctica anterior">↑ Primero</button><button type="button" class="sec" data-down="${esc(String(p.id))}" ${i===periodos.length-1?'disabled':''} title="Poner después de la siguiente práctica">↓ Después</button><button type="button" data-pe="${esc(String(p.id))}">Editar</button><button type="button" class="sec" data-pt="${esc(String(p.id))}">${p.activo?'Desactivar':'Activar'}</button><button type="button" class="sec" data-pb="${esc(String(p.id))}">Borrar</button></td></tr>`).join('')+'</tbody></table></div>';
+  list.innerHTML='<div class="wrap"><table><thead><tr><th>Orden</th><th>Periodo</th><th>Salón</th><th>Técnica</th><th>Inicio</th><th>Cierre</th><th>Estado</th><th>Acciones</th></tr></thead><tbody>'+periodos.map((p,i)=>`<tr><td><b>${i+1}.º</b></td><td>${esc(p.titulo)}</td><td>${esc(String(p.grado))}.º ${esc(p.seccion||'Todas')}</td><td>${p.tecnica==='e2'?'Enlace 2':'Banco'}</td><td>${esc(new Date(p.inicio).toLocaleString('es-PA'))}</td><td>${esc(new Date(p.fin).toLocaleString('es-PA'))}</td><td>${p.activo?'Activo':'Inactivo'}</td><td><button type="button" class="sec" data-up="${esc(String(p.id))}" ${i===0?'disabled':''} title="Poner antes de la práctica anterior">↑ Primero</button><button type="button" class="sec" data-down="${esc(String(p.id))}" ${i===periodos.length-1?'disabled':''} title="Poner después de la siguiente práctica">↓ Después</button><button type="button" data-ahora="${esc(String(p.id))}">Mostrar ahora</button><button type="button" data-pe="${esc(String(p.id))}">Editar</button><button type="button" class="sec" data-pt="${esc(String(p.id))}">${p.activo?'Desactivar':'Activar'}</button><button type="button" class="sec" data-pb="${esc(String(p.id))}">Borrar</button></td></tr>`).join('')+'</tbody></table></div>';
   // Orden cronológico: intercambia exclusivamente inicio/fin entre periodos.
   // No exige columnas nuevas en Supabase y conserva título, técnica y notas.
   async function moverPeriodo(id,direccion){
@@ -556,6 +568,22 @@ async function ciaAdministrarPeriodos(uid,box){
    msg.textContent='Orden cambiado. Las fechas se intercambiaron correctamente.';
    await cargar();
   }
+  list.querySelectorAll('[data-ahora]').forEach(b=>b.onclick=async()=>{
+   const elegido=periodos.find(p=>String(p.id)===b.dataset.ahora);
+   if(!elegido)return;
+   const ahora=Date.now();
+   const actual=periodos.find(p=>p.id!==elegido.id&&p.activo&&new Date(p.inicio).getTime()<=ahora&&new Date(p.fin).getTime()>ahora&&String(p.grado)===String(elegido.grado)&&(p.seccion||'')===(elegido.seccion||''));
+   if(!actual){msg.textContent='No hay otro periodo vigente del mismo salón para intercambiar. Usa Editar para asignar a este periodo las fechas actuales.';return;}
+   if(!confirm('¿Mostrar «'+elegido.titulo+'» ahora? Se intercambiarán sus fechas con «'+actual.titulo+'».'))return;
+   b.disabled=true;
+   const guardar=(p,ini,fin)=>sb.from('cia_periodos').update({inicio:ini,fin:fin,activo:true}).eq('id',p.id).eq('docente_id',uid);
+   const primero=await guardar(elegido,actual.inicio,actual.fin);
+   if(primero.error){msg.textContent='Error: '+primero.error.message;b.disabled=false;return;}
+   const segundo=await guardar(actual,elegido.inicio,elegido.fin);
+   if(segundo.error){await guardar(elegido,elegido.inicio,elegido.fin);msg.textContent='No se completó el intercambio: '+segundo.error.message;await cargar();return;}
+   msg.textContent='Listo. «'+elegido.titulo+'» corresponde ahora a las fechas vigentes. Actualiza la pantalla del estudiante.';
+   await cargar();
+  });
   list.querySelectorAll('[data-up]').forEach(b=>b.onclick=()=>moverPeriodo(b.dataset.up,-1));
   list.querySelectorAll('[data-down]').forEach(b=>b.onclick=()=>moverPeriodo(b.dataset.down,1));
   list.querySelectorAll('[data-pe]').forEach(b=>b.onclick=()=>{const p=periodos.find(x=>String(x.id)===b.dataset.pe);if(!p)return;editando=p.id;for(const n of ['titulo','materia_id','grado','seccion'])campo(n).value=p[n]==null?'':String(p[n]);campo('inicio').value=localFecha(p.inicio);campo('fin').value=localFecha(p.fin);campo('activo').checked=!!p.activo;box.querySelector(`input[name="ta"][value="${p.tecnica}"]`).checked=true;cont.querySelector('#cia-guardar-periodo').textContent='Guardar cambios';cont.querySelector('#cia-cancelar-periodo').hidden=false;msg.textContent='Editando: '+p.titulo;form.scrollIntoView({behavior:'smooth',block:'nearest'});});
