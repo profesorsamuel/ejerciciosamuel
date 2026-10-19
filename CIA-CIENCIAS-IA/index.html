@@ -857,7 +857,7 @@ async function matPreguntas(c,root){
 const E2_DESC={detective:'Encuentra el error en cada afirmación.',quien:'Adivina el concepto a partir de las pistas.',causa:'Relaciona cada causa con su efecto.',mito:'Distingue lo que es mito de lo que es ciencia.',casos:'Aplica lo aprendido a situaciones reales.'};
 const e2PanelHTML=()=>`<h3>Evaluación 2</h3><label id=e2mw>Materia<select id=e2m><option>Cargando…</option></select></label>
  <label>Evaluación<select id=e2catalogo><option value="">Evaluación 2 (original)</option></select></label><div class=matgrid>${Object.entries(E2_TECNICAS).map(([k,n])=>`<button class=big data-e2t="${k}" disabled style="text-align:left;display:block;width:100%;margin:6px 0"><b>${esc(n)}</b><br><span style="font-weight:400;font-size:.85rem">${esc(E2_DESC[k]||'')}</span><span class=e2-estado style="display:block;font-size:.8rem"></span></button>`).join('')}</div>`;
-async function e2Cablear(){
+async function e2Cablear(seleccionAnterior){
  const {data,error}=await sb.rpc('cia14_materias',{p_cedula:est.cedula});
  if(error){$('#m').textContent=error.message;return;}
  const unicas=[...new Map((data||[]).map(x=>[x.materia_id||x.id,x])).values()].filter(x=>x.materia_id||x.id);
@@ -878,19 +878,22 @@ async function e2Cablear(){
    const t=b.querySelector('.e2-estado');if(t)t.textContent=x?' ✓ Realizado · Mejor nota: '+Number(x.mejor_nota).toFixed(2):local?' ✓ Realizado en este dispositivo':'';
   });
  }
+ if(seleccionAnterior && [...$('#e2catalogo').options].some(o=>o.value===String(seleccionAnterior.catalogo))) $('#e2catalogo').value=String(seleccionAnterior.catalogo);
+ if(seleccionAnterior && [...$('#e2m').options].some(o=>o.value===String(seleccionAnterior.materia))) $('#e2m').value=String(seleccionAnterior.materia);
  $('#e2catalogo').onchange=actualizarEstadoE2;
  pintarRealizados();$('#e2catalogo').onchange();if(unicas.length===1)$('#e2mw').style.display='none';
  document.querySelectorAll('[data-e2t]').forEach(b=>{b.disabled=false;b.onclick=()=>iniciarE2(b.dataset.e2t);});
 }
-async function practicaE2(){
+async function practicaE2(seleccionAnterior){
  draw(`<div class=card><h2>Elige tu ejercicio</h2><p class=s>Toca una tarjeta para empezar. Cada intento trae ocho preguntas. La nota es de práctica; no es una evaluación oficial.</p>${e2PanelHTML()}<p class=err id=m></p><button class=sec id=e2b>Volver al menú</button></div>`);
  $('#e2b').onclick=()=>menu();
- await e2Cablear();
+ await e2Cablear(seleccionAnterior);
 }
 async function iniciarE2(tec){
  document.querySelectorAll('[data-e2t]').forEach(b=>b.disabled=true);
  {
   const catalogo=$('#e2catalogo').value;
+  const materiaElegida=$('#e2m').value;
   const {data:d,error:er}=catalogo
    ?await sb.rpc('cia14_iniciar_catalogo',{p_cedula:est.cedula,p_materia:$('#e2m').value,p_tecnica:tec,p_catalogo:catalogo})
    :await sb.rpc('cia14_iniciar',{p_cedula:est.cedula,p_materia:$('#e2m').value,p_tecnica:tec});
@@ -908,7 +911,7 @@ async function iniciarE2(tec){
    marcarRealizado(tipoE2);
    await registrarRealizadoServidor(tipoE2);
    draw(`<div class=card><h2>Resultado guardado</h2><p>Correctas: <b>${esc(r.aciertos)}</b> de <b>${esc(r.total)}</b></p><h3>Nota de práctica: ${esc(r.nota)} / 5.00</h3><p class=s>Esta calificación no corresponde a una evaluación oficial.</p><button id=e2otra>Hacer otra práctica</button><button class=sec id=e2menu>Volver al menú</button></div>`);
-   $('#e2otra').onclick=()=>practicaE2();$('#e2menu').onclick=()=>menu();
+   $('#e2otra').onclick=()=>practicaE2({catalogo,materia:materiaElegida});$('#e2menu').onclick=()=>menu();
   };
  }
 }
