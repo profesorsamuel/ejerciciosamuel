@@ -35,10 +35,14 @@ const fmt=c=>Array.isArray(c)?(Array.isArray(c[0])?c.map(p=>p.join(' = ')).join(
 function inicio(){draw(`<div class=card><h2>¿Quién eres?</h2>${CONFIG.url?'':'<p class=err>Falta configurar Supabase en index.html (CONFIG).</p>'}<button class=big id=e>Soy estudiante</button><button class="big sec" id=d>Soy docente</button></div>`);$('#e').onclick=loginEst;$('#d').onclick=loginDoc;}
 
 /* ---------- ESTUDIANTE ---------- */
-function loginEst(){draw(`<div class=card><h2>Ingreso de estudiante</h2><label>Nombre<input id=n autocomplete=name></label><label>Cédula<input id=c inputmode=text></label><p class=err id=m></p><button id=go>Entrar</button><button class=sec id=b>Volver</button></div>`);
+function loginEst(){draw(`<div class=card><h2>Ingreso de estudiante</h2><p>Escribe tu cédula tal como aparece en la matrícula de Portal 2027.</p><label>Cédula<input id=c inputmode=text autocomplete=off placeholder="Ejemplo: 3-123-456"></label><p class=err id=m></p><button id=go>Entrar</button><button class=sec id=b>Volver</button></div>`);
 $('#b').onclick=inicio;
-$('#go').onclick=async()=>{const n=$('#n').value.trim(),c=$('#c').value.trim();if(!n||!c)return $('#m').textContent='Escribe tu nombre y tu cédula.';
- const {data,error}=await sb.rpc('cia_ingresar',{p_cedula:c,p_nombre:n});if(error){$('#m').textContent=error.code==='PGRST202'?'Falta instalar o recuperar la función cia_ingresar en Supabase. Avise al profesor.':error.message;return;}if(!data||!data.id){$('#m').textContent='No se encontró un estudiante válido. Revise la matrícula.';return;}est={...data,cedula:c,nombreVerificacion:n};menu();};}
+$('#c').onkeydown=e=>{if(e.key==='Enter')$('#go').click();};
+$('#go').onclick=async()=>{const c=$('#c').value.trim();if(!c)return $('#m').textContent='Escribe tu cédula.';
+ const boton=$('#go');boton.disabled=true;$('#m').textContent='Comprobando matrícula…';
+ try{const {data,error}=await sb.rpc('cia_ingresar_cedula',{p_cedula:c});if(error){$('#m').textContent=error.code==='PGRST202'?'Primero ejecute cia_acceso_solo_cedula.sql en Supabase.':error.message;return;}
+ if(!data||!data.id){$('#m').textContent='No se encontró una cédula única en la matrícula. Consulte al profesor.';return;}
+ est={...data,cedula:c,nombreVerificacion:data.nombres};menu();}finally{boton.disabled=false;}};}
 async function menu(){draw(`<div class=card><h2>Hola, ${esc(est.nombres)}</h2><p>Elige un ejercicio. Cada intento trae 8 preguntas distintas. Responde todas antes de enviar.</p>${Object.entries(TIPOS).map(([k,v])=>`<button class=big data-t=${k}>${v}</button>`).join('')}<p class=err id=m></p><button class=sec id=s>Salir</button></div>`);
 const contenedor=document.createElement('div');contenedor.className='card';contenedor.innerHTML='<h2>Evaluaciones asignadas</h2><p id=ev-est-msg>Buscando evaluaciones vigentes…</p><div id=ev-est-list></div><button class=sec id=ev-est-recargar>Actualizar evaluaciones</button>';app.append(contenedor);
  const historial=document.createElement('div');historial.className='card';historial.innerHTML='<h2>Mi historial de evaluaciones</h2><p id=hist-estado>Consultando intentos…</p><div class=wrap id=hist-tabla></div><button class=sec id=hist-actualizar>Actualizar historial</button>';app.append(historial);
