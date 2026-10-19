@@ -439,11 +439,11 @@ async function ciaResultadosPeriodos(uid){
    const filas=Array.isArray(data)?data:(Array.isArray(data?.estudiantes)?data.estudiantes:[]);
    const tipos=p.tecnica==='e2'?['detective','quien','causa','mito','casos']:['multiple','verdadero_falso','completar','relacionar','ordenar'];
    const nombres=p.tecnica==='e2'?['Detective','Quién soy','Causa','Mito','Casos']:['Selección múltiple','Verdadero/Falso','Completar','Relacionar','Ordenar'];
-   const nota=(r,t,i)=>{const x=r[t]??r['nota_'+t]??r['nota'+(i+1)]??r.notas?.[t]??r.notas?.[i];return x===undefined||x===null?'1.00':Number(x).toFixed(2);};
+   const nota=(r,t,i)=>{const x=r[t]??r['nota_'+t]??r['nota'+(i+1)]??r.notas?.[t]??r.notas?.[i];return x===undefined||x===null?'—':Number(x).toFixed(2);};
    exportHeaders=['Nombre','Cédula','Grado','Sección',...nombres,'Nota final'];
-   exportRows=filas.map(r=>{const ns=tipos.map((t,i)=>nota(r,t,i));const promedio=ns.reduce((a,n)=>a+Number(n),0)/5;return [r.nombres??r.nombre??'',r.cedula??'',r.grado??p.grado,r.seccion??p.seccion??'',...ns,Number(r.nota_final??r.final??promedio).toFixed(2)];});
+   exportRows=filas.map(r=>{const ns=tipos.map((t,i)=>nota(r,t,i));const promedio=ns.reduce((a,n)=>a+(n==='—'?1:Number(n)),0)/5;return [r.nombres??r.nombre??'',r.cedula??'',r.grado??p.grado,r.seccion??p.seccion??'',...ns,Number(r.nota_final??r.final??promedio).toFixed(2)];});
    tabla.innerHTML='<table><thead><tr>'+exportHeaders.map(h=>'<th>'+esc(h)+'</th>').join('')+'</tr></thead><tbody>'+(exportRows.map(row=>'<tr>'+row.map(v=>'<td>'+esc(String(v))+'</td>').join('')+'</tr>').join('')||'<tr><td colspan="9">Sin estudiantes para este periodo</td></tr>')+'</tbody></table>';
-   estado.textContent=filas.length+' estudiante(s) · '+new Date(p.inicio).toLocaleString('es-PA')+' – '+new Date(p.fin).toLocaleString('es-PA');
+   estado.textContent=filas.length+' estudiante(s) · Notas sin entrega: — (cuentan como 1.00 para el promedio) · '+new Date(p.inicio).toLocaleString('es-PA')+' – '+new Date(p.fin).toLocaleString('es-PA');
    boton.disabled=!filas.length;
   }catch(e){estado.textContent='No se pudieron obtener las notas del periodo: '+e.message+'. Verifique el nombre y parámetros de la función SQL del docente.';exportRows=[];}
  }
