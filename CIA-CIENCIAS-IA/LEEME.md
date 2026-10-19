@@ -36,6 +36,8 @@ Todo vive en `CIA-CIENCIAS-IA/index.html` (una sola dirección).
 Enlaces directos: `.../CIA-CIENCIAS-IA/#docente`, `#estudiante`, `#docente/mat`, `#docente/est`.
 (`#docente/banco` y `#docente/e2` ahora abren Materias.) Las páginas viejas `tecnicas2/*.html` y el `index.html` de la raíz solo redirigen; se pueden borrar.
 
+**Técnica activa:** en Materias el docente elige cuál técnica ven los estudiantes (una sola). Requiere ejecutar `sql/cia_tecnica_activa.sql` una vez en Supabase.
+
 **Importante:** la función `supabase/functions/cia-generar/index.ts` cambió (nuevo modo `banco`). Vuelve a desplegarla: `supabase functions deploy cia-generar`.
 
 ## Enlace 2 · Técnicas 2 (banco con Gemini)
