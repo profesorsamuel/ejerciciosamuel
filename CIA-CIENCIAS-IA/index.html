@@ -434,7 +434,7 @@ async function ciaResultadosPeriodos(uid){
   estado.textContent='Cargando notas…';tabla.innerHTML='';boton.disabled=true;
   try{
    /* La función SQL del docente debe aceptar p_periodo y verificar la identidad del docente. */
-   const {data,error}=await sb.rpc('cia_periodo_resultados',{p_periodo:id});
+   const {data,error}=await sb.rpc('cia_periodo_resultados_v2',{p_periodo:id});
    if(error)throw error;
    const filas=Array.isArray(data)?data:(Array.isArray(data?.estudiantes)?data.estudiantes:[]);
    const tipos=p.tecnica==='e2'?['detective','quien','causa','mito','casos']:['multiple','verdadero_falso','completar','relacionar','ordenar'];
