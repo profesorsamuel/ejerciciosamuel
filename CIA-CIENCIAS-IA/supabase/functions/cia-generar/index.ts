@@ -14,7 +14,8 @@ function responder(data: unknown, status = 200) {
 
 type ModeloGemini = { name?: string; supportedGenerationMethods?: string[] };
 
-const TECNICAS_VALIDAS = ["detective", "quien", "causa", "mito", "casos"];
+const TECNICAS_ENLACE2 = ["detective", "quien", "causa", "mito", "casos"];
+const TECNICAS_BANCO = ["seleccion_multiple", "verdadero_falso", "completar"];
 
 async function buscarModelos(apiKey: string): Promise<string[]> {
   const encontrados: string[] = [];
@@ -108,8 +109,11 @@ Deno.serve(async (req) => {
     const numero = Number(body.cantidad);
     const cantidad = Math.min(80, Math.max(5, Number.isFinite(numero) ? Math.floor(numero) : 20));
 
+    // modo "banco" = Banco de preguntas; cualquier otro valor = Técnicas Enlace 2 (comportamiento anterior)
+    const modoBanco = body.modo === "banco";
+    const validas = modoBanco ? TECNICAS_BANCO : TECNICAS_ENLACE2;
     const tecnicas: string[] = Array.isArray(body.tecnicas)
-      ? body.tecnicas.filter((t: unknown) => typeof t === "string" && TECNICAS_VALIDAS.includes(t))
+      ? body.tecnicas.filter((t: unknown) => typeof t === "string" && validas.includes(t))
       : [];
     if (!tecnicas.length) return responder({ error: "Seleccione al menos una técnica" }, 400);
 
@@ -135,16 +139,22 @@ CANTIDAD: ${cantidad}
 Genera hasta ${cantidad} preguntas basadas exclusivamente en el texto del PDF. No inventes información ni uses información externa. Lenguaje apropiado para el grado. Mezcla dificultad facil, medio y dificil. Evita preguntas repetidas y cubre distintas partes del texto.
 ${bloqueEvitar}
 SOLO puedes usar estos valores en el campo "tipo": ${tecnicas.map((t) => `"${t}"`).join(", ")}.
-Reparte las preguntas equitativamente entre esos tipos. Está PROHIBIDO usar otro tipo (por ejemplo seleccion_multiple, verdadero_falso o completar).
+Reparte las preguntas equitativamente entre esos tipos. Está PROHIBIDO usar otro tipo.
 
-TODAS las preguntas deben tener EXACTAMENTE 3 opciones distintas, y "respuesta" debe ser idéntica a una de las 3 opciones. Incluye una explicación breve. Los distractores deben ser plausibles pero claramente incorrectos según el texto.
+${modoBanco
+  ? `Reglas de opciones:
+- seleccion_multiple: EXACTAMENTE 4 opciones distintas, una sola correcta.
+- verdadero_falso: una afirmación; las opciones son EXACTAMENTE ["Verdadero","Falso"].
+- completar: un enunciado con un espacio "_____" y EXACTAMENTE 4 opciones distintas.
+"respuesta" debe ser idéntica a una de las opciones. Incluye una explicación breve. Los distractores deben ser plausibles pero claramente incorrectos según el texto.`
+  : `TODAS las preguntas deben tener EXACTAMENTE 3 opciones distintas, y "respuesta" debe ser idéntica a una de las 3 opciones. Incluye una explicación breve. Los distractores deben ser plausibles pero claramente incorrectos según el texto.
 
 Guía por tipo:
 - detective: presenta un error conceptual y pregunta cómo corregirlo.
 - quien: da pistas para reconocer un concepto ("¿Quién soy?").
 - causa: pide identificar una causa o una consecuencia.
 - mito: presenta una afirmación y pregunta cuál explicación científica es correcta.
-- casos: plantea una situación práctica basada en el PDF.
+- casos: plantea una situación práctica basada en el PDF.`}
 
 Si no hay contenido suficiente, genera menos preguntas.
 Devuelve exclusivamente JSON válido con esta forma:
@@ -174,7 +184,7 @@ ${texto}
             properties: {
               tipo: { type: "STRING", enum: tecnicas },
               pregunta: { type: "STRING" },
-              opciones: { type: "ARRAY", items: { type: "STRING" }, minItems: 3, maxItems: 3 },
+              opciones: { type: "ARRAY", items: { type: "STRING" }, minItems: modoBanco ? 2 : 3, maxItems: modoBanco ? 4 : 3 },
               respuesta: { type: "STRING" },
               explicacion: { type: "STRING" },
               dificultad: { type: "STRING", enum: ["facil", "medio", "dificil"] },
@@ -270,7 +280,10 @@ ${texto}
         typeof p.pregunta === "string" && p.pregunta.trim().length > 0 &&
         typeof p.respuesta === "string" &&
         typeof p.explicacion === "string" &&
-        Array.isArray(ops) && ops.length >= 3 &&
+        Array.isArray(ops) &&
+        (modoBanco
+          ? (String(p.tipo) === "verdadero_falso" ? ops.length === 2 : ops.length === 4)
+          : ops.length >= 3) &&
         ops.every((o: unknown) => typeof o === "string") &&
         new Set(ops as string[]).size === ops.length &&
         (ops as string[]).includes(p.respuesta as string)
