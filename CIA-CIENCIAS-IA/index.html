@@ -28,6 +28,9 @@ main{max-width:980px}
 details>summary{cursor:pointer;padding:4px 0}
 @media print{header,.tabs,button,input,select,.editor-fondo{display:none!important}body{background:#fff;color:#111}main{max-width:none;padding:0}.card{break-inside:avoid;border:0;padding:8px;margin:5px 0}table{font-size:11px}tr{break-inside:avoid}}
 .opts{grid-template-columns:repeat(2,minmax(0,1fr))}.opt{min-width:0;min-height:105px}.opt b{font-size:1rem}.matgrid{grid-template-columns:repeat(auto-fit,minmax(min(100%,240px),1fr))}.practicas-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,240px),1fr));gap:10px}.practicas-grid button{margin:0;width:100%;min-height:85px;text-align:left}.practica-hecha{background:#176344!important;color:#fff!important;border:2px solid #f1c453!important}.practica-hecha::after{content:"  ✓ Realizado";display:block;font-size:.78rem;margin-top:5px}@media(max-width:520px){.opts{grid-template-columns:1fr}}
+
+/* CIA: recorrido único del profesor, sin pestañas ni pantallas intermedias */
+.cia-ruta{display:flex;flex-wrap:wrap;gap:8px;margin:14px 0}.cia-ruta a{padding:10px 12px;background:#e8f2ef;color:#105c47;border-radius:9px;font-weight:700;text-decoration:none}.cia-ruta a:hover,.cia-ruta a:focus{background:#c8e6dc}.cia-etapa{scroll-margin-top:16px;margin:18px 0}.cia-etapa>.card{margin-bottom:0}.cia-etapa #cia-administrar-periodos{margin-top:0}.cia-etapa #cia-administrar-periodos>hr{display:none}.cia-etapa #cia-panel-publicar{padding:12px}.cia-etapa #cia-administrar-periodos .cia-accesos #cia-nuevo-rapido{display:none}
 </style><style id="cia-periodos-mejora">
 #cia-administrar-periodos{background:#f1f6ff;border:2px solid #b7d0fa;border-radius:16px;padding:18px;margin-top:18px;color:#18345b}
 #cia-administrar-periodos>h3{color:#153b81;font-size:1.35rem}
@@ -809,7 +812,7 @@ async function matLista(uid){
  if(err){v.innerHTML=`<div class=card>${avisoError(err)}</div>`;return;}
  const n=(r,id,f)=>(r.data||[]).filter(x=>String(x.materia_id)===String(id)&&(!f||f(x))).length;
  v.innerHTML=`<div class=card><h2>Mis materias</h2><p class=s>Entra a una materia para trabajar dentro de ella: asignar salones, subir el PDF, elegir grado y técnica, y revisar las preguntas.</p><div class=add><input id=mn maxlength=90 placeholder="Nueva materia. Ej.: Ciencias Naturales" aria-label="Nueva materia"><button id=ma>Agregar materia</button></div><p id=mm class=err role=status></p></div><div class=card id=tcard><p class=s>Cargando…</p></div>${(m.data||[]).length?`<div class=matgrid>${m.data.map(x=>`<div class=card><h3>${esc(x.nombre)}</h3><p class=s>${n(s,x.id)} salón(es) · ${n(b,x.id)} en el banco · ${n(e,x.id,q=>q.activa!==false)} de Enlace 2</p><button data-ent="${esc(x.id)}">Entrar</button></div>`).join('')}</div>`:'<div class=card><p>Aún no tienes materias. Escribe el nombre de la primera arriba (por ejemplo, Ciencias Naturales).</p></div>'}`;
- tecnicaDocente(uid);
+ // Los periodos se administran dentro de cada materia, en el paso 4.
  $('#ma').onclick=async()=>{const nombre=$('#mn').value.trim(),msg=$('#mm');
   if(nombre.length<2||nombre.length>90){msg.textContent='Escribe un nombre de 2 a 90 caracteres.';return;}
   if((m.data||[]).some(x=>e2Sin(x.nombre)===e2Sin(nombre))){msg.textContent='Ya existe una materia con ese nombre.';return;}
@@ -828,10 +831,21 @@ async function matEntrar(uid,id,paso){
  const {data:sal,error:se}=await sb.from('cia_materia_salones').select('id,grado,seccion').eq('docente_id',uid).eq('materia_id',id);
  if(se)return volver(avisoError(se));
  const salones=sal||[],grados=[...new Set(salones.map(x=>String(x.grado)))].sort(porGrado);
- v.innerHTML=`<div class=card><div class=row><button class=sec id=mv>← Todas las materias</button><span><button class=sec id=mr>Cambiar nombre</button><button class=sec id=md>Eliminar materia</button></span></div><h2>${esc(mat.nombre)}</h2><div class=pasos><button data-st=1>1 · Salones</button><button data-st=2>2 · PDF, grado y técnica</button><button data-st=3>3 · Preguntas guardadas</button></div></div><div class="card" id="cia-flujo-rapido"><h3>Ruta de trabajo · ${esc(mat.nombre)}</h3><p class=s>Sigue los pasos de izquierda a derecha. Solo el último paso publica la evaluación para estudiantes.</p><div class="pasos"><button type="button" data-ir="1">1. Salones</button><button type="button" data-ir="2">2. Generar</button><button type="button" data-ir="3">3. Comprobar</button><button type="button" id="cia-ir-activar">4. Programar / activar</button></div></div><div id=paso></div>`;
- const c={uid,mat,salones,grados,recargar:p=>matEntrar(uid,id,p)},pasos={1:matSalones,2:matGenerar,3:matPreguntas};
- const mostrar=k=>{v.querySelectorAll('[data-st]').forEach(b=>b.classList.toggle('on',Number(b.dataset.st)===k));pasos[k](c,$('#paso'));const barra=document.querySelector('#cia-flujo-rapido');if(barra)barra.querySelectorAll('[data-ir]').forEach(b=>b.classList.toggle('on',Number(b.dataset.ir)===k));};
- v.querySelectorAll('[data-ir]').forEach(b=>b.onclick=()=>mostrar(Number(b.dataset.ir)));$('#cia-ir-activar').onclick=()=>{tInforme(uid).then(()=>{const destino=document.querySelector('#cia-administrar-periodos');if(destino){const materia=destino.querySelector('[name=materia_id]');if(materia){materia.value=String(id);materia.dispatchEvent(new Event('change'));}destino.scrollIntoView({behavior:'smooth',block:'start'});}});};
+ v.innerHTML=`<div class="card"><div class="row"><button class="sec" id="mv">← Todas las materias</button><span><button class="sec" id="mr">Cambiar nombre</button><button class="sec" id="md">Eliminar materia</button></span></div><h2>${esc(mat.nombre)}</h2><p class="s">Trabaja de arriba hacia abajo. Todos los pasos están aquí, sin cambiar de pantalla.</p><nav class="cia-ruta"><a href="#cia-etapa-1">1 · Salones</a><a href="#cia-etapa-2">2 · Generar</a><a href="#cia-etapa-3">3 · Revisar</a><a href="#cia-etapa-4">4 · Activar</a></nav></div><section id="cia-etapa-1" class="cia-etapa"><div id="cia-panel-salones"></div></section><section id="cia-etapa-2" class="cia-etapa"><div id="cia-panel-generar"></div></section><section id="cia-etapa-3" class="cia-etapa"><div id="cia-panel-preguntas"></div></section><section id="cia-etapa-4" class="cia-etapa"><div id="cia-panel-publicar" class="card"><h3>4 · Programar y activar para estudiantes</h3><p class="s">Cargando periodos…</p></div></section>`;
+ const c={uid,mat,salones,grados,recargar:p=>matEntrar(uid,id,p)};
+ // Todos los módulos originales siguen funcionando; solo cambia su disposición.
+ matSalones(c,$('#cia-panel-salones'));
+ matGenerar(c,$('#cia-panel-generar'));
+ matPreguntas(c,$('#cia-panel-preguntas'));
+ const publicar=$('#cia-panel-publicar');
+ await ciaAdministrarPeriodos(uid,publicar);
+ const formPublicar=publicar.querySelector('#cia-form-periodo');
+ if(formPublicar){
+  const materia=formPublicar.elements.namedItem('materia_id');
+  if(materia){materia.value=String(id);materia.dispatchEvent(new Event('change'));}
+  const grado=formPublicar.elements.namedItem('grado');
+  if(grado&&grados.length===1){grado.value=grados[0];grado.dispatchEvent(new Event('change'));}
+ }
  $('#mv').onclick=()=>matLista(uid);
  $('#mr').onclick=async()=>{const nombre=prompt('Nuevo nombre de la materia:',mat.nombre)?.trim();if(!nombre||nombre===mat.nombre)return;if(nombre.length<2||nombre.length>90)return alert('El nombre debe tener entre 2 y 90 caracteres.');const {error:e}=await sb.from('cia_materias').update({nombre}).eq('id',id).eq('docente_id',uid);if(e)return alert(e.message);c.recargar(paso);};
  $('#md').onclick=async()=>{if(!confirm(`¿Eliminar la materia "${mat.nombre}"?\n\nSe quitan sus salones asignados. Si tiene preguntas guardadas, el sistema puede impedirlo: bórralas antes en el paso 3.`))return;await sb.from('cia_materia_salones').delete().eq('materia_id',id).eq('docente_id',uid);const {data,error:e}=await sb.from('cia_materias').delete().eq('id',id).eq('docente_id',uid).select('id');if(e||!data?.length)return alert('No se pudo eliminar: '+(e?.message||'sin permiso (revise las políticas RLS de delete en cia_materias).'));matLista(uid);};
