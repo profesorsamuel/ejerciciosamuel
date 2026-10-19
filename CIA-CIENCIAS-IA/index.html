@@ -27,6 +27,7 @@ main{max-width:980px}
 .grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px}
 details>summary{cursor:pointer;padding:4px 0}
 @media print{header,.tabs,button,input,select,.editor-fondo{display:none!important}body{background:#fff;color:#111}main{max-width:none;padding:0}.card{break-inside:avoid;border:0;padding:8px;margin:5px 0}table{font-size:11px}tr{break-inside:avoid}}
+.opts{grid-template-columns:repeat(2,minmax(0,1fr))}.opt{min-width:0;min-height:105px}.opt b{font-size:1rem}.matgrid{grid-template-columns:repeat(auto-fit,minmax(min(100%,240px),1fr))}.practicas-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,240px),1fr));gap:10px}.practicas-grid button{margin:0;width:100%;min-height:85px;text-align:left}.practica-hecha{background:#176344!important;color:#fff!important;border:2px solid #f1c453!important}.practica-hecha::after{content:"  ✓ Realizado";display:block;font-size:.78rem;margin-top:5px}@media(max-width:520px){.opts{grid-template-columns:1fr}}
 </style></head><body>
 <header><h1 onclick="location.hash='';location.reload()" title="Ir al inicio">CIA · Ciencias IA</h1><p>C.E.B.G. El Jiral · Ciencias Naturales</p></header><main id="app"></main>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
@@ -40,6 +41,10 @@ const $=s=>document.querySelector(s),app=$('#app'),draw=h=>app.innerHTML=h;
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const norm=s=>String(s).toLowerCase().normalize('NFD').replace(/[^a-z0-9]/g,'');
 const TIPOS={multiple:'Selección múltiple',verdadero_falso:'Verdadero o falso',completar:'Completar el espacio',relacionar:'Relacionar columnas',ordenar:'Ordenar la secuencia'};
+const etiquetaEval=t=>t==='e2'?'Evaluación 2':'Evaluación 1';
+function claveMarca(tipo){const p=window.__ciaPeriodoActual;return 'cia-realizado:'+est?.id+':'+(p?.id||'sin-periodo')+':'+(p?.tecnica||'defecto')+':'+tipo;}
+function marcarRealizado(tipo){try{localStorage.setItem(claveMarca(tipo),'1');}catch(e){console.warn('No se pudo guardar marca local',e);}}
+function pintarRealizados(){document.querySelectorAll('[data-t],[data-e2t]').forEach(b=>{const tipo=b.dataset.t?'banco:'+b.dataset.t:'e2:'+b.dataset.e2t;try{b.classList.toggle('practica-hecha',localStorage.getItem(claveMarca(tipo))==='1');}catch(e){}});}
 const META=18; // 18 por tipo x 5 tipos = 90 preguntas (mínimo pedido: 80)
 let est=null;
 const fmt=c=>Array.isArray(c)?(Array.isArray(c[0])?c.map(p=>p.join(' = ')).join('; '):c.join(' → ')):c;
@@ -85,15 +90,15 @@ async function mostrarNotasPeriodo(){const el=$('#periodo-notas');if(!el)return;
  },0)/5;
  el.innerHTML=`<table><thead><tr><th>Práctica</th><th>Mejor nota</th></tr></thead><tbody>${items.join('')}</tbody></table><p><b>Nota final: ${nota(promedio)} / 5.00</b></p>${!completas?'<p class="s">Aviso: Supabase no está devolviendo el detalle de las cinco prácticas; las notas faltantes aparecen como 1.00 hasta corregir la función SQL.</p>':''}`;
 }
-async function menu(auto){const consulta=await obtenerPeriodo(),periodo=consulta.periodo;window.__ciaPeriodoActual=periodo;const activa=periodo?(periodo.tecnica==='e2'?'e2':'banco'):await tecnicaActiva();const cerrado=periodo&&new Date(periodo.fin||periodo.cierre).getTime()<=Date.now();draw(`<div class=card><h2>Hola, ${esc(est.nombres)}</h2>${activa==='e2'?`<p>Elige tu ejercicio. Cada intento trae 8 preguntas. Responde todas antes de enviar.</p>${e2PanelHTML()}`:`<p>Elige un ejercicio. Cada intento trae 8 preguntas distintas. Responde todas antes de enviar.</p>${Object.entries(TIPOS).map(([k,v])=>`<button class=big data-t=${k}>${v}</button>`).join('')}`}<p class=err id=m></p><button class=sec id=s>Salir</button></div>${periodoHtml(periodo)}`);if(periodo){iniciarReloj(periodo);await mostrarNotasPeriodo();}if(cerrado)app.querySelectorAll('[data-t],[data-e2t]').forEach(b=>b.disabled=true);
+async function menu(auto){const consulta=await obtenerPeriodo(),periodo=consulta.periodo;window.__ciaPeriodoActual=periodo;const activa=periodo?(periodo.tecnica==='e2'?'e2':'banco'):await tecnicaActiva();const cerrado=periodo&&new Date(periodo.fin||periodo.cierre).getTime()<=Date.now();draw(`<div class=card><h2>Hola, ${esc(est.nombres)}</h2>${activa==='e2'?`<p>Elige tu ejercicio. Cada intento trae 8 preguntas. Responde todas antes de enviar.</p>${e2PanelHTML()}`:`<p>Elige un ejercicio. Cada intento trae 8 preguntas distintas. Responde todas antes de enviar.</p>${`<h3>Evaluación 1</h3><div class="practicas-grid">`+Object.entries(TIPOS).map(([k,v])=>`<button class=big data-t=${k}>${v}</button>`).join('')+`</div>`}`}<p class=err id=m></p><button class=sec id=s>Salir</button></div>${periodoHtml(periodo)}`);if(periodo){iniciarReloj(periodo);await mostrarNotasPeriodo();}pintarRealizados();if(cerrado)app.querySelectorAll('[data-t],[data-e2t]').forEach(b=>b.disabled=true);
 const contenedor=document.createElement('div');contenedor.className='card';contenedor.innerHTML='<h2>Evaluaciones asignadas</h2><p id=ev-est-msg>Buscando evaluaciones vigentes…</p><div id=ev-est-list></div><button class=sec id=ev-est-recargar>Actualizar evaluaciones</button>';app.append(contenedor);
  const historial=document.createElement('div');historial.className='card';historial.innerHTML='<h2>Mi historial de evaluaciones</h2><p id=hist-estado>Consultando intentos…</p><div class=wrap id=hist-tabla></div><button class=sec id=hist-actualizar>Actualizar historial</button>';app.append(historial);
  const cargarHistorial=async()=>{const {data,error}=await sb.rpc('cia_eval_historial',{p_est:est.id,p_cedula:est.cedula,p_nombre:est.nombreVerificacion});const estado=$('#hist-estado'),tabla=$('#hist-tabla');if(!estado||!tabla)return;if(error){estado.textContent='Historial no disponible: '+error.message;return;}const filas=data||[];estado.textContent=filas.length?`${filas.length} intento(s) registrado(s). La mejor nota se calcula por evaluación y día.`:'Aún no hay intentos registrados.';tabla.innerHTML=filas.length?`<table><tr><th>Evaluación</th><th>Fecha</th><th>Estado</th><th>Nota</th><th>Mejor del día</th></tr>${filas.map(x=>`<tr><td>${esc(x.titulo)}</td><td>${esc(new Date(x.inicio).toLocaleString('es-PA'))}</td><td>${x.enviado_en?'Entregado':'Pendiente'}</td><td>${x.nota_5==null?'—':Number(x.nota_5).toFixed(2)}</td><td>${x.mejor_dia==null?'—':Number(x.mejor_dia).toFixed(2)}</td></tr>`).join('')}</table>`:'';};$('#hist-actualizar').onclick=cargarHistorial;await cargarHistorial();
  const cargarEvaluaciones=async()=>{const {data,error}=await sb.rpc('cia_eval_listar',{p_est:est.id,p_cedula:est.cedula,p_nombre:est.nombreVerificacion});const msg=$('#ev-est-msg'),lista=$('#ev-est-list');if(!msg||!lista)return;if(error){msg.textContent='No se pudieron consultar evaluaciones: '+error.message;return;}const a=data||[];msg.textContent=a.length?`${a.length} evaluación(es) disponible(s) o pendiente(s).`:'No hay evaluaciones activas para tu salón en este momento.';lista.innerHTML=a.map(v=>`<div class=card><b>${esc(v.titulo)}</b><p>${esc(v.estado)} · ${v.duracion_min} minutos · ${v.preguntas} preguntas</p><button data-ev-iniciar="${esc(v.id)}" ${v.estado!=='Disponible'?'disabled':''}>Iniciar evaluación</button></div>`).join('');lista.querySelectorAll('[data-ev-iniciar]').forEach(b=>b.onclick=async()=>{b.disabled=true;const {data:r,error:er}=await sb.rpc('cia_eval_iniciar',{p_est:est.id,p_cedula:est.cedula,p_nombre:est.nombreVerificacion,p_eval:b.dataset.evIniciar});if(er){alert(er.message);b.disabled=false;return;}quizEvaluacion(r);});};$('#ev-est-recargar').onclick=cargarEvaluaciones;await cargarEvaluaciones();
- app.querySelectorAll('[data-t]').forEach(b=>b.onclick=async()=>{if(cerrado)return $('#m').textContent='Periodo cerrado.';const {data,error}=await sb.rpc('cia_iniciar',{p_est:est.id,p_tipo:b.dataset.t});if(error)return $('#m').textContent=error.message;quiz(data);});if(activa==='e2'&&!cerrado)e2Cablear();$('#s').onclick=()=>{est=null;inicio();};}
+ app.querySelectorAll('[data-t]').forEach(b=>b.onclick=async()=>{if(cerrado)return $('#m').textContent='Periodo cerrado.';const {data,error}=await sb.rpc('cia_iniciar',{p_est:est.id,p_tipo:b.dataset.t});if(error)return $('#m').textContent=error.message;quiz(data,b.dataset.t);});if(activa==='e2'&&!cerrado)e2Cablear();$('#s').onclick=()=>{est=null;inicio();};}
 // Mezcla Fisher-Yates: se aplica una sola vez por intento, nunca al volver atrás.
 function mezclarOpciones(valores){const a=[...valores];for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
-function quiz(d){
+function quiz(d,tipoPractica){
  const opcionesIntento=new Map();
  for(const q of d.preguntas){const x=q.datos||{};
   if(q.tipo==='multiple'||q.tipo==='completar')opcionesIntento.set(q.id,mezclarOpciones(x.opciones||[]));
@@ -103,7 +108,7 @@ function quiz(d){
  }
  let i=0;const R={};const inicioIntento=Date.now();let enviando=false;
  const resumen=()=>{const total=d.preguntas.length,contestadas=d.preguntas.filter(q=>R[q.id]!==undefined).length;return `${contestadas} de ${total} respondidas`;};
- const enviar=async()=>{if(enviando)return;const pendientes=d.preguntas.filter(q=>R[q.id]===undefined);if(pendientes.length){alert(`Faltan ${pendientes.length} preguntas por responder.`);return;}if(!confirm(`¿Enviar las ${d.preguntas.length} respuestas para calificar? No podrá modificarlas después.`))return;enviando=true;draw('<div class=card><h2>Guardando respuestas…</h2><p>Espere mientras Supabase calcula su resultado.</p></div>');const {data,error}=await sb.rpc('cia_enviar',{p_est:est.id,p_intento:d.intento,p_resp:R});if(error){enviando=false;draw(`<div class=card><h2>No se pudo enviar</h2><p class=err>${esc(error.message)}</p><button id=reintentar>Reintentar envío</button></div>`);$('#reintentar').onclick=enviar;return;}resultado(data);};
+ const enviar=async()=>{if(enviando)return;const pendientes=d.preguntas.filter(q=>R[q.id]===undefined);if(pendientes.length){alert(`Faltan ${pendientes.length} preguntas por responder.`);return;}if(!confirm(`¿Enviar las ${d.preguntas.length} respuestas para calificar? No podrá modificarlas después.`))return;enviando=true;draw('<div class=card><h2>Guardando respuestas…</h2><p>Espere mientras Supabase calcula su resultado.</p></div>');const {data,error}=await sb.rpc('cia_enviar',{p_est:est.id,p_intento:d.intento,p_resp:R});if(error){enviando=false;draw(`<div class=card><h2>No se pudo enviar</h2><p class=err>${esc(error.message)}</p><button id=reintentar>Reintentar envío</button></div>`);$('#reintentar').onclick=enviar;return;}marcarRealizado("banco:"+tipoPractica);resultado(data);};
  const paso=()=>{const q=d.preguntas[i],x=q.datos;let cu='';
   if(q.tipo=='multiple'||q.tipo=='completar')cu=opcionesIntento.get(q.id).map(o=>`<button class=op data-v="${esc(o)}">${esc(o)}</button>`).join('');
   else if(q.tipo=='verdadero_falso')cu=opcionesIntento.get(q.id).map(o=>`<button class=op data-v="${o}">${o}</button>`).join('');
@@ -517,7 +522,7 @@ async function tecnicaDocente(uid){
  const {data,error}=await sb.from('cia_config').select('tecnica_activa').eq('docente_id',uid).maybeSingle();
  if(error){box.innerHTML='<h3>Técnica que ven los estudiantes</h3><p class=err>Falta instalar esta función: ejecuta <b>sql/cia_tecnica_activa.sql</b> en Supabase (SQL Editor). Mientras tanto, los estudiantes ven el Banco de preguntas.</p>';return;}
  const act=data?.tecnica_activa==='e2'?'e2':'banco';
- box.innerHTML=`<h3>Técnica que ven los estudiantes</h3><p class=s>Esta es la técnica por defecto. <b>Si hay un periodo vigente para su salón, el estudiante ve la técnica de ese periodo</b> (ver abajo), no esta.</p><p id="cia-vigente" class=s role="status"></p><div class=opts><label class=opt><input type=radio name=ta value=banco ${act==='banco'?'checked':''}><b>Banco de preguntas</b><span>Selección múltiple, verdadero o falso, completar, relacionar y ordenar.</span></label><label class=opt><input type=radio name=ta value=e2 ${act==='e2'?'checked':''}><b>Técnicas Enlace 2</b><span>Detective, ¿Quién soy?, Causa y efecto, Mito o ciencia y Casos.</span></label></div><button id=tg>Guardar técnica activa</button><p id=tm class=s role=status></p>`;
+ box.innerHTML=`<h3>Técnica que ven los estudiantes</h3><p class=s>Esta es la técnica por defecto. <b>Si hay un periodo vigente para su salón, el estudiante ve la técnica de ese periodo</b> (ver abajo), no esta.</p><p id="cia-vigente" class=s role="status"></p><div class=opts><label class=opt><input type=radio name=ta value=banco ${act==='banco'?'checked':''}><b>Evaluación 1</b><span>Selección múltiple, verdadero o falso, completar, relacionar y ordenar.</span></label><label class=opt><input type=radio name=ta value=e2 ${act==='e2'?'checked':''}><b>Evaluación 2</b><span>Detective, ¿Quién soy?, Causa y efecto, Mito o ciencia y Casos.</span></label></div><button id=tg>Guardar técnica activa</button><p id=tm class=s role=status></p>`;
  $('#tg').onclick=async()=>{const v=box.querySelector('[name=ta]:checked').value;const {error:e}=await sb.from('cia_config').upsert({docente_id:uid,tecnica_activa:v,actualizado_en:new Date().toISOString()},{onConflict:'docente_id'});$('#tm').textContent=e?'No se pudo guardar: '+e.message:'Guardado. Ahora los estudiantes ven: '+(v==='e2'?'Técnicas Enlace 2':'Banco de preguntas')+'.';};
  await ciaAdministrarPeriodos(uid,box);
 }
@@ -529,7 +534,7 @@ async function ciaAdministrarPeriodos(uid,box){
  <div class="s" style="padding:9px;border:1px solid #d6e6d9;border-radius:8px;margin:10px 0">Para elegir cuál ve el estudiante, pulsa <b>Mostrar ahora</b> en el periodo deseado: ese queda visible y los otros periodos vigentes de su salón se desactivan (puedes reactivarlos después). Para reordenar fechas usa <b>↑ Primero</b> o <b>↓ Después</b>. Se intercambian las fechas de los dos periodos, sin cambiar sus técnicas ni sus notas.</div>
  <form id="cia-form-periodo"><label>Título del periodo<input name="titulo" maxlength="120" required placeholder="Ej.: Prácticas de octubre"></label>
  <label>Materia (opcional)<select name="materia_id"><option value="">Todas las materias</option></select></label>
- <label>Técnica de este periodo<select name="tecnica" required><option value="banco">Banco de preguntas</option><option value="e2">Técnicas Enlace 2</option></select></label>
+ <label>Técnica de este periodo<select name="tecnica" required><option value="banco">Evaluación 1</option><option value="e2">Evaluación 2</option></select></label>
  <label>Grado<select name="grado" required><option value="">Seleccionar grado</option><option value="7">7.º</option><option value="8">8.º</option><option value="9">9.º</option></select></label>
  <label>Sección<select name="seccion"><option value="">Todas las secciones</option><option value="A">A</option><option value="B">B</option><option value="C">C</option></select></label>
  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(175px,1fr));gap:8px"><label>Inicio<input name="inicio" type="datetime-local" required></label><label>Cierre<input name="fin" type="datetime-local" required></label></div>
@@ -665,7 +670,7 @@ function matGenerar(c,root){
 <label>Tema (opcional)<input id=gt maxlength=120 placeholder="Ej. La célula animal y vegetal"></label>
 <label>② ¿A qué grado va este PDF?<select id=gg>${c.grados.map(g=>`<option value=${g}>${g}.º</option>`).join('')}</select></label>
 <b>③ ¿Qué técnica usarás?</b>
-<div class=opts><label class=opt><input type=radio name=gtec value=banco checked><b>Banco de preguntas</b><span>Selección múltiple, verdadero o falso y completar. Se guardan en el banco de esta materia y grado.</span></label><label class=opt><input type=radio name=gtec value=e2><b>Técnicas Enlace 2</b><span>Detective de errores, ¿Quién soy?, Causa y efecto, Mito o ciencia y Casos prácticos (3 alternativas).</span></label></div>
+<div class=opts><label class=opt><input type=radio name=gtec value=banco checked><b>Evaluación 1</b><span>Selección múltiple, verdadero o falso y completar. Se guardan en el banco de esta materia y grado.</span></label><label class=opt><input type=radio name=gtec value=e2><b>Evaluación 2</b><span>Detective de errores, ¿Quién soy?, Causa y efecto, Mito o ciencia y Casos prácticos (3 alternativas).</span></label></div>
 <fieldset id=gsub style="border:1px solid var(--linea);border-radius:8px;margin:8px 0"></fieldset>
 <label>Cantidad de preguntas<select id=gc><option>10</option><option>20</option><option>40</option><option>60</option><option>80</option></select></label><p id=gnota class=s></p>
 <button id=gen disabled>④ Generar preguntas para revisar</button><p id=ges class=s role=status></p></div><div id=grev></div>`;
@@ -802,7 +807,7 @@ async function matPreguntas(c,root){
 
 /* ======== ENLACE 2 · ESTUDIANTE (práctica de 8 preguntas) ======== */
 const E2_DESC={detective:'Encuentra el error en cada afirmación.',quien:'Adivina el concepto a partir de las pistas.',causa:'Relaciona cada causa con su efecto.',mito:'Distingue lo que es mito de lo que es ciencia.',casos:'Aplica lo aprendido a situaciones reales.'};
-const e2PanelHTML=()=>`<label id=e2mw>Materia<select id=e2m><option>Cargando…</option></select></label>
+const e2PanelHTML=()=>`<h3>Evaluación 2</h3><label id=e2mw>Materia<select id=e2m><option>Cargando…</option></select></label>
  <div class=matgrid>${Object.entries(E2_TECNICAS).map(([k,n])=>`<button class=big data-e2t="${k}" disabled style="text-align:left;display:block;width:100%;margin:6px 0"><b>${esc(n)}</b><br><span style="font-weight:400;font-size:.85rem">${esc(E2_DESC[k]||'')}</span></button>`).join('')}</div>`;
 async function e2Cablear(){
  const {data,error}=await sb.rpc('cia14_materias',{p_cedula:est.cedula});
@@ -810,7 +815,7 @@ async function e2Cablear(){
  const unicas=[...new Map((data||[]).map(x=>[x.materia_id||x.id,x])).values()].filter(x=>x.materia_id||x.id);
  if(!unicas.length){$('#e2m').innerHTML='';$('#m').textContent='Tu salón aún no tiene materias asignadas. Consulta al profesor.';return;}
  $('#e2m').innerHTML=unicas.map(x=>`<option value="${esc(x.materia_id||x.id)}">${esc(x.materia)}</option>`).join('');
- if(unicas.length===1)$('#e2mw').style.display='none';
+ pintarRealizados();if(unicas.length===1)$('#e2mw').style.display='none';
  document.querySelectorAll('[data-e2t]').forEach(b=>{b.disabled=false;b.onclick=()=>iniciarE2(b.dataset.e2t);});
 }
 async function practicaE2(){
@@ -831,7 +836,7 @@ async function iniciarE2(tec){
    $('#e2env').disabled=true;
    const {data:r,error:ee}=await sb.rpc('cia14_enviar',{p_cedula:est.cedula,p_intento:intento,p_respuestas:resp});
    if(ee){$('#m').textContent=ee.message;$('#e2env').disabled=false;return;}
-   draw(`<div class=card><h2>Resultado guardado</h2><p>Correctas: <b>${esc(r.aciertos)}</b> de <b>${esc(r.total)}</b></p><h3>Nota de práctica: ${esc(r.nota)} / 5.00</h3><p class=s>Esta calificación no corresponde a una evaluación oficial.</p><button id=e2otra>Hacer otra práctica</button><button class=sec id=e2menu>Volver al menú</button></div>`);
+   marcarRealizado("e2:"+tec);draw(`<div class=card><h2>Resultado guardado</h2><p>Correctas: <b>${esc(r.aciertos)}</b> de <b>${esc(r.total)}</b></p><h3>Nota de práctica: ${esc(r.nota)} / 5.00</h3><p class=s>Esta calificación no corresponde a una evaluación oficial.</p><button id=e2otra>Hacer otra práctica</button><button class=sec id=e2menu>Volver al menú</button></div>`);
    $('#e2otra').onclick=()=>menu();$('#e2menu').onclick=()=>menu();
   };
  }
