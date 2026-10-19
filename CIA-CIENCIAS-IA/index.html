@@ -642,7 +642,7 @@ async function ciaAdministrarPeriodos(uid,box){
  <label><input type="checkbox" name="activo" checked style="width:auto"> Periodo activo</label>
  </div></details>
  <button type="submit" id="cia-guardar-periodo">Guardar periodo</button><button type="button" class="sec" id="cia-cancelar-periodo" hidden>Cancelar edición</button>
- <p id="cia-periodo-mensaje" role="status" class=s></p></form><h3>Periodos existentes</h3><div id="cia-lista-periodos">Cargando…</div>`;
+ <p id="cia-periodo-mensaje" role="status" class=s></p></form><h3>Periodos existentes</h3><p id="cia-lista-msg" role="status" style="font-weight:700;margin:6px 0"></p><div id="cia-lista-periodos">Cargando…</div>`;
  box.appendChild(cont);
  const form=cont.querySelector('form'),msg=cont.querySelector('#cia-periodo-mensaje'),list=cont.querySelector('#cia-lista-periodos');
  const campo=n=>form.elements.namedItem(n);
@@ -652,6 +652,7 @@ async function ciaAdministrarPeriodos(uid,box){
  const cambiarModalidad=()=>{const modo=campo('modalidad').value;cont.querySelector('#cia-fechas').style.display=modo==='abierta'?'none':'grid';cont.querySelector('#cia-cierre-label').style.display=modo==='fechas'?'block':'none';campo('inicio').required=modo!=='abierta';campo('fin').required=modo==='fechas';cont.querySelector('#cia-ayuda-modalidad').textContent=modo==='abierta'?'Disponible inmediatamente hasta que lo desactive.':modo==='inicio'?'Se abre en la fecha indicada y no vence.':'Disponible solo entre las dos fechas indicadas.';};
  campo('modalidad').onchange=cambiarModalidad;cambiarModalidad();
  let editando=null,periodos=[];
+ {const lm=cont.querySelector('#cia-lista-msg');new MutationObserver(()=>{const t=msg.textContent||'';lm.textContent=t;lm.style.color=/^(Error|No se)/.test(t)?'#a62020':'#0b5a34';}).observe(msg,{childList:true,characterData:true,subtree:true});}
  cont.querySelector('#cia-ver-tecnicas').onclick=()=>ciaVerTecnicas(uid,periodos);
  cont.querySelector('#cia-nuevo-rapido').onclick=()=>{limpiar();const hoy=new Date();hoy.setMinutes(hoy.getMinutes()-1);campo('modalidad').value='abierta';cambiarModalidad();campo('inicio').value=localFecha(hoy);const fin=new Date(Date.now()+7*86400000);campo('fin').value=localFecha(fin);campo('titulo').value='Práctica '+new Date().toLocaleDateString('es-PA');form.scrollIntoView({behavior:'smooth',block:'center'});campo('grado').focus();};
  cont.querySelector('#cia-recargar-periodos').onclick=()=>cargar();
@@ -696,7 +697,6 @@ async function ciaAdministrarPeriodos(uid,box){
    const esTodas=v=>!seccionNormal(v)||['TODAS','TODOS','TODAS LAS SECCIONES','ALL'].includes(seccionNormal(v));
    const mismoSalon=p=>gradoNormal(p.grado)===gradoNormal(elegido.grado)&&(esTodas(p.seccion)||esTodas(elegido.seccion)||seccionNormal(p.seccion)===seccionNormal(elegido.seccion));
    const otros=periodos.filter(p=>p.id!==elegido.id&&mismoSalon(p)&&vigente(p));
-   if(!confirm('¿Mostrar «'+elegido.titulo+'» ('+(elegido.tecnica==='e3'?'Evaluación 3':elegido.tecnica==='e2'?'Evaluación 2':'Evaluación 1')+') a los estudiantes ahora?'+(otros.length?' Se ocultarán: '+otros.map(o=>'«'+o.titulo+'»').join(', ')+'.':'')))return;
    b.disabled=true;
    const dur=Math.max(new Date(elegido.fin).getTime()-new Date(elegido.inicio).getTime(),86400000);
    const cambios={activo:true};
@@ -704,7 +704,7 @@ async function ciaAdministrarPeriodos(uid,box){
    const r1=await sb.from('cia_periodos').update(cambios).eq('id',elegido.id).eq('docente_id',uid);
    if(r1.error){msg.textContent='Error: '+r1.error.message;b.disabled=false;return;}
    for(const o of otros){const r=await sb.from('cia_periodos').update({activo:false}).eq('id',o.id).eq('docente_id',uid);if(r.error){msg.textContent='No se pudo ocultar «'+o.titulo+'»: '+r.error.message;await cargar();return;}}
-   msg.textContent='Listo. Los estudiantes ven ahora «'+elegido.titulo+'». Que actualicen su pantalla.';
+   msg.textContent='Listo. Los estudiantes ven ahora «'+elegido.titulo+'» ('+(elegido.tecnica==='e3'?'Evaluación 3':elegido.tecnica==='e2'?'Evaluación 2':'Evaluación 1')+')'+(otros.length?'. Se ocultó: '+otros.map(o=>'«'+o.titulo+'»').join(', '):'')+'. Que actualicen su pantalla.';
    await cargar();
   });
   list.querySelectorAll('[data-up]').forEach(b=>b.onclick=()=>moverPeriodo(b.dataset.up,-1));
@@ -919,6 +919,7 @@ function matGenerar(c,root){
 }
 
 /* Paso 3 · preguntas guardadas */
+const ETQ=t=>E2_TECNICAS[t]||(E3_TECNICAS[t]?'Eval. 3 · '+E3_TECNICAS[t]:t);
 async function matPreguntas(c,root){
  root.innerHTML='<div class=card><p>Cargando preguntas…</p></div>';
  const [e,pm]=await Promise.all([
@@ -928,13 +929,13 @@ async function matPreguntas(c,root){
  const ids=(pm.data||[]).map(x=>x.pregunta_id),bq=[];
  for(let i=0;i<ids.length;i+=100){const r=await sb.from('cia_preguntas').select('id,enunciado,correcta').eq('docente_id',c.uid).in('id',ids.slice(i,i+100));if(r.error){root.innerHTML=`<div class=card>${avisoError(r.error)}</div>`;return;}bq.push(...(r.data||[]));}
  const gMap=new Map((pm.data||[]).map(x=>[String(x.pregunta_id),String(x.grado)]));
- const items=[...(e.data||[]).map(x=>({k:'e2',id:x.id,grado:String(x.grado),tec:x.tecnica,et:E2_TECNICAS[x.tecnica]||x.tecnica,enun:x.enunciado,cor:x.correcta,act:x.activa!==false})),...bq.map(x=>({k:'banco',id:x.id,grado:gMap.get(String(x.id))||'',tec:'banco',et:'Banco de preguntas',enun:x.enunciado,cor:x.correcta,act:true}))];
- const gr=(c.grados.length?c.grados:[...new Set(items.map(i=>i.grado).filter(Boolean))]).sort(porGrado),tipos=Object.keys(E2_TECNICAS);
+ const items=[...(e.data||[]).map(x=>({k:'e2',id:x.id,grado:String(x.grado),tec:x.tecnica,et:ETQ(x.tecnica),enun:x.enunciado,cor:x.correcta,act:x.activa!==false})),...bq.map(x=>({k:'banco',id:x.id,grado:gMap.get(String(x.id))||'',tec:'banco',et:'Banco de preguntas',enun:x.enunciado,cor:x.correcta,act:true}))];
+ const gr=(c.grados.length?c.grados:[...new Set(items.map(i=>i.grado).filter(Boolean))]).sort(porGrado),tipos=[...Object.keys(E2_TECNICAS),...Object.keys(E3_TECNICAS)];
  const cnt=(t,g)=>items.filter(i=>i.tec===t&&i.grado===g&&i.act).length;
- const cob=gr.length?`<div class=wrap><table class=e2cob><thead><tr><th>Técnica</th>${gr.map(g=>`<th>${g}.º</th>`).join('')}</tr></thead><tbody><tr><td>Banco de preguntas</td>${gr.map(g=>`<td>${cnt('banco',g)}</td>`).join('')}</tr>${tipos.map(t=>`<tr><td>${esc(E2_TECNICAS[t])}</td>${gr.map(g=>{const n=cnt(t,g);return `<td class="${n>=E2_META?'e2ok':'e2falta'}">${n}/${E2_META}${n>=E2_META?' ✓':''}</td>`}).join('')}</tr>`).join('')}</tbody></table></div><p class=s>Técnicas Enlace 2: meta de ${E2_META} preguntas por técnica y grado. El banco no tiene meta fija.</p>`:'<p class=s>Asigna salones en el paso 1 para ver la cobertura por grado.</p>';
+ const cob=gr.length?`<div class=wrap><table class=e2cob><thead><tr><th>Técnica</th>${gr.map(g=>`<th>${g}.º</th>`).join('')}</tr></thead><tbody><tr><td>Banco de preguntas</td>${gr.map(g=>`<td>${cnt('banco',g)}</td>`).join('')}</tr>${tipos.map(t=>`<tr><td>${esc(ETQ(t))}</td>${gr.map(g=>{const n=cnt(t,g);return `<td class="${n>=E2_META?'e2ok':'e2falta'}">${n}/${E2_META}${n>=E2_META?' ✓':''}</td>`}).join('')}</tr>`).join('')}</tbody></table></div><p class=s>Técnicas Enlace 2: meta de ${E2_META} preguntas por técnica y grado. El banco no tiene meta fija.</p>`:'<p class=s>Asigna salones en el paso 1 para ver la cobertura por grado.</p>';
  root.innerHTML=`<div class=card><h3>3 · Preguntas de ${esc(c.mat.nombre)}</h3><div class=resumen-banco><div><b>${items.filter(i=>i.k==='banco').length}</b><span>En el banco</span></div><div><b>${items.filter(i=>i.k==='e2').length}</b><span>Enlace 2</span></div></div>${cob}</div>
-<div class=card><h3>Ver y eliminar preguntas</h3><div class=grid2><label>Técnica<select id=pt><option value="">Todas</option><option value=banco>Banco de preguntas</option>${tipos.map(t=>`<option value=${t}>${esc(E2_TECNICAS[t])}</option>`).join('')}</select></label><label>Grado<select id=pg><option value="">Todos</option>${gr.map(g=>`<option value=${g}>${g}.º</option>`).join('')}</select></label></div><p id=pc class=s></p><div id=pl></div></div>
-<div class=card><details><summary><b>Crear una pregunta de Enlace 2 a mano</b></summary><label>Técnica<select id=mt>${tipos.map(t=>`<option value=${t}>${esc(E2_TECNICAS[t])}</option>`).join('')}</select></label><label>Grado<select id=mg>${(gr.length?gr:E2_GRADOS).map(g=>`<option value=${g}>${g}.º</option>`).join('')}</select></label><label>Enunciado<textarea id=me rows=3></textarea></label><label>Alternativa A<input id=ma1></label><label>Alternativa B<input id=ma2></label><label>Alternativa C<input id=ma3></label><label>Respuesta correcta<select id=mc><option value=0>A</option><option value=1>B</option><option value=2>C</option></select></label><label>Explicación<textarea id=mx rows=2></textarea></label><button id=mgd>Guardar pregunta</button><p id=mmsg class=s role=status></p></details></div>
+<div class=card><h3>Ver y eliminar preguntas</h3><div class=grid2><label>Técnica<select id=pt><option value="">Todas</option><option value=banco>Banco de preguntas</option>${tipos.map(t=>`<option value=${t}>${esc(ETQ(t))}</option>`).join('')}</select></label><label>Grado<select id=pg><option value="">Todos</option>${gr.map(g=>`<option value=${g}>${g}.º</option>`).join('')}</select></label></div><p id=pc class=s></p><div id=pl></div></div>
+<div class=card><details><summary><b>Crear una pregunta de Enlace 2 a mano</b></summary><label>Técnica<select id=mt>${tipos.map(t=>`<option value=${t}>${esc(ETQ(t))}</option>`).join('')}</select></label><label>Grado<select id=mg>${(gr.length?gr:E2_GRADOS).map(g=>`<option value=${g}>${g}.º</option>`).join('')}</select></label><label>Enunciado<textarea id=me rows=3></textarea></label><label>Alternativa A<input id=ma1></label><label>Alternativa B<input id=ma2></label><label>Alternativa C<input id=ma3></label><label>Respuesta correcta<select id=mc><option value=0>A</option><option value=1>B</option><option value=2>C</option></select></label><label>Explicación<textarea id=mx rows=2></textarea></label><button id=mgd>Guardar pregunta</button><p id=mmsg class=s role=status></p></details></div>
 <div class=card><p class=s>¿Necesitas exportar, auditar o publicar preguntas del banco general a prácticas rápidas?</p><button class=sec id=adv>Herramientas avanzadas del banco general</button></div>`;
  const lista=()=>{
   const ft=$('#pt').value,fg=$('#pg').value,v=items.filter(i=>(!ft||i.tec===ft)&&(!fg||i.grado===fg));
