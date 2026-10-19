@@ -75,14 +75,32 @@ $('generarIA').onclick=async()=>{
   const paginas=[];for(let n=1;n<=doc.numPages;n++){const c=await(await doc.getPage(n)).getTextContent();paginas.push(c.items.map(x=>x.str).join(' '))}
   const texto=paginas.join('\n').slice(0,45000);if(texto.trim().length<150)throw Error('PDF sin texto suficiente; los PDF escaneados requieren OCR');
   setEstadoIA('Generando con Gemini...');
-  const {data,error}=await sb.functions.invoke('cia-generar',{body:{texto,materia:$('materia').selectedOptions[0]?.textContent,tema:$('temaIA').value.trim()||f.name,grado:$('grado').value,cantidad:Number($('cantidadIA').value),tecnicas:tec}});
-  if(error)throw Error(data?.error||error.message);if(data?.error)throw Error(data.error);
-  const crudas=Array.isArray(data?.preguntas)?data.preguntas:[];
-  const procesadas=crudas.map(normalizarIA);
-  const rechazos=procesadas.filter(x=>x.error).map(x=>x.error);
-  preguntasIA=procesadas.filter(x=>!x.error);
-  const vistos=new Set();preguntasIA=preguntasIA.filter(p=>{const k=[p.tipo,p.pregunta.toLowerCase().replace(/\s+/g,' ').trim()].join('|');if(vistos.has(k)){rechazos.push('Pregunta repetida');return false}vistos.add(k);return true});
-  renderIA();setEstadoIA(`Gemini devolvió ${crudas.length} preguntas; ${preguntasIA.length} compatibles para revisar. ${rechazos.length?'Rechazos: '+rechazos.slice(0,5).join('; ')+(rechazos.length>5?' y '+(rechazos.length-5)+' más':'')+'. ':''}No se guardó ninguna automáticamente.`);
+  const objetivo=Number($('cantidadIA').value);
+  const vistos=new Set(),rechazos=[];
+  let recibidas=0, rondas=0;
+  preguntasIA=[];
+  // Lotes pequeños reducen respuestas JSON truncadas. Máximo 4 solicitudes por clic.
+  while(preguntasIA.length<objetivo && rondas<4){
+   rondas++;
+   const faltan=objetivo-preguntasIA.length;
+   const cantidadLote=Math.min(20,Math.max(5,faltan));
+   setEstadoIA(`Generando lote ${rondas} · ${preguntasIA.length} de ${objetivo} preguntas válidas...`);
+   const {data,error}=await sb.functions.invoke('cia-generar',{body:{texto,materia:$('materia').selectedOptions[0]?.textContent,tema:$('temaIA').value.trim()||f.name,grado:$('grado').value,cantidad:cantidadLote,tecnicas:tec}});
+   if(error||data?.error){if(!preguntasIA.length)throw Error(data?.error||error.message);rechazos.push('Lote '+rondas+': '+(data?.error||error.message));break}
+   const crudas=Array.isArray(data?.preguntas)?data.preguntas:[];recibidas+=crudas.length;
+   for(const raw of crudas){
+    const p=normalizarIA(raw);
+    if(p.error){rechazos.push(p.error);continue}
+    if(!tec.includes(p.tipo)){rechazos.push('Técnica no solicitada: '+p.tipo);continue}
+    const k=[p.tipo,p.pregunta.toLowerCase().replace(/\s+/g,' ').trim()].join('|');
+    if(vistos.has(k)){rechazos.push('Pregunta repetida');continue}
+    vistos.add(k);preguntasIA.push(p);
+    if(preguntasIA.length===objetivo)break;
+   }
+   if(!crudas.length)break;
+  }
+  renderIA();
+  setEstadoIA(`Gemini devolvió ${recibidas} preguntas en ${rondas} lote(s); ${preguntasIA.length} de ${objetivo} compatibles para revisar. ${rechazos.length?'Se descartaron '+rechazos.length+' por formato, técnica o repetición. ':''}No se guardó ninguna automáticamente.${preguntasIA.length<objetivo?' Puede intentar otra generación para completar las faltantes.':''}`);
  }catch(e){setEstadoIA('Error: '+e.message)}finally{btn.disabled=false}
 };
 </script><script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script></html>
