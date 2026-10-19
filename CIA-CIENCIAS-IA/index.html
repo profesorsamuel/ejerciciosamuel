@@ -54,14 +54,14 @@ $('#go').onclick=async()=>{const c=$('#c').value.trim();if(!c)return $('#m').tex
  const boton=$('#go');boton.disabled=true;$('#m').textContent='Comprobando matrícula…';
  try{const {data,error}=await sb.rpc('cia_ingresar_cedula',{p_cedula:c});if(error){$('#m').textContent=error.code==='PGRST202'?'Primero ejecute cia_acceso_solo_cedula.sql en Supabase.':error.message;return;}
  if(!data||!data.id){$('#m').textContent='No se encontró una cédula única en la matrícula. Consulte al profesor.';return;}
- est={...data,cedula:c,nombreVerificacion:data.nombres};menu(true);}finally{boton.disabled=false;}};}
+ est={...data,cedula:c,nombreVerificacion:data.nombres};menu();}finally{boton.disabled=false;}};}
 async function tecnicaActiva(){try{const {data,error}=await sb.rpc('cia_tecnica_activa',{p_cedula:est.cedula});return !error&&data==='e2'?'e2':'banco';}catch{return 'banco';}}
-async function menu(auto){const activa=await tecnicaActiva();if(auto===true&&activa==='e2'){practicaE2(true);return;}draw(`<div class=card><h2>Hola, ${esc(est.nombres)}</h2>${activa==='e2'?`<p>Practica con las técnicas Enlace 2. Cada intento trae 8 preguntas. Responde todas antes de enviar.</p><h3>Técnicas Enlace 2</h3><p class=s>Detective de errores, ¿Quién soy?, Causa y efecto, Mito o ciencia y Casos prácticos.</p><button class=big id=e2p>Practicar técnicas Enlace 2</button>`:`<p>Elige un ejercicio. Cada intento trae 8 preguntas distintas. Responde todas antes de enviar.</p>${Object.entries(TIPOS).map(([k,v])=>`<button class=big data-t=${k}>${v}</button>`).join('')}`}<p class=err id=m></p><button class=sec id=s>Salir</button></div>`);
+async function menu(auto){const activa=await tecnicaActiva();draw(`<div class=card><h2>Hola, ${esc(est.nombres)}</h2>${activa==='e2'?`<p>Elige tu ejercicio. Cada intento trae 8 preguntas. Responde todas antes de enviar.</p>${e2PanelHTML()}`:`<p>Elige un ejercicio. Cada intento trae 8 preguntas distintas. Responde todas antes de enviar.</p>${Object.entries(TIPOS).map(([k,v])=>`<button class=big data-t=${k}>${v}</button>`).join('')}`}<p class=err id=m></p><button class=sec id=s>Salir</button></div>`);
 const contenedor=document.createElement('div');contenedor.className='card';contenedor.innerHTML='<h2>Evaluaciones asignadas</h2><p id=ev-est-msg>Buscando evaluaciones vigentes…</p><div id=ev-est-list></div><button class=sec id=ev-est-recargar>Actualizar evaluaciones</button>';app.append(contenedor);
  const historial=document.createElement('div');historial.className='card';historial.innerHTML='<h2>Mi historial de evaluaciones</h2><p id=hist-estado>Consultando intentos…</p><div class=wrap id=hist-tabla></div><button class=sec id=hist-actualizar>Actualizar historial</button>';app.append(historial);
  const cargarHistorial=async()=>{const {data,error}=await sb.rpc('cia_eval_historial',{p_est:est.id,p_cedula:est.cedula,p_nombre:est.nombreVerificacion});const estado=$('#hist-estado'),tabla=$('#hist-tabla');if(!estado||!tabla)return;if(error){estado.textContent='Historial no disponible: '+error.message;return;}const filas=data||[];estado.textContent=filas.length?`${filas.length} intento(s) registrado(s). La mejor nota se calcula por evaluación y día.`:'Aún no hay intentos registrados.';tabla.innerHTML=filas.length?`<table><tr><th>Evaluación</th><th>Fecha</th><th>Estado</th><th>Nota</th><th>Mejor del día</th></tr>${filas.map(x=>`<tr><td>${esc(x.titulo)}</td><td>${esc(new Date(x.inicio).toLocaleString('es-PA'))}</td><td>${x.enviado_en?'Entregado':'Pendiente'}</td><td>${x.nota_5==null?'—':Number(x.nota_5).toFixed(2)}</td><td>${x.mejor_dia==null?'—':Number(x.mejor_dia).toFixed(2)}</td></tr>`).join('')}</table>`:'';};$('#hist-actualizar').onclick=cargarHistorial;await cargarHistorial();
  const cargarEvaluaciones=async()=>{const {data,error}=await sb.rpc('cia_eval_listar',{p_est:est.id,p_cedula:est.cedula,p_nombre:est.nombreVerificacion});const msg=$('#ev-est-msg'),lista=$('#ev-est-list');if(!msg||!lista)return;if(error){msg.textContent='No se pudieron consultar evaluaciones: '+error.message;return;}const a=data||[];msg.textContent=a.length?`${a.length} evaluación(es) disponible(s) o pendiente(s).`:'No hay evaluaciones activas para tu salón en este momento.';lista.innerHTML=a.map(v=>`<div class=card><b>${esc(v.titulo)}</b><p>${esc(v.estado)} · ${v.duracion_min} minutos · ${v.preguntas} preguntas</p><button data-ev-iniciar="${esc(v.id)}" ${v.estado!=='Disponible'?'disabled':''}>Iniciar evaluación</button></div>`).join('');lista.querySelectorAll('[data-ev-iniciar]').forEach(b=>b.onclick=async()=>{b.disabled=true;const {data:r,error:er}=await sb.rpc('cia_eval_iniciar',{p_est:est.id,p_cedula:est.cedula,p_nombre:est.nombreVerificacion,p_eval:b.dataset.evIniciar});if(er){alert(er.message);b.disabled=false;return;}quizEvaluacion(r);});};$('#ev-est-recargar').onclick=cargarEvaluaciones;await cargarEvaluaciones();
- app.querySelectorAll('[data-t]').forEach(b=>b.onclick=async()=>{const {data,error}=await sb.rpc('cia_iniciar',{p_est:est.id,p_tipo:b.dataset.t});if(error)return $('#m').textContent=error.message;quiz(data);});if($('#e2p'))$('#e2p').onclick=()=>practicaE2();$('#s').onclick=()=>{est=null;inicio();};}
+ app.querySelectorAll('[data-t]').forEach(b=>b.onclick=async()=>{const {data,error}=await sb.rpc('cia_iniciar',{p_est:est.id,p_tipo:b.dataset.t});if(error)return $('#m').textContent=error.message;quiz(data);});if(activa==='e2')e2Cablear();$('#s').onclick=()=>{est=null;inicio();};}
 // Mezcla Fisher-Yates: se aplica una sola vez por intento, nunca al volver atrás.
 function mezclarOpciones(valores){const a=[...valores];for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
 function quiz(d){
@@ -655,23 +655,29 @@ async function matPreguntas(c,root){
 }
 
 /* ======== ENLACE 2 · ESTUDIANTE (práctica de 8 preguntas) ======== */
-async function practicaE2(auto){
- draw(`<div class=card><h2>Técnicas Enlace 2</h2><p class=s>Ocho preguntas aleatorias. La nota es de práctica; no es una evaluación oficial.</p>
- <label>Materia<select id=e2m><option>Cargando…</option></select></label>
- <label>Técnica<select id=e2t>${Object.entries(E2_TECNICAS).map(([k,n])=>`<option value="${k}">${esc(n)}</option>`).join('')}</select></label>
- <p class=err id=m></p><button id=e2go disabled>Iniciar ocho preguntas</button><button class=sec id=e2b>Volver al menú</button></div>`);
- $('#e2b').onclick=()=>menu();
+const E2_DESC={detective:'Encuentra el error en cada afirmación.',quien:'Adivina el concepto a partir de las pistas.',causa:'Relaciona cada causa con su efecto.',mito:'Distingue lo que es mito de lo que es ciencia.',casos:'Aplica lo aprendido a situaciones reales.'};
+const e2PanelHTML=()=>`<label id=e2mw>Materia<select id=e2m><option>Cargando…</option></select></label>
+ <div class=matgrid>${Object.entries(E2_TECNICAS).map(([k,n])=>`<button class=big data-e2t="${k}" disabled style="text-align:left;display:block;width:100%;margin:6px 0"><b>${esc(n)}</b><br><span style="font-weight:400;font-size:.85rem">${esc(E2_DESC[k]||'')}</span></button>`).join('')}</div>`;
+async function e2Cablear(){
  const {data,error}=await sb.rpc('cia14_materias',{p_cedula:est.cedula});
  if(error){$('#m').textContent=error.message;return;}
  const unicas=[...new Map((data||[]).map(x=>[x.materia_id||x.id,x])).values()].filter(x=>x.materia_id||x.id);
  if(!unicas.length){$('#e2m').innerHTML='';$('#m').textContent='Tu salón aún no tiene materias asignadas. Consulta al profesor.';return;}
  $('#e2m').innerHTML=unicas.map(x=>`<option value="${esc(x.materia_id||x.id)}">${esc(x.materia)}</option>`).join('');
- $('#e2go').disabled=false;
- $('#e2go').onclick=async()=>{
-  $('#e2go').disabled=true;
-  const {data:d,error:er}=await sb.rpc('cia14_iniciar',{p_cedula:est.cedula,p_materia:$('#e2m').value,p_tecnica:$('#e2t').value});
-  if(er){$('#m').textContent=er.message;$('#e2go').disabled=false;return;}
-  const items=d.preguntas||[],intento=d.intento,tecnicaNombre=E2_TECNICAS[$('#e2t').value];
+ if(unicas.length===1)$('#e2mw').style.display='none';
+ document.querySelectorAll('[data-e2t]').forEach(b=>{b.disabled=false;b.onclick=()=>iniciarE2(b.dataset.e2t);});
+}
+async function practicaE2(){
+ draw(`<div class=card><h2>Elige tu ejercicio</h2><p class=s>Toca una tarjeta para empezar. Cada intento trae ocho preguntas. La nota es de práctica; no es una evaluación oficial.</p>${e2PanelHTML()}<p class=err id=m></p><button class=sec id=e2b>Volver al menú</button></div>`);
+ $('#e2b').onclick=()=>menu();
+ await e2Cablear();
+}
+async function iniciarE2(tec){
+ document.querySelectorAll('[data-e2t]').forEach(b=>b.disabled=true);
+ {
+  const {data:d,error:er}=await sb.rpc('cia14_iniciar',{p_cedula:est.cedula,p_materia:$('#e2m').value,p_tecnica:tec});
+  if(er){$('#m').textContent=er.message;document.querySelectorAll('[data-e2t]').forEach(b=>b.disabled=false);return;}
+  const items=d.preguntas||[],intento=d.intento,tecnicaNombre=E2_TECNICAS[tec];
   draw(`<div class=card><h2>${esc(tecnicaNombre)}</h2><p class=s>Responde las ${items.length} preguntas y pulsa Enviar.</p>${items.map((q,i)=>`<div class=card><b>${i+1}. ${esc(q.enunciado)}</b>${q.opciones.map((o,j)=>`<label style="display:block;margin:8px 0"><input style="width:auto;margin:0 8px 0 0" type=radio name="q${i}" value="${j}"> ${esc(o)}</label>`).join('')}</div>`).join('')}<p class=err id=m></p><button id=e2env>Enviar respuestas</button></div>`);
   $('#e2env').onclick=async()=>{
    const resp={};
@@ -680,10 +686,9 @@ async function practicaE2(auto){
    const {data:r,error:ee}=await sb.rpc('cia14_enviar',{p_cedula:est.cedula,p_intento:intento,p_respuestas:resp});
    if(ee){$('#m').textContent=ee.message;$('#e2env').disabled=false;return;}
    draw(`<div class=card><h2>Resultado guardado</h2><p>Correctas: <b>${esc(r.aciertos)}</b> de <b>${esc(r.total)}</b></p><h3>Nota de práctica: ${esc(r.nota)} / 5.00</h3><p class=s>Esta calificación no corresponde a una evaluación oficial.</p><button id=e2otra>Hacer otra práctica</button><button class=sec id=e2menu>Volver al menú</button></div>`);
-   $('#e2otra').onclick=()=>practicaE2(true);$('#e2menu').onclick=()=>menu();
+   $('#e2otra').onclick=()=>practicaE2();$('#e2menu').onclick=()=>menu();
   };
- };
- if(auto===true&&unicas.length===1){const ks=Object.keys(E2_TECNICAS);$('#e2t').value=ks[Math.floor(Math.random()*ks.length)];$('#e2go').click();}
+ }
 }
 
 const hash0=location.hash;
