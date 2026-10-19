@@ -982,8 +982,11 @@ async function e2Cablear(seleccionAnterior){
  avisoMateria.textContent=unicas.length>1?'Tienes varias materias. Elige la que deseas practicar.':'Materia asignada automáticamente según tu matrícula.';
  const {data:cats,error:catError}=await sb.rpc('cia14_catalogos_estudiante',{p_cedula:est.cedula});
  if(catError){$('#m').textContent='No se pudo cargar el catálogo: '+catError.message;return;}
- const lista=(Array.isArray(cats)?cats:[]).filter(c=>MODO_E!=='e3'||!c.motor||c.motor==='e3');
+ const lista=(Array.isArray(cats)?cats:[]).filter(c=>!c.motor||c.motor===MODO_E);
  $('#e2catalogo').innerHTML='<option value="">'+etiquetaEval(MODO_E)+' (original)</option>'+lista.map(c=>`<option value="${esc(c.id)}">${esc(c.nombre)}</option>`).join('');
+ // Priorizar automáticamente el catálogo de la evaluación activa cuando existe.
+ const preferido=lista.find(c=>String(c.nombre||'').trim().toLowerCase()===etiquetaEval(MODO_E).toLowerCase())||lista.find(c=>/evaluaci[oó]n\s*3/i.test(c.nombre||'')&&MODO_E==='e3');
+ if(preferido)$('#e2catalogo').value=String(preferido.id);
  async function actualizarEstadoE2(){
   const cat=$('#e2catalogo').value;
   let resumen={};let servidorDisponible=false;let errorResumen='';
@@ -1055,7 +1058,7 @@ async function iniciarE2(tec){
   const {data:d,error:er}=catalogo
    ?await sb.rpc('cia14_iniciar_catalogo',{p_cedula:est.cedula,p_materia:$('#e2m').value,p_tecnica:tec,p_catalogo:catalogo})
    :await sb.rpc('cia14_iniciar',{p_cedula:est.cedula,p_materia:$('#e2m').value,p_tecnica:tec});
-  if(er){$('#m').textContent=er.message;document.querySelectorAll('[data-e2t]').forEach(b=>b.disabled=false);return;}
+  if(er){$('#m').textContent='No se pudo iniciar: '+er.message+' Compruebe que haya al menos 8 preguntas aprobadas para esta materia, grado y técnica en la evaluación seleccionada.';document.querySelectorAll('[data-e2t]').forEach(b=>b.disabled=false);return;}
   if(!d||!Array.isArray(d.preguntas)||!d.preguntas.length||!d.intento){$('#m').textContent='No hay preguntas disponibles para esta evaluación y técnica.';document.querySelectorAll('[data-e2t]').forEach(b=>b.disabled=false);return;}
   const items=d.preguntas||[],intento=d.intento,tecnicaNombre=tecnicasDe(MODO_E)[tec];
   draw(`<div class=card><h2>${esc(tecnicaNombre)}</h2><p class=s>Responde las ${items.length} preguntas y pulsa Enviar.</p>${items.map((q,i)=>`<div class=card><b>${i+1}. ${esc(q.enunciado)}</b>${q.opciones.map((o,j)=>`<label style="display:block;margin:8px 0"><input style="width:auto;margin:0 8px 0 0" type=radio name="q${i}" value="${j}"> ${esc(o)}</label>`).join('')}</div>`).join('')}<p class=err id=m></p><button id=e2env>Enviar respuestas</button></div>`);
