@@ -30,7 +30,7 @@ details>summary{cursor:pointer;padding:4px 0}
 .opts{grid-template-columns:repeat(2,minmax(0,1fr))}.opt{min-width:0;min-height:105px}.opt b{font-size:1rem}.matgrid{grid-template-columns:repeat(auto-fit,minmax(min(100%,240px),1fr))}.practicas-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,240px),1fr));gap:10px}.practicas-grid button{margin:0;width:100%;min-height:85px;text-align:left}.practica-hecha{background:#176344!important;color:#fff!important;border:2px solid #f1c453!important}.practica-hecha::after{content:"  ✓ Realizado";display:block;font-size:.78rem;margin-top:5px}@media(max-width:520px){.opts{grid-template-columns:1fr}}
 
 /* CIA: recorrido único del profesor, sin pestañas ni pantallas intermedias */
-.cia-ruta{display:flex;flex-wrap:wrap;gap:8px;margin:14px 0}.cia-ruta a{padding:10px 12px;background:#e8f2ef;color:#105c47;border-radius:9px;font-weight:700;text-decoration:none}.cia-ruta a:hover,.cia-ruta a:focus{background:#c8e6dc}.cia-etapa{scroll-margin-top:16px;margin:18px 0}.cia-etapa>.card{margin-bottom:0}.cia-etapa #cia-administrar-periodos{margin-top:0}.cia-etapa #cia-administrar-periodos>hr{display:none}.cia-etapa #cia-panel-publicar{padding:12px}.cia-etapa #cia-administrar-periodos .cia-accesos #cia-nuevo-rapido{display:none}
+.cia-ruta{display:flex;flex-wrap:wrap;gap:8px;margin:14px 0}.cia-ruta a{padding:10px 12px;background:#e8f2ef;color:#105c47;border-radius:9px;font-weight:700;text-decoration:none}.cia-ruta a:hover,.cia-ruta a:focus{background:#c8e6dc}.cia-etapa{scroll-margin-top:12px;margin:18px 0}.cia-etapa>.card{margin-bottom:0}.cia-etapa #cia-administrar-periodos{margin-top:0}.cia-etapa #cia-administrar-periodos>hr{display:none}.cia-etapa #cia-panel-publicar{padding:12px}.cia-etapa #cia-administrar-periodos .cia-accesos #cia-nuevo-rapido{display:none}
 </style><style id="cia-periodos-mejora">
 #cia-administrar-periodos{background:#f1f8f4;border:2px solid #b8dccc;border-radius:16px;padding:18px;margin-top:18px;color:#173e31}
 #cia-administrar-periodos>h3{color:#12543e;font-size:1.35rem}
@@ -866,7 +866,11 @@ async function matEntrar(uid,id,paso){
  $('#mv').onclick=()=>matLista(uid);
  $('#mr').onclick=async()=>{const nombre=prompt('Nuevo nombre de la materia:',mat.nombre)?.trim();if(!nombre||nombre===mat.nombre)return;if(nombre.length<2||nombre.length>90)return alert('El nombre debe tener entre 2 y 90 caracteres.');const {error:e}=await sb.from('cia_materias').update({nombre}).eq('id',id).eq('docente_id',uid);if(e)return alert(e.message);c.recargar(paso);};
  $('#md').onclick=async()=>{if(!confirm(`¿Eliminar la materia "${mat.nombre}"?\n\nSe quitan sus salones asignados. Si tiene preguntas guardadas, el sistema puede impedirlo: bórralas antes en el paso 3.`))return;await sb.from('cia_materia_salones').delete().eq('materia_id',id).eq('docente_id',uid);const {data,error:e}=await sb.from('cia_materias').delete().eq('id',id).eq('docente_id',uid).select('id');if(e||!data?.length)return alert('No se pudo eliminar: '+(e?.message||'sin permiso (revise las políticas RLS de delete en cia_materias).'));matLista(uid);};
- mostrar(paso||(salones.length?2:1));
+ // Navegación inmediata dentro de la misma pantalla.
+ const irPaso=(n)=>{const destino=document.getElementById('cia-etapa-'+n);if(destino)destino.scrollIntoView({behavior:'auto',block:'start'});};
+ v.querySelectorAll('.cia-ruta a').forEach(a=>a.addEventListener('click',e=>{e.preventDefault();const n=Number(a.getAttribute('href').slice(-1));irPaso(n);}));
+ if(paso&&paso>1)requestAnimationFrame(()=>irPaso(paso));
+
 }
 
 /* Paso 1 · salones */
@@ -877,7 +881,7 @@ function matSalones(c,root){
   const {error}=await sb.from('cia_materia_salones').upsert(secs.map(seccion=>({docente_id:c.uid,materia_id:c.mat.id,grado:$('#sg').value,seccion})),{onConflict:'docente_id,materia_id,grado,seccion'});
   if(error)return $('#sm').textContent=error.message;c.recargar(1);};
  root.querySelectorAll('[data-q]').forEach(b=>b.onclick=async()=>{if(!confirm('¿Quitar este salón de la materia?'))return;const {error}=await sb.from('cia_materia_salones').delete().eq('id',b.dataset.q).eq('docente_id',c.uid);if(error)return alert(error.message);c.recargar(1);});
- if($('#sn'))$('#sn').onclick=()=>c.recargar(2);
+ if($('#sn'))$('#sn').onclick=()=>document.getElementById('cia-etapa-2')?.scrollIntoView({behavior:'auto',block:'start'});
 }
 
 /* Paso 2 · PDF, grado y técnica */
