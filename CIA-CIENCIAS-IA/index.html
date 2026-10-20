@@ -532,6 +532,7 @@ async function tRes(uid){
 }
 
 /* ======== ENLACE 2 · DOCENTE (banco de técnicas con Gemini) ======== */
+const E4_TECNICAS={matematica4:'Matemática científica',espanol4:'Español científico',crucigrama4:'Crucigrama científico',rompecabezas4:'Rompecabezas científico',decisiones4:'Reto de decisiones'};
 const E3_TECNICAS={errores3:'Detective de errores aplicado',mision3:'Misión científica',prediccion3:'¿Qué pasaría si…?',clasificacion3:'Clasificación científica',evidencia3:'Encuentra la evidencia'};
 const E2_TECNICAS={detective:'Detective de errores',quien:'¿Quién soy?',causa:'Causa y efecto',mito:'Mito o ciencia',casos:'Casos prácticos'};
 const E2_META=8,E2_GRADOS=['7','8','9','10','11','12'];
@@ -921,13 +922,13 @@ function matGenerar(c,root){
 <label>Tema (opcional)<input id=gt maxlength=120 placeholder="Ej. La célula animal y vegetal"></label>
 <label>② ¿A qué grado va este PDF?<select id=gg>${c.grados.map(g=>`<option value=${g}>${g}.º</option>`).join('')}</select></label>
 <b>③ ¿Qué técnica usarás?</b>
-<div class=opts><label class=opt><input type=radio name=gtec value=banco checked><b>Evaluación 1</b><span>Selección múltiple, verdadero o falso y completar. Se guardan en el banco de esta materia y grado.</span></label><label class=opt><input type=radio name=gtec value=e2><b>Evaluación 2</b><span>Detective de errores, ¿Quién soy?, Causa y efecto, Mito o ciencia y Casos prácticos (3 alternativas).</span></label><label class=opt><input type=radio name=gtec value=e3><b>Evaluación 3</b><span>Misión científica, predicciones, clasificación, evidencias y detección de errores aplicada.</span></label></div>
+<div class=opts><label class=opt><input type=radio name=gtec value=banco checked><b>Evaluación 1</b><span>Selección múltiple, verdadero o falso y completar. Se guardan en el banco de esta materia y grado.</span></label><label class=opt><input type=radio name=gtec value=e2><b>Evaluación 2</b><span>Detective de errores, ¿Quién soy?, Causa y efecto, Mito o ciencia y Casos prácticos (3 alternativas).</span></label><label class=opt><input type=radio name=gtec value=e3><b>Evaluación 3</b><span>Misión científica, predicciones, clasificación, evidencias y detección de errores aplicada.</span></label><label class=opt><input type=radio name=gtec value=e4><b>Evaluación 4</b><span>Matemática, Español, crucigrama, rompecabezas y reto de decisiones. Generación inicial en preguntas con alternativas.</span></label></div>
 <fieldset id=gsub style="border:1px solid var(--linea);border-radius:8px;margin:8px 0"></fieldset>
 <label>Cantidad de preguntas<select id=gc><option>10</option><option>20</option><option>40</option><option>60</option><option selected>80</option></select></label><p id=gnota class=s></p>
 <label style="display:flex;gap:8px;align-items:center;margin:8px 0"><input type=checkbox id=gauto checked style="width:auto"> Guardar automáticamente al terminar de generar</label>
 <button id=gen disabled>④ Generar preguntas y guardar</button><p id=ges class=s role=status></p></div><div id=grev></div>`;
  const tipoSel=()=>root.querySelector('[name=gtec]:checked').value;
- const pintarSub=()=>{const e2=tipoSel()!=='banco';$('#gsub').innerHTML=`<legend>Tipos de pregunta</legend><div class=checks>${Object.entries(tipoSel()==='e3'?E3_TECNICAS:e2?E2_TECNICAS:BANCO_TIPOS).map(([k,n])=>`<label><input type=checkbox class=gs value=${k} checked> ${esc(n)}</label>`).join('')}</div>`;$('#gc').value='80';$('#gnota').textContent=e2?'Meta de 80 preguntas: Gemini genera por lotes y permite revisar los resultados. Si faltan, vuelve a generar hasta completar el banco.':'Las preguntas se revisan antes de guardarse.';};
+ const pintarSub=()=>{const e2=tipoSel()!=='banco';$('#gsub').innerHTML=`<legend>Tipos de pregunta</legend><div class=checks>${Object.entries(tipoSel()==='e4'?E4_TECNICAS:tipoSel()==='e3'?E3_TECNICAS:e2?E2_TECNICAS:BANCO_TIPOS).map(([k,n])=>`<label><input type=checkbox class=gs value=${k} checked> ${esc(n)}</label>`).join('')}</div>`;$('#gc').value='80';$('#gnota').textContent=e2?'Meta de 80 preguntas: Gemini genera por lotes y permite revisar los resultados. Si faltan, vuelve a generar hasta completar el banco.':'Las preguntas se revisan antes de guardarse.';};
  const guardarTec=async v=>{const {error}=await sb.from('cia_config').upsert({docente_id:c.uid,tecnica_activa:v,actualizado_en:new Date().toISOString()},{onConflict:'docente_id'});$('#ges').textContent=error?'No se pudo guardar la técnica activa: '+error.message:'Técnica guardada. Ahora los estudiantes ven: '+(v==='e3'?'Evaluación 3':v==='e2'?'Evaluación 2':'Evaluación 1')+'.';};
  root.querySelectorAll('[name=gtec]').forEach(r=>r.onchange=()=>{pintarSub();$('#ges').textContent='Tipo elegido para generar preguntas. Para mostrarlo al estudiante, utiliza el único botón «Activar para estudiantes» en Periodos.';});pintarSub();
  sb.from('cia_config').select('tecnica_activa').eq('docente_id',c.uid).maybeSingle().then(({data})=>{if(['e2','e3'].includes(data?.tecnica_activa)){const r=root.querySelector('[name=gtec][value='+data.tecnica_activa+']');if(r){r.checked=true;pintarSub();}}});
@@ -955,8 +956,8 @@ function matGenerar(c,root){
  const resumenPend=()=>{const n=pend().length;root.querySelectorAll('[data-lote]').forEach(b=>{b.style.display=n?'':'none';b.textContent=`Guardar todas las pendientes (${n})`});$('#ges').textContent=n?`Pendientes por revisar: ${n}.`:'No quedan preguntas pendientes. Revisa el paso 3 para verlas.';};
  const pintar=()=>{
   const cont=$('#grev');cont.innerHTML='';
-  const T=gctx.modo==='e3'?E3_TECNICAS:gctx.e2?E2_TECNICAS:BANCO_TIPOS;
-  const cab=document.createElement('div');cab.className='card';cab.innerHTML=`<b>Se guardarán en:</b> ${esc(c.mat.nombre)} · ${esc(gctx.grado)}.º · ${gctx.modo==='e3'?'Evaluación 3':gctx.e2?'Evaluación 2':'Evaluación 1'}<br><span class=s>${$('#gauto')&&$('#gauto').checked?'Se guardan automáticamente. Las que den error quedan aquí en rojo para corregirlas.':'Revisa cada pregunta (puedes editarla), luego guárdala o descártala. Nada se guarda solo.'}</span><br><button data-lote></button>`;cont.append(cab);
+  const T=gctx.modo==='e4'?E4_TECNICAS:gctx.modo==='e3'?E3_TECNICAS:gctx.e2?E2_TECNICAS:BANCO_TIPOS;
+  const cab=document.createElement('div');cab.className='card';cab.innerHTML=`<b>Se guardarán en:</b> ${esc(c.mat.nombre)} · ${esc(gctx.grado)}.º · ${gctx.modo==='e4'?'Evaluación 4':gctx.modo==='e3'?'Evaluación 3':gctx.e2?'Evaluación 2':'Evaluación 1'}<br><span class=s>${$('#gauto')&&$('#gauto').checked?'Se guardan automáticamente. Las que den error quedan aquí en rojo para corregirlas.':'Revisa cada pregunta (puedes editarla), luego guárdala o descártala. Nada se guarda solo.'}</span><br><button data-lote></button>`;cont.append(cab);
   pregs.forEach((p,i)=>{
    if(p.guardada)return;
    const d=document.createElement('div');d.className='card e2-item';
@@ -1004,7 +1005,7 @@ function matGenerar(c,root){
     const pendientesTec=gctx.modo==='e3'?tec.filter(t=>nuevasPorTecnica[t]<metaPorTecnica[t]):tec;
     if(gctx.modo==='e3'&&!pendientesTec.length)break;
     let data;
-    try{data=await invocarIA({texto:pdfCache.texto,materia:c.mat.nombre,tema:gctx.tema,grado:gctx.grado,cantidad:Math.min(20,Math.max(5,objetivo-pregs.length)),tecnicas:pendientesTec,modo:tipoSel()==='e3'?'evaluacion3':e2?'enlace2':'banco',evitar:[...evitar,...pregs.slice(-30).map(x=>x.enunciado)].slice(-40)});}
+    try{data=await invocarIA({texto:pdfCache.texto,materia:c.mat.nombre,tema:gctx.tema,grado:gctx.grado,cantidad:Math.min(20,Math.max(5,objetivo-pregs.length)),tecnicas:pendientesTec,modo:tipoSel()==='e4'?'evaluacion4':tipoSel()==='e3'?'evaluacion3':e2?'enlace2':'banco',evitar:[...evitar,...pregs.slice(-30).map(x=>x.enunciado)].slice(-40)});}
     catch(err){if(!pregs.length)throw err;rech.push('Lote '+rondas+' falló: '+err.message);break;}
     const crudas=Array.isArray(data?.preguntas)?data.preguntas:[];recib+=crudas.length;
     for(const raw of crudas){
@@ -1210,4 +1211,4 @@ async function iniciarE2(tec){
 
 const hash0=location.hash;
 if(/^#docente/.test(hash0))loginDoc();else if(/^#estudiante/.test(hash0))loginEst();else inicio();
-</script><p style="text-align:center"><a href="evaluacion4/index.html">Evaluación 4 · Demostración</a></p></body></html>
+</script></body></html>
