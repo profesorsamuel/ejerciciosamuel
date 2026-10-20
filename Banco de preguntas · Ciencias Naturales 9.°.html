@@ -32,6 +32,10 @@ button:disabled{opacity:.45;cursor:not-allowed}
 .rv{border-top:1px solid var(--bd);padding:10px 0}
 .nav{display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;margin-top:12px}
 table{width:100%;border-collapse:collapse;font-size:.88rem}th,td{padding:6px;border-bottom:1px solid var(--bd);text-align:left}
+.tk{border:2px solid var(--pr);border-radius:12px;padding:14px;margin:16px 0;background:color-mix(in srgb,var(--pr) 7%,var(--card))}
+.tk h2{margin-top:0}.tk .it{border-top:1px solid var(--bd);padding:12px 0}.tk .it:first-of-type{margin-top:8px}
+.tk img{display:block;max-width:100%;max-height:220px;border-radius:8px;border:1px solid var(--bd);margin:8px 0}
+.tk .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
 .sc{overflow-x:auto}.hide{display:none}
 </style></head><body><div class="w">
 
@@ -43,6 +47,9 @@ table{width:100%;border-collapse:collapse;font-size:.88rem}th,td{padding:6px;bor
 <label for="ce">Cédula</label><input id="ce" autocomplete="off" value="3-765-1039">
 <label for="nm">Nombre y apellido</label><input id="nm" readonly value="GONZALEZ GONZALEZ, ALLAN MOISÉS">
 
+<div class="tk"><h2>📘 Tarea previa: lea el temario y suba su trabajo</h2>
+<p class="mu" style="margin-top:0"><b>Paso 1.</b> Lea el temario en PDF (Clases 1 a 4). <b>Paso 2.</b> Haga las 3 tareas <b>a mano</b>, con su nombre, grado y título arriba. <b>Paso 3.</b> Tome la foto de frente, con buena luz y sin sombras, y súbala aquí. Escriba primero su cédula arriba para que la foto quede guardada a su nombre.</p>
+<div id="tks"></div><p id="tkm" class="mu"></p></div>
 <p id="msg" class="no"></p>
 <button class="p" id="go">Comenzar</button> <button id="ver">Ver mis notas</button>
 </div>
@@ -304,4 +311,44 @@ $('csv').onclick=()=>{
  const t='Nombre,Cédula,Grupo,Intento,Nota,Aciertos,Segundos,Fecha\n'+rows.map(r=>[r.nm,r.ce,r.gr,r.n,r.nota,r.ok,r.seg||'',r.fecha].map(v=>'"'+String(v??'').replace(/"/g,'""')+'"').join(',')).join('\n');
  const a=document.createElement('a');a.href=URL.createObjectURL(new Blob(['\ufeff'+t],{type:'text/csv'}));a.download='notas_ciencias_9.csv';a.click();
 };
+
+// ---- Tareas a mano: foto guardada en el navegador (IndexedDB) ----
+const TK=[
+ ['Cartel «Del Big Bang a los humanos» (Clases 1 y 2)','Línea de tiempo ilustrada: Big Bang y sus 3 evidencias, nebulosa y otras 4 teorías, origen de la Luna (Tea), capas de la Tierra, las 4 eras geológicas, y naves y tecnología (Galileo, James Webb, Voyager, Curiosity, Soyuz, Crew Dragon).'],
+ ['Mapa conceptual ilustrado de las ondas (Clases 3 y 4)','Onda con todas sus partes rotuladas, cuadro de los 4 criterios de clasificación (voz, luz de lámpara y ola del mar), cuerpo humano con ojo, oído, piel y aparato fonador, y recuadro de aplicaciones.'],
+ ['Hoja de electricidad: teoría y ejercicios (Clase 4)','Circuito sencillo rotulado, tabla de magnitudes y unidades, conductores/aislantes/semiconductores, cargas que se atraen y repelen, 2 ejercicios de Ley de Ohm y 1 de Ley de Coulomb resueltos a mano.']
+];
+const idb=()=>new Promise((ok,no)=>{const r=indexedDB.open('cn9_tareas',1);r.onupgradeneeded=()=>r.result.createObjectStore('f',{keyPath:'k'});r.onsuccess=()=>ok(r.result);r.onerror=()=>no(r.error)});
+const dbOp=async(m,...a)=>{const d=await idb();return new Promise((ok,no)=>{const q=d.transaction('f',m==='get'||m==='getAll'?'readonly':'readwrite').objectStore('f')[m](...a);q.onsuccess=()=>ok(q.result);q.onerror=()=>no(q.error)})};
+const comprimir=f=>new Promise((ok,no)=>{const u=URL.createObjectURL(f),im=new Image();
+ im.onload=()=>{const m=1400,k=Math.min(1,m/Math.max(im.width,im.height)),c=document.createElement('canvas');c.width=Math.round(im.width*k);c.height=Math.round(im.height*k);
+  c.getContext('2d').drawImage(im,0,0,c.width,c.height);URL.revokeObjectURL(u);ok(c.toDataURL('image/jpeg',.82))};
+ im.onerror=()=>{URL.revokeObjectURL(u);no(new Error('img'))};im.src=u});
+const tkMsg=(t,bad)=>{$('tkm').textContent=t;$('tkm').className=bad?'no':'mu'};
+async function tkDraw(){
+ const box=$('tks');box.innerHTML='';const ce=$('ce').value.trim().replace(/\s+/g,''),ok=!!buscar(ce),id=sid();
+ for(let n=0;n<TK.length;n++){
+  let reg=null;if(ok){try{reg=await dbOp('get',id+'|'+n)}catch(e){}}
+  const d=document.createElement('div');d.className='it';
+  const h=document.createElement('div');h.style.fontWeight='600';h.textContent=(n+1)+'. '+TK[n][0];
+  const p=document.createElement('div');p.className='mu';p.textContent=TK[n][1];
+  const stt=document.createElement('div');stt.className=reg?'ok':'mu';stt.style.fontWeight='600';stt.style.marginTop='6px';
+  stt.textContent=reg?'✓ Foto guardada · '+reg.fecha:'Aún sin foto';
+  d.append(h,p,stt);
+  if(reg){const im=document.createElement('img');im.src=reg.data;im.alt='Foto de la tarea '+(n+1);d.appendChild(im)}
+  const row=document.createElement('div');row.className='row';
+  const fi=document.createElement('input');fi.type='file';fi.accept='image/*';fi.className='hide';
+  const b=document.createElement('button');b.className=reg?'':'p';b.textContent=reg?'Cambiar foto':'📷 Subir foto';b.onclick=()=>fi.click();
+  fi.onchange=async()=>{const f=fi.files[0];if(!f)return;
+   if(!buscar($('ce').value.trim().replace(/\s+/g,''))){tkMsg('Escriba primero su cédula autorizada arriba.',1);return}
+   tkMsg('Guardando…');
+   try{const data=await comprimir(f);await dbOp('put',{k:sid()+'|'+n,id:sid(),n,data,fecha:new Date().toLocaleString('es-PA')});tkMsg('Foto de la tarea '+(n+1)+' guardada.');tkDraw()}
+   catch(e){tkMsg('No se pudo guardar la foto. Intente con otra imagen.',1)}};
+  row.append(b,fi);
+  if(reg){const x=document.createElement('button');x.textContent='Quitar';x.onclick=async()=>{try{await dbOp('delete',id+'|'+n)}catch(e){}tkMsg('');tkDraw()};row.appendChild(x)}
+  d.appendChild(row);box.appendChild(d);
+ }
+ if(!ok)tkMsg('Escriba su cédula arriba para subir y guardar sus fotos.');
+}
+$('ce').addEventListener('input',()=>{tkMsg('');tkDraw()});tkDraw();
 </script></body></html>
