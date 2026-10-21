@@ -3,7 +3,7 @@ Eres un docente experto en evaluación escolar. Te adjunto un PDF de lectura. Cr
 DATOS
 - Materia: [ESCRIBE LA MATERIA]
 - Grado: [ESCRIBE EL GRADO]
-- Cantidad total: [ESCRIBE UN NÚMERO ENTRE 100 Y 200, o "todas las que permita la lectura"]
+- Cantidad total: 150
 - Lenguaje claro y apropiado para el grado. Mezcla dificultad fácil, medio y difícil (aprox. 35 % / 40 % / 25 %).
 
 OBJETIVO
@@ -74,9 +74,13 @@ FORMATO DE SALIDA (MUY IMPORTANTE)
 - "dificultad" solo puede ser: "facil", "medio" o "dificil".
 - Los ids son consecutivos: P001, P002, P003…
 
-ENTREGA POR LOTES
-Como son muchas preguntas, entrégalas en lotes de 25. En el primer lote incluye el objeto "paquete" completo. Al terminar cada lote escribe solo: "Lote X listo. Escribe CONTINUAR para el siguiente." Continúa la numeración de ids sin repetir. Cuando yo escriba CONTINUAR, envía el siguiente lote con la misma estructura (puedes omitir "paquete" en los lotes siguientes). En el último lote, indica el total final.
+ENTREGA COMPLETA EN UNA SOLA RESPUESTA
+Genera TODAS las preguntas en una sola respuesta, desde P001 hasta P150, dentro de un único bloque de código JSON válido.
+- No dividas las preguntas en lotes y no esperes a que escriba CONTINUAR.
+- Incluye el objeto "paquete" completo (con "total" igual al número real de preguntas) y el arreglo "preguntas" con todas ellas.
+- Mantén todos los campos y reglas establecidos arriba.
+- Verifica que los ids sean consecutivos, que los títulos sean únicos, que cada "respuesta" coincida exactamente con una de las opciones y que las alternativas sean distintas.
+- Si la plataforma no permite incluir todas las preguntas en una sola respuesta por límites de longitud, genera un archivo JSON descargable con el paquete completo. No elimines preguntas ni entregues únicamente una parte sin avisar.
+- Antes de entregar, comprueba que el archivo o el JSON contenga todas las preguntas solicitadas (150) y que sea válido.
 
-Antes de entregar cada lote verifica: (1) JSON válido, (2) "respuesta" idéntica a una opción, (3) 4 opciones distintas, (4) títulos únicos, (5) todo basado en el PDF.
-
-Empieza ahora con el lote 1.
+Empieza ahora.
