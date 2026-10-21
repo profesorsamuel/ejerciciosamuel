@@ -541,8 +541,8 @@ const e2Clave=s=>e2Sin(s).replace(/[^a-z0-9]+/g,' ').trim();
 
 function e2Normalizar(p){
  if(!p||typeof p!=='object')return{error:'Registro vacío o inválido'};
- const clave=e2Sin(p.tipo??p.tecnica??p.tipo_pregunta).replace(/[^a-z0-9]+/g,'_');
- const mapa={errores3:'errores3',mision3:'mision3',prediccion3:'prediccion3',clasificacion3:'clasificacion3',evidencia3:'evidencia3',detective:'detective',detective_de_errores:'detective',error:'detective',quien:'quien',quien_soy:'quien',quien_soy_:'quien',causa:'causa',causa_efecto:'causa',causa_y_efecto:'causa',mito:'mito',mito_o_ciencia:'mito',caso:'casos',casos:'casos',casos_practicos:'casos',caso_practico:'casos'};
+ const clave=e2Sin(p.tipo??p.tecnica??p.tipo_pregunta).replace(/[^a-z0-9]+/g,'_').replace(/^_+|_+$/g,'');
+ const mapa={matematica4:'matematica4',matematica:'matematica4',matematica_cientifica:'matematica4',espanol4:'espanol4',espanol:'espanol4',espanol_cientifico:'espanol4',crucigrama4:'crucigrama4',crucigrama:'crucigrama4',crucigrama_cientifico:'crucigrama4',rompecabezas4:'rompecabezas4',rompecabezas:'rompecabezas4',rompecabezas_cientifico:'rompecabezas4',decisiones4:'decisiones4',decision:'decisiones4',decisiones:'decisiones4',reto_de_decisiones:'decisiones4',errores3:'errores3',mision3:'mision3',prediccion3:'prediccion3',clasificacion3:'clasificacion3',evidencia3:'evidencia3',detective:'detective',detective_de_errores:'detective',error:'detective',quien:'quien',quien_soy:'quien',quien_soy_:'quien',causa:'causa',causa_efecto:'causa',causa_y_efecto:'causa',mito:'mito',mito_o_ciencia:'mito',caso:'casos',casos:'casos',casos_practicos:'casos',caso_practico:'casos'};
  const tipo=mapa[clave];if(!tipo)return{error:'Técnica no reconocida: '+String(p.tipo??p.tecnica??'sin tipo')};
  const pregunta=String(p.pregunta??p.enunciado??'').trim();if(!pregunta)return{error:'Enunciado vacío'};
  const fuente=p.opciones??p.alternativas??[];
@@ -1005,7 +1005,7 @@ function matGenerar(c,root){
     const pendientesTec=gctx.modo==='e3'?tec.filter(t=>nuevasPorTecnica[t]<metaPorTecnica[t]):tec;
     if(gctx.modo==='e3'&&!pendientesTec.length)break;
     let data;
-    try{data=await invocarIA({texto:pdfCache.texto,materia:c.mat.nombre,tema:gctx.tema,grado:gctx.grado,cantidad:Math.min(20,Math.max(5,objetivo-pregs.length)),tecnicas:pendientesTec,modo:tipoSel()==='e4'?'evaluacion4':tipoSel()==='e3'?'evaluacion3':e2?'enlace2':'banco',evitar:[...evitar,...pregs.slice(-30).map(x=>x.enunciado)].slice(-40)});}
+    try{data=await invocarIA({texto:pdfCache.texto,materia:c.mat.nombre,tema:gctx.tema,grado:gctx.grado,cantidad:Math.min(20,Math.max(5,objetivo-pregs.length)),tecnicas:pendientesTec,modo:gctx.modo==='e4'?'evaluacion4':gctx.modo==='e3'?'evaluacion3':e2?'enlace2':'banco',evitar:[...evitar,...pregs.slice(-30).map(x=>x.enunciado)].slice(-40)});}
     catch(err){if(!pregs.length)throw err;rech.push('Lote '+rondas+' falló: '+err.message);break;}
     const crudas=Array.isArray(data?.preguntas)?data.preguntas:[];recib+=crudas.length;
     for(const raw of crudas){
@@ -1018,7 +1018,7 @@ function matGenerar(c,root){
      if(vistos.has(k)){rech.push('Repetida');continue;}
      vistos.add(k);pregs.push(p);if(gctx.modo==='e3')nuevasPorTecnica[p.tipo]++;if(pregs.length===objetivo)break;
     }
-    if(!crudas.length)break;
+    if(!crudas.length||(!pregs.length&&rech.some(x=>x.startsWith('Técnica no reconocida')||x==='Tipo no solicitado')))break;
    }
    pintar();
    let autoMsg='';
@@ -1040,7 +1040,7 @@ function matGenerar(c,root){
 
 /* Paso 3 · preguntas guardadas */
 const diaDe=t=>t?new Date(t).toLocaleDateString('en-CA'):'';const diaTxt=d=>d?d.split('-').reverse().join('/'):'sin fecha';
-const ETQ=t=>E2_TECNICAS[t]||(E3_TECNICAS[t]?'Eval. 3 · '+E3_TECNICAS[t]:t);
+const ETQ=t=>(E4_TECNICAS[t]?'Eval. 4 · '+E4_TECNICAS[t]:null)||E2_TECNICAS[t]||(E3_TECNICAS[t]?'Eval. 3 · '+E3_TECNICAS[t]:t);
 async function matPreguntas(c,root){
  root.innerHTML='<div class=card><p>Cargando preguntas…</p></div>';
  const [e,pm]=await Promise.all([
@@ -1051,16 +1051,16 @@ async function matPreguntas(c,root){
  for(let i=0;i<ids.length;i+=100){const r=await sb.from('cia_preguntas').select('id,enunciado,correcta,creado_en').eq('docente_id',c.uid).in('id',ids.slice(i,i+100));if(r.error){root.innerHTML=`<div class=card>${avisoError(r.error)}</div>`;return;}bq.push(...(r.data||[]));}
  const gMap=new Map((pm.data||[]).map(x=>[String(x.pregunta_id),String(x.grado)]));
  const items=[...(e.data||[]).map(x=>({k:'e2',dia:diaDe(x.creado_en),id:x.id,grado:(String(x.grado??'').match(/\d+/)||[''])[0],tec:String(x.tecnica||'').trim().toLowerCase(),et:ETQ(x.tecnica),enun:x.enunciado,cor:x.correcta,act:x.activa!==false})),...bq.map(x=>({k:'banco',dia:diaDe(x.creado_en),id:x.id,grado:gMap.get(String(x.id))||'',tec:'banco',et:'Banco de preguntas',enun:x.enunciado,cor:x.correcta,act:true}))];
- const gr=(c.grados.length?c.grados:[...new Set(items.map(i=>i.grado).filter(Boolean))]).sort(porGrado),tipos=[...Object.keys(E2_TECNICAS),...Object.keys(E3_TECNICAS)];
+ const gr=(c.grados.length?c.grados:[...new Set(items.map(i=>i.grado).filter(Boolean))]).sort(porGrado),tipos=[...Object.keys(E2_TECNICAS),...Object.keys(E3_TECNICAS),...Object.keys(E4_TECNICAS)];
  const cnt=(t,g)=>items.filter(i=>i.tec===t&&i.grado===g&&i.act).length;
- const cob=gr.length?`<div class=wrap><table class=e2cob><thead><tr><th>Técnica</th>${gr.map(g=>`<th>${g}.º</th>`).join('')}</tr></thead><tbody><tr><td>Banco de preguntas</td>${gr.map(g=>`<td>${cnt('banco',g)}</td>`).join('')}</tr>${tipos.map(t=>`<tr><td>${esc(ETQ(t))}</td>${gr.map(g=>{const n=cnt(t,g);return `<td class="${n>=E2_META?'e2ok':'e2falta'}">${n}/${E2_META}${n>=E2_META?' ✓':''}</td>`}).join('')}</tr>`).join('')}</tbody></table></div><p class=s>Evaluaciones 2 y 3: meta de ${E2_META} preguntas activas por técnica y grado. El banco no tiene meta fija.</p>`:'<p class=s>Asigna salones en el paso 1 para ver la cobertura por grado.</p>';
+ const cob=gr.length?`<div class=wrap><table class=e2cob><thead><tr><th>Técnica</th>${gr.map(g=>`<th>${g}.º</th>`).join('')}</tr></thead><tbody><tr><td>Banco de preguntas</td>${gr.map(g=>`<td>${cnt('banco',g)}</td>`).join('')}</tr>${tipos.map(t=>`<tr><td>${esc(ETQ(t))}</td>${gr.map(g=>{const n=cnt(t,g);return `<td class="${n>=E2_META?'e2ok':'e2falta'}">${n}/${E2_META}${n>=E2_META?' ✓':''}</td>`}).join('')}</tr>`).join('')}</tbody></table></div><p class=s>Evaluaciones 2, 3 y 4: meta de ${E2_META} preguntas activas por técnica y grado. El banco no tiene meta fija.</p>`:'<p class=s>Asigna salones en el paso 1 para ver la cobertura por grado.</p>';
  const grs=[...new Set([...gr,...items.map(i=>i.grado).filter(Boolean)])].sort(porGrado);
  const dias=Object.entries(items.reduce((a,i)=>{if(i.dia)a[i.dia]=(a[i.dia]||0)+1;return a;},{})).sort((x,y)=>y[0].localeCompare(x[0]));
  const sinContar=items.filter(i=>i.k==='e2'&&!(tipos.includes(i.tec)&&gr.includes(i.grado)&&i.act));
  const grupos={};sinContar.forEach(i=>{const k=(tipos.includes(i.tec)?ETQ(i.tec):'técnica desconocida «'+i.tec+'»')+' · '+(gr.includes(i.grado)?i.grado+'.º':'grado «'+(i.grado||'vacío')+'»')+(i.act?'':' · inactiva');grupos[k]=(grupos[k]||0)+1;});
  const aviso=sinContar.length?`<p class=err><b>⚠️ ${sinContar.length} pregunta(s) guardadas no se cuentan en la tabla</b> (por eso el total es mayor que la suma):</p><ul class=s>${Object.entries(grupos).map(([k,n])=>`<li>${esc(k)}: ${n}</li>`).join('')}</ul>`:'';
  root.innerHTML=`<div class=card><h3>3 · Preguntas de ${esc(c.mat.nombre)}</h3><div class=resumen-banco><div><b>${items.filter(i=>i.k==='banco').length}</b><span>En el banco</span></div><div><b>${items.filter(i=>i.k==='e2').length}</b><span>Enlace 2</span></div></div>${cob}${aviso}</div>
-<div class=card id=bk><h3>🗑️ Eliminar preguntas en bloque</h3><p class=s>Borra de una vez las preguntas de esta materia. No se puede deshacer. No afecta estudiantes, periodos ni notas.</p><div class=grid2><label>¿Qué evaluación?<select id=bk-ev><option value=all>Todas las evaluaciones</option><option value=banco>Evaluación 1 (banco)</option><option value=e2>Evaluación 2</option><option value=e3>Evaluación 3</option></select></label><label>Grado<select id=bk-g><option value="">Todos los grados</option>${grs.map(g=>`<option value=${g}>${g}.º</option>`).join('')}</select></label><label>Técnica<select id=bk-t><option value="">Todas las técnicas</option><option value=banco>Banco de preguntas</option>${tipos.map(t=>`<option value=${t}>${esc(ETQ(t))}</option>`).join('')}</select></label><label>Fecha en que se crearon<select id=bk-d><option value="">Todas las fechas</option>${dias.map(([d,n])=>`<option value=${d}>${diaTxt(d)} · ${n} pregunta(s)</option>`).join('')}</select></label></div><p id=bk-n class=s></p><label style="display:flex;gap:8px;align-items:center;margin:10px 0"><input type=checkbox id=bk-ok style="width:auto"> Entiendo que se eliminarán definitivamente</label><button id=bk-b disabled style="background:#a62020;color:#fff">Eliminar preguntas</button><p id=bk-m class=s role=status></p></div>
+<div class=card id=bk><h3>🗑️ Eliminar preguntas en bloque</h3><p class=s>Borra de una vez las preguntas de esta materia. No se puede deshacer. No afecta estudiantes, periodos ni notas.</p><div class=grid2><label>¿Qué evaluación?<select id=bk-ev><option value=all>Todas las evaluaciones</option><option value=banco>Evaluación 1 (banco)</option><option value=e2>Evaluación 2</option><option value=e3>Evaluación 3</option><option value=e4>Evaluación 4</option></select></label><label>Grado<select id=bk-g><option value="">Todos los grados</option>${grs.map(g=>`<option value=${g}>${g}.º</option>`).join('')}</select></label><label>Técnica<select id=bk-t><option value="">Todas las técnicas</option><option value=banco>Banco de preguntas</option>${tipos.map(t=>`<option value=${t}>${esc(ETQ(t))}</option>`).join('')}</select></label><label>Fecha en que se crearon<select id=bk-d><option value="">Todas las fechas</option>${dias.map(([d,n])=>`<option value=${d}>${diaTxt(d)} · ${n} pregunta(s)</option>`).join('')}</select></label></div><p id=bk-n class=s></p><label style="display:flex;gap:8px;align-items:center;margin:10px 0"><input type=checkbox id=bk-ok style="width:auto"> Entiendo que se eliminarán definitivamente</label><button id=bk-b disabled style="background:#a62020;color:#fff">Eliminar preguntas</button><p id=bk-m class=s role=status></p></div>
 <div class=card><h3>Ver y eliminar preguntas</h3><div class=grid2><label>Técnica<select id=pt><option value="">Todas</option><option value=banco>Banco de preguntas</option>${tipos.map(t=>`<option value=${t}>${esc(ETQ(t))}</option>`).join('')}</select></label><label>Grado<select id=pg><option value="">Todos</option>${gr.map(g=>`<option value=${g}>${g}.º</option>`).join('')}</select></label></div><p id=pc class=s></p><div style="margin:8px 0 14px"><label style="display:flex;gap:8px;align-items:center;margin:6px 0"><input type=checkbox id=pq-ok style="width:auto"> Confirmo que quiero eliminarlas definitivamente</label><button id=pq-b disabled style="background:#a62020;color:#fff">🗑️ Eliminar las mostradas</button><p id=pq-m class=s role=status></p></div><div id=pl></div></div>
 `;
  let vistas=[];
@@ -1085,7 +1085,7 @@ async function matPreguntas(c,root){
    matPreguntas(c,root);});
  };
  $('#pt').onchange=()=>{$('#pq-ok').checked=false;lista();};$('#pg').onchange=()=>{$('#pq-ok').checked=false;lista();};$('#pq-ok').onchange=pintarQ;$('#pq-b').onclick=()=>borrarItems(vistas,$('#pq-m'),$('#pq-b'));lista();
- {const sel=()=>{const ev=$('#bk-ev').value,g=$('#bk-g').value,t=$('#bk-t').value,d=$('#bk-d').value;return items.filter(i=>(ev==='all'||(ev==='banco'?i.k==='banco':ev==='e2'?(i.k==='e2'&&!!E2_TECNICAS[i.tec]):(i.k==='e2'&&!!E3_TECNICAS[i.tec])))&&(!g||i.grado===g)&&(!t||i.tec===t)&&(!d||i.dia===d));};
+ {const sel=()=>{const ev=$('#bk-ev').value,g=$('#bk-g').value,t=$('#bk-t').value,d=$('#bk-d').value;return items.filter(i=>(ev==='all'||(ev==='banco'?i.k==='banco':ev==='e2'?(i.k==='e2'&&!!E2_TECNICAS[i.tec]):(i.k==='e2'&&!!(ev==='e4'?E4_TECNICAS:E3_TECNICAS)[i.tec])))&&(!g||i.grado===g)&&(!t||i.tec===t)&&(!d||i.dia===d));};
   const pintar=()=>{const n=sel().length;$('#bk-n').textContent=n?`Se eliminarán ${n} pregunta(s).`:'No hay preguntas con esta selección.';$('#bk-b').disabled=!n||!$('#bk-ok').checked;};
   ['#bk-ev','#bk-g','#bk-t','#bk-d'].forEach(x=>$(x).onchange=()=>{$('#bk-ok').checked=false;pintar();});$('#bk-ok').onchange=pintar;pintar();
   $('#bk-b').onclick=async()=>{const v=sel();if(!v.length)return;const bt=$('#bk-b'),m=$('#bk-m');bt.disabled=true;m.textContent='Eliminando…';
