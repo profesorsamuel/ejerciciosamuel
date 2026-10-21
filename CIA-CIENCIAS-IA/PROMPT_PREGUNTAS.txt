@@ -1,0 +1,82 @@
+Eres un docente experto en evaluación escolar. Te adjunto un PDF de lectura. Crea un PAQUETE DE PREGUNTAS basado ÚNICAMENTE en ese PDF (sin inventar datos ni usar información externa).
+
+DATOS
+- Materia: [ESCRIBE LA MATERIA]
+- Grado: [ESCRIBE EL GRADO]
+- Cantidad total: [ESCRIBE UN NÚMERO ENTRE 100 Y 200, o "todas las que permita la lectura"]
+- Lenguaje claro y apropiado para el grado. Mezcla dificultad fácil, medio y difícil (aprox. 35 % / 40 % / 25 %).
+
+OBJETIVO
+Estas preguntas se subirán a una plataforma y el docente decidirá después con qué técnica las usa (Evaluación 1, 2, 3 o 4). Por eso TODAS las preguntas deben funcionar con alternativas, y las que corresponden a crucigrama o rompecabezas deben traer además sus datos extra.
+
+REGLAS GENERALES
+1. Recorre TODO el PDF de principio a fin y reparte las preguntas proporcionalmente entre sus secciones. No repitas preguntas ni hagas variantes casi iguales.
+2. Cada pregunta lleva un "titulo" corto, único y descriptivo (máx. 80 caracteres) con el que se guardará, por ejemplo: "Función de la membrana celular". No uses títulos genéricos como "Pregunta 1".
+3. Reparte las preguntas de forma equitativa entre estos tipos (campo "tipo"; usa exactamente estas palabras):
+   - seleccion_multiple, verdadero_falso, completar
+   - detective (presenta un error conceptual y pregunta cómo corregirlo)
+   - quien (¿Quién soy? con pistas para reconocer un concepto)
+   - causa (identificar causa o consecuencia)
+   - mito (afirmación: ¿mito o ciencia? con la explicación correcta)
+   - casos (situación práctica basada en el PDF)
+   - mision (resolver una misión con pistas)
+   - prediccion (¿qué pasaría si…?)
+   - clasificacion (identificar la categoría correcta)
+   - evidencia (elegir la evidencia que respalda una conclusión)
+   - matematica (problema numérico con datos del PDF)
+   - espanol (comprensión: idea principal, vocabulario, inferencia)
+   - crucigrama (incluye "palabra" y "pista")
+   - rompecabezas (incluye "piezas" y "orden_correcto")
+   - decisiones (reto de decisiones: elegir la mejor decisión científica)
+4. Opciones:
+   - Todas las preguntas tienen "opciones" con EXACTAMENTE 4 alternativas distintas y una sola correcta, salvo verdadero_falso, que usa exactamente ["Verdadero","Falso"].
+   - "respuesta" debe ser TEXTUALMENTE idéntica a una de las opciones.
+   - Los distractores deben ser plausibles pero claramente incorrectos según el PDF. Varía la posición de la respuesta correcta.
+   - completar: el enunciado incluye un espacio "_____".
+5. Crucigrama: "palabra" = una sola palabra en minúsculas, sin tildes ni espacios, tomada del PDF; "pista" = definición clara. Además llena "opciones" y "respuesta" (la palabra correcta entre 4 alternativas).
+6. Rompecabezas: "piezas" = 3 a 5 elementos desordenados; "orden_correcto" = esos mismos elementos en el orden correcto (proceso, secuencia o jerarquía del PDF). Además llena "opciones" y "respuesta" (opciones = 4 órdenes posibles escritos con flechas, ej. "Membrana → Citoplasma → Núcleo"; respuesta = el correcto).
+7. Para los tipos que no son crucigrama ni rompecabezas, deja "palabra", "pista" y "pagina" como "" y "piezas" y "orden_correcto" como [].
+8. Toda pregunta incluye "explicacion" breve (1 o 2 frases) que justifique la respuesta según el PDF, y "pagina" con el número aproximado de página del PDF donde está el contenido (o "" si no lo sabes).
+9. Si el PDF no da contenido suficiente para la cantidad pedida, genera menos y dime cuántas hiciste y por qué. No rellenes con preguntas inventadas.
+
+FORMATO DE SALIDA (MUY IMPORTANTE)
+- Responde SOLO con JSON válido, sin texto antes ni después, dentro de un bloque de código. Comillas dobles rectas, sin comas finales, sin comentarios.
+- Estructura exacta:
+
+{
+  "paquete": {
+    "materia": "[ESCRIBE LA MATERIA]",
+    "grado": "[ESCRIBE EL GRADO]",
+    "tema": "",
+    "fuente": "nombre del PDF",
+    "total": 0
+  },
+  "preguntas": [
+    {
+      "id": "P001",
+      "titulo": "",
+      "tipo": "seleccion_multiple",
+      "tema": "",
+      "dificultad": "facil",
+      "enunciado": "",
+      "opciones": ["", "", "", ""],
+      "respuesta": "",
+      "explicacion": "",
+      "palabra": "",
+      "pista": "",
+      "piezas": [],
+      "orden_correcto": [],
+      "pagina": ""
+    }
+  ]
+}
+
+- "dificultad" solo puede ser: "facil", "medio" o "dificil".
+- Los ids son consecutivos: P001, P002, P003…
+
+ENTREGA POR LOTES
+Como son muchas preguntas, entrégalas en lotes de 25. En el primer lote incluye el objeto "paquete" completo. Al terminar cada lote escribe solo: "Lote X listo. Escribe CONTINUAR para el siguiente." Continúa la numeración de ids sin repetir. Cuando yo escriba CONTINUAR, envía el siguiente lote con la misma estructura (puedes omitir "paquete" en los lotes siguientes). En el último lote, indica el total final.
+
+Antes de entregar cada lote verifica: (1) JSON válido, (2) "respuesta" idéntica a una opción, (3) 4 opciones distintas, (4) títulos únicos, (5) todo basado en el PDF.
+
+Empieza ahora con el lote 1.

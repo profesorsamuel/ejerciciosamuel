@@ -44,3 +44,13 @@ Enlaces directos: `.../CIA-CIENCIAS-IA/#docente`, `#estudiante`, `#docente/mat`,
 - Desplegar la función tras cada cambio de `supabase/functions/cia-generar/index.ts` (GitHub **no** la actualiza solo).
 - Técnicas: `detective`, `quien`, `causa`, `mito`, `casos`. Meta: 8 preguntas por técnica, materia y grado.
 - Pendiente: los SQL de `cia14_preguntas`, `cia14_materias`, `cia14_iniciar`, `cia14_enviar` y `cia12_materias_estudiante` no están en `sql/`. Exportarlos desde Supabase y guardarlos aquí como respaldo.
+
+## NUEVO · Paquete de preguntas (sin Gemini)
+La IA ya no genera preguntas dentro de la plataforma. Flujo en **Materias → paso 2**:
+1. Elige el grado y la cantidad (100, 150, 200 o todas) y pulsa **Copiar prompt** (también está en `PROMPT_PREGUNTAS.txt`).
+2. Pégalo en tu IA (ChatGPT, Gemini, Claude…), adjunta el PDF y pide los lotes con CONTINUAR.
+3. Sube el/los `.json` (o pega el texto con los bloques de código). Se valida y muestra un resumen con los títulos.
+4. Marca en qué técnicas quieres el paquete: Evaluación 1 (banco, 4 alternativas), 2, 3 y 4 (3 alternativas; cada tipo se adapta a la técnica más parecida). Se evitan repetidas.
+- Cada pregunta se guarda con su **título**. Para verlo también en las Evaluaciones 2–4, ejecuta una vez `sql/06_cia14_titulo.sql`.
+- Ya **no hace falta** desplegar `supabase/functions/cia-generar` ni la clave de Gemini (queda en el proyecto solo por si la quieres reutilizar).
+- La Evaluación 4 se guarda en `cia14_preguntas`, pero la vista del estudiante para E4 todavía no está conectada (solo existe la demostración en `evaluacion4/`).
