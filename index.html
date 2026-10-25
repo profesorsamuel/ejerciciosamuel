@@ -57,7 +57,7 @@ details>summary{cursor:pointer;padding:4px 0}
 @media(max-width:600px){#cia-administrar-periodos{padding:10px}#cia-administrar-periodos #cia-form-periodo{grid-template-columns:1fr}}
 </style>
 </head><body>
-<header><h1 onclick="location.hash='';location.reload()" title="Ir al inicio">CIA · Ciencias IA</h1><p>C.E.B.G. El Jiral · Ciencias Naturales</p></header><nav style="text-align:center;padding:12px"><a href="catalogo-tecnicas.html" style="display:inline-block;background:#175d49;color:white;padding:11px 18px;border-radius:10px;font-weight:700;text-decoration:none">📋 Catálogo de 25 técnicas · trabajar una por una</a></nav><main id="app"></main>
+<header><h1 onclick="location.hash='';location.reload()" title="Ir al inicio">CIA · Ciencias IA</h1><p>C.E.B.G. El Jiral · Ciencias Naturales</p></header><nav style="text-align:center;padding:12px"><a href="#docente/cat" style="display:inline-block;background:#175d49;color:white;padding:11px 18px;border-radius:10px;font-weight:700;text-decoration:none">📚 Catálogos de técnicas y juegos</a></nav><main id="app"></main>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <script type="module">
@@ -192,12 +192,12 @@ async function panel(){
   draw(`<div class=card><h2>No se pudo verificar el acceso docente</h2><p class=err>${detalle}</p><p class=s>Cuenta: ${esc(user.email||'sin correo')} · ID: ${esc(user.id)}</p><button id=x class=sec>Salir</button></div>`);
   $('#x').onclick=async()=>{await sb.auth.signOut();inicio();};return;
  }
- draw(`<div class="card tabs"><button data-p=informe>Resumen</button><button data-p=mat>Materias</button><button data-p=est>Estudiantes</button><button data-p=cat>Catálogo de técnicas</button><button data-p=grupos>Equipos</button><button data-p=eval>Evaluaciones</button><button data-p=res>Resultados</button><button class=sec id=x>Salir</button></div><div id=v></div>`);
+ draw(`<div class="card tabs"><button data-p=informe>Resumen</button><button data-p=est>Estudiantes</button><button data-p=cat>Catálogo de técnicas</button><button data-p=eval>Evaluaciones</button><button data-p=res>Resultados</button><button class=sec id=x>Salir</button></div><div id=v></div>`);
  app.querySelectorAll('[data-p]').forEach(b=>b.onclick=()=>{app.querySelectorAll('[data-p]').forEach(o=>o.classList.toggle('on',o==b));history.replaceState(null,'','#docente/'+b.dataset.p);({informe:tInforme,mat:tMaterias,est:tEst,cat:tCatalogo,grupos:tEquipos,eval:tEvaluaciones,res:tRes})[b.dataset.p](user.id);});
  $('#x').onclick=async()=>{await sb.auth.signOut();inicio();};const ini0=(location.hash.match(/^#docente\/(\w+)/)||[])[1],ini=['banco','e2'].includes(ini0)?'mat':ini0;(app.querySelector(`[data-p="${ini}"]`)||app.querySelector('[data-p=informe]')).click();}
 
 async function tCatalogo(uid){
- $('#v').innerHTML=`<div class="card"><h2>Catálogo de técnicas por tipo</h2><p>Seleccione una técnica y trabájela una por una. El seguimiento del desarrollo se guarda en este navegador, no en Supabase.</p><p><a href="catalogo-tecnicas.html" target="_blank" rel="noopener">Abrir catálogo completo de 25 técnicas</a></p><p>Las técnicas todavía no implementadas no se habilitan automáticamente para los estudiantes.</p></div>`;
+ $('#v').innerHTML=`<div class="card"><h2>Seleccione el catálogo que desea abrir</h2><p>Elija dónde quiere trabajar. Los catálogos se abren en una pestaña nueva.</p><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:14px;margin-top:18px"><div class="card"><h3>📋 Catálogo de técnicas</h3><p>25 técnicas de evaluación · Copiar prompts y administrar clases publicadas.</p><a href="catalogo-tecnicas.html" target="_blank" rel="noopener" style="display:inline-block;padding:12px 16px;background:#17654c;color:#fff;border-radius:9px;text-decoration:none;font-weight:700">Entrar a las 25 técnicas</a></div><div class="card"><h3>🎮 Catálogo de juegos</h3><p>Juegos educativos como romper globos, lanzar flechas y laberinto tipo Pac-Man.</p><a href="juegos-educativos.html" target="_blank" rel="noopener" style="display:inline-block;padding:12px 16px;background:#17654c;color:#fff;border-radius:9px;text-decoration:none;font-weight:700">Entrar a los juegos</a></div></div><p class="s">El catálogo de juegos se incluye como acceso organizado. Para conservar los motores de los tres juegos existentes, reemplace la página incluida por su archivo original cuando lo tenga disponible.</p></div>`;
 }
 async function tEquipos(uid){
  const v=$('#v');v.innerHTML='<div class="card"><h2>Equipos de estudiantes</h2><p>Cargando…</p></div>';
