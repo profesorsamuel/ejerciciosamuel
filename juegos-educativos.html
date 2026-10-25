@@ -66,6 +66,7 @@ label{display:block;margin:10px 0 4px;font-weight:600}.muted{color:#52697b}.hide
   <button id="loadRes">Cargar resultados</button><div id="res"></div></div>
 </section>
 
+<section id="vBank" class="panel hide"></section>
 <section id="vCfg" class="panel hide"></section>
 <section id="vPlay" class="panel hide"></section>
 <section id="vEnd" class="panel hide"></section>
@@ -99,11 +100,12 @@ function drawCatalog(){
  $('#catalog').innerHTML=GAMES.map(g=>`<div class="card"><div class="em">${g.em}</div><h3>${esc(g.name)}</h3>
  <span class="badge ${g.ready?'f':'p'}">${g.ready?'Etapa '+(GAMES.indexOf(g)+1)+' · Funcional':'Pendiente'}</span><p>${esc(g.desc)}</p>
  <div class="row"><button data-try="${g.id}" ${g.ready?'':'disabled'}>▶ Probar</button><button class="sec" data-cfg="${g.id}" ${g.ready?'':'disabled'}>⚙ Configurar</button>
- <button class="sec" data-prompt="${g.id}">📋 Copiar prompt</button>
+ <button class="sec" data-bank="${g.id}">📚 Banco de preguntas</button><button class="sec" data-prompt="${g.id}">📋 Copiar prompt</button>
  <button class="sec" disabled title="La asignación a grupos se activará al conectar la base de datos (etapa siguiente)">📌 Asignar</button></div></div>`).join('');
  document.querySelectorAll('[data-try]').forEach(b=>b.onclick=()=>start(b.dataset.try,{modo:'practica',timed:false,secs:90,n:5,quien:'individual',cedulas:[],equipo:'',evalId:''}));
  document.querySelectorAll('[data-cfg]').forEach(b=>b.onclick=()=>config(b.dataset.cfg));
- document.querySelectorAll('[data-prompt]').forEach(b=>b.onclick=()=>copyGamePrompt(b.dataset.prompt,b));
+ document.querySelectorAll('[data-bank]').forEach(b=>b.onclick=()=>bankEditor(b.dataset.bank));
+  document.querySelectorAll('[data-prompt]').forEach(b=>b.onclick=()=>copyGamePrompt(b.dataset.prompt,b));
 }
 
 /* ---------- Prompts de los 20 juegos ---------- */
@@ -140,7 +142,7 @@ async function copyGamePrompt(gid,button){
 }
 
 /* ---------- Preguntas ---------- */
-let Q=[
+const DEMO_Q=[
 {enunciado:'¿Qué necesitan las plantas para realizar la fotosíntesis?',correcta:'Luz solar',distractores:['Plástico','Arena seca','Vidrio']},
 {enunciado:'¿Qué órgano bombea la sangre?',correcta:'Corazón',distractores:['Pulmón','Estómago','Riñón']},
 {enunciado:'¿En qué estado se encuentra el hielo?',correcta:'Sólido',distractores:['Gaseoso','Plasma','Líquido']},
@@ -151,13 +153,41 @@ let Q=[
 {enunciado:'¿Qué estudia la biología?',correcta:'Los seres vivos',distractores:['Las rocas','Los astros','Los idiomas']},
 {enunciado:'¿Cómo se llama el cambio de líquido a gas?',correcta:'Evaporación',distractores:['Fusión','Solidificación','Congelación']},
 {enunciado:'¿Qué astro es el centro de nuestro sistema solar?',correcta:'El Sol',distractores:['La Luna','La Tierra','Marte']}];
-$('#upload').onchange=async e=>{try{const raw=JSON.parse(await e.target.files[0].text()),arr=Array.isArray(raw)?raw:raw.preguntas;if(!Array.isArray(arr))throw Error('Falta el arreglo preguntas');
- const ok=arr.filter(q=>q&&typeof q.enunciado==='string'&&typeof q.correcta==='string'&&Array.isArray(q.distractores)&&q.distractores.filter(x=>typeof x==='string'&&x!==q.correcta).length>=3)
-  .map(q=>({enunciado:q.enunciado,correcta:q.correcta,distractores:q.distractores.filter(x=>typeof x==='string'&&x!==q.correcta).slice(0,3)}));
- if(!ok.length)throw Error('No hay preguntas compatibles');Q=ok;$('#qstatus').textContent=`${ok.length} preguntas cargadas (solo en esta sesión; no se modifica ningún banco).`}catch(err){$('#qstatus').textContent='Error: '+err.message}};
-
+const BANK_KEY='cia_juegos_bancos_v3';
+let banks={};try{banks=JSON.parse(localStorage.getItem(BANK_KEY)||'{}')}catch(e){}
+let activeGame='globos';let Q=DEMO_Q;
+function cleanQuestions(raw){
+ const arr=Array.isArray(raw)?raw:raw&&raw.preguntas;
+ if(!Array.isArray(arr))throw Error('El archivo debe contener un arreglo preguntas.');
+ const used=new Set();const ok=[];
+ for(const q of arr){if(!q||typeof q.enunciado!=='string'||typeof q.correcta!=='string'||!Array.isArray(q.distractores))continue;
+ const en=q.enunciado.trim(),cor=q.correcta.trim(),dis=[...new Set(q.distractores.filter(x=>typeof x==='string').map(x=>x.trim()))].filter(x=>x&&x!==cor);
+ const key=en.toLocaleLowerCase();if(!en||!cor||dis.length<3||used.has(key))continue;
+ used.add(key);ok.push({...q,enunciado:en,correcta:cor,distractores:dis.slice(0,3)});
+ }if(!ok.length)throw Error('No hay preguntas válidas (enunciado, correcta y tres distractores diferentes).');return ok;
+}
+function persistBanks(){localStorage.setItem(BANK_KEY,JSON.stringify(banks))}
+function selectBank(gid){activeGame=gid;Q=(banks[gid]&&banks[gid].preguntas&&banks[gid].preguntas.length)?banks[gid].preguntas:DEMO_Q}
+function bankEditor(gid){selectBank(gid);const g=GAMES.find(x=>x.id===gid);show('vBank');
+ const data=banks[gid]||{};
+ $('#vBank').innerHTML=`<h2>📚 Banco de preguntas · ${esc(g.name)}</h2><p class="muted">${Q.length} preguntas disponibles. Cada partida selecciona preguntas al azar sin repetir y mezcla las cuatro respuestas. Los bancos se conservan en este navegador.</p>
+ <label>Materia</label><input id="bm" value="${esc(data.materia||'Ciencias Naturales')}">
+ <label>Grado</label><input id="bg" value="${esc(data.grado||'9.º')}">
+ <label>Tema</label><input id="bt" value="${esc(data.tema||'La célula')}">
+ <label>Importar archivo JSON</label><input type="file" id="bf" accept=".json,application/json">
+ <label>O pegar JSON completo</label><textarea id="bp" rows="7" placeholder='{"preguntas":[{"enunciado":"...","correcta":"...","distractores":["...","...","..."]}]}'></textarea>
+ <p><button id="bi">📥 Importar y guardar</button> <button class="sec" id="be">⬇ Exportar banco</button> <button class="sec" id="bc">📋 Copiar enlace</button></p>
+ <p><button class="sec" id="bplay" ${g.ready?'':'disabled'}>▶ Configurar partida</button> <button class="sec" id="bb">Volver al catálogo</button></p>
+ <p id="bs" class="muted"></p><p class="muted">El enlace compartido abre este juego y sus preguntas solo si el banco cabe en la URL. Para bancos grandes, comparta el archivo JSON y cárguelo en el otro dispositivo. La publicación centralizada requiere una tabla y permisos de Supabase; guardar en este navegador no publica en la nube.</p>`;
+ $('#bb').onclick=()=>show('vCat');$('#bplay').onclick=()=>config(gid);
+ $('#bi').onclick=async()=>{try{const file=$('#bf').files[0],str=file?await file.text():$('#bp').value;if(!str.trim())throw Error('Seleccione un archivo o pegue el JSON.');const raw=JSON.parse(str),arr=cleanQuestions(raw);banks[gid]={materia:$('#bm').value.trim(),grado:$('#bg').value.trim(),tema:$('#bt').value.trim(),preguntas:arr};persistBanks();bankEditor(gid);$('#bs').textContent='✅ Banco guardado: '+arr.length+' preguntas.'}catch(e){$('#bs').textContent='⚠️ '+e.message}};
+ $('#be').onclick=()=>{const data=banks[gid]||{materia:$('#bm').value,grado:$('#bg').value,tema:$('#bt').value,preguntas:Q};const blob=new Blob([JSON.stringify({juego:gid,...data},null,2)],{type:'application/json'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='banco_'+gid+'.json';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000)};
+ $('#bc').onclick=async()=>{try{const payload=JSON.stringify(banks[gid]||{preguntas:Q}),encoded=btoa(unescape(encodeURIComponent(payload)));const url=new URL(location.href);url.searchParams.set('juego',gid);url.searchParams.set('banco',encoded);if(url.href.length>7000)throw Error('Banco demasiado grande para un enlace confiable. Use Exportar banco y comparta el JSON.');await navigator.clipboard.writeText(url.href);$('#bs').textContent='✅ Enlace copiado.'}catch(e){$('#bs').textContent='⚠️ '+e.message}};
+}
+$('#upload').onchange=async e=>{try{const raw=JSON.parse(await e.target.files[0].text()),arr=cleanQuestions(raw);banks[activeGame]={...(banks[activeGame]||{}),preguntas:arr};persistBanks();selectBank(activeGame);$('#qstatus').textContent=arr.length+' preguntas guardadas para '+activeGame+'.'}catch(err){$('#qstatus').textContent='Error: '+err.message}};
+function loadSharedBank(){try{const url=new URL(location.href),gid=url.searchParams.get('juego'),encoded=url.searchParams.get('banco');if(!gid||!GAMES.some(g=>g.id===gid))return;if(encoded){const obj=JSON.parse(decodeURIComponent(escape(atob(encoded))));banks[gid]={...obj,preguntas:cleanQuestions(obj)};persistBanks();history.replaceState(null,'',location.pathname+'?juego='+encodeURIComponent(gid))}selectBank(gid);bankEditor(gid)}catch(e){console.warn('Enlace de banco no válido',e)}}
 /* ---------- Vistas ---------- */
-const views=['vCat','vCfg','vPlay','vEnd'];const show=v=>views.forEach(x=>$('#'+x).classList.toggle('hide',x!==v));
+const views=['vCat','vBank','vCfg','vPlay','vEnd'];const show=v=>views.forEach(x=>$('#'+x).classList.toggle('hide',x!==v));
 let run=null;
 
 function config(gid){
@@ -165,7 +195,7 @@ function config(gid){
  $('#vCfg').innerHTML=`<h2 style="margin-top:0">${g.em} ${esc(g.name)} · Configurar</h2>
  <label>Modalidad</label><select id="fq"><option value="individual">Individual (un estudiante con su cédula)</option><option value="grupal">Grupal (equipo)</option></select>
  <label>Tipo de sesión</label><select id="fm"><option value="practica">Práctica (sin calificación oficial)</option><option value="evaluacion">Evaluación (nota 1.0 a 5.0)</option></select>
- <label>Cantidad de preguntas (hay ${Q.length} disponibles)</label><select id="fn">${[5,8,10,15,20].map(n=>`<option>${n}</option>`).join('')}</select>
+ <label>Cantidad de preguntas (hay ${Q.length} disponibles)</label><select id="fn">${[5,8,10,15,20].map(n=>`<option ${n===15?'selected':''}>${n}</option>`).join('')}</select>
  <label><input type="checkbox" id="ft"> Contrarreloj</label><label>Duración total (segundos)</label><input type="number" id="fs" value="90" min="20" max="1800">
  <div id="fgrp" class="hide"><label>Nombre del equipo</label><input id="feq"></div>
  <label id="fcl">Cédula del estudiante</label><textarea id="fc" placeholder="Una cédula por línea (en modo grupal, una por integrante)"></textarea>
@@ -185,7 +215,7 @@ function config(gid){
 /* ---------- Motor común ---------- */
 let audio=null;function beep(ok){if(!$('#snd').checked)return;try{audio=audio||new (window.AudioContext||window.webkitAudioContext)();const o=audio.createOscillator(),g=audio.createGain();o.frequency.value=ok?660:180;o.type=ok?'sine':'sawtooth';g.gain.value=.08;o.connect(g);g.connect(audio.destination);o.start();o.stop(audio.currentTime+.18)}catch(e){}}
 function start(gid,cfg){
- if(run)clearInterval(run.timer);
+ selectBank(gid);if(run)clearInterval(run.timer);
  let n=Math.min(cfg.n,Q.length);if(gid==='pacman')n=Math.min(Math.max(n,MAZE.gates+3),Q.length);
  if(gid==='pacman'&&Q.length<MAZE.gates){alert('El laberinto necesita al menos '+MAZE.gates+' preguntas.');return}
  run={gid,cfg,qs:shuffle(Q).slice(0,n),i:0,hits:0,miss:0,pts:0,t0:Date.now(),over:false,total:n,left:cfg.timed?cfg.secs:null,opts:null,optsFor:-1,extra:0,fixedTotal:true};
@@ -299,5 +329,5 @@ $('#loadRes').onclick=async()=>{const box=$('#res');box.textContent='Cargando…
   box.innerHTML=`<p><b>${data.length}</b> partidas · <b>${Object.keys(by(r=>r.cedula)).length}</b> estudiantes participantes</p><h3>Por estudiante</h3><div style="overflow:auto"><table>${head}${Object.values(by(r=>r.cedula)).map(a=>row(a[0].nombres+' ('+a[0].cedula+')',a)).join('')}</table></div><h3>Por grupo</h3><div style="overflow:auto"><table>${head}${Object.entries(by(r=>(r.grado||'')+'° '+(r.seccion||''))).map(([k,a])=>row(k,a)).join('')}</table></div>`;
  }catch(e){box.innerHTML='<p>'+esc(e.code==='PGRST202'?'Falta ejecutar juegos_educativos.sql en Supabase.':(e.message||e))+'</p>'}};
 
-drawCatalog();
+drawCatalog();loadSharedBank();
 </script></body></html>
