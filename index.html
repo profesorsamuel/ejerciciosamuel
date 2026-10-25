@@ -1,0 +1,1270 @@
+<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>CIA · Ciencias IA</title>
+<style>
+:root{--ink:#10302f;--hoja:#2e8b57;--papel:#f5f7f2;--sol:#e9a23b;--mal:#b83b2e;--ok:#1f7a4a;--linea:#cfd9cc}
+*{box-sizing:border-box}body{margin:0;background:var(--papel);color:var(--ink);font:17px/1.5 system-ui,sans-serif}
+h1,h2,h3{font-family:Georgia,serif;line-height:1.2;margin:.2em 0 .5em}
+header{background:var(--ink);color:#fff;padding:18px 20px}header h1{margin:0;font-size:1.5rem}header p{margin:0;opacity:.8;font-size:.9rem}
+main{max-width:860px;margin:0 auto;padding:16px}.card{background:#fff;border:1px solid var(--linea);border-radius:12px;padding:20px;margin:14px 0}
+button,select,input,textarea{font:inherit}button{background:var(--hoja);color:#fff;border:0;border-radius:10px;padding:12px 18px;margin:4px;cursor:pointer;font-weight:600}
+button.sec{background:#e4ebe1;color:var(--ink)}button.big{padding:18px 24px;font-size:1.1rem}button:disabled{opacity:.5}
+:focus-visible{outline:3px solid var(--sol);outline-offset:2px}
+input,select,textarea{width:100%;padding:11px;border:1px solid #9fb09c;border-radius:8px;margin:4px 0 12px;background:#fff}
+.op{display:block;width:100%;text-align:left;background:#fff;color:var(--ink);border:2px solid var(--linea)}.op.sel{border-color:var(--hoja);background:#e8f4ec}
+.bien{border-left:6px solid var(--ok)}.mal{border-left:6px solid var(--mal)}.bar{height:10px;background:#dde6da;border-radius:9px;overflow:hidden}.bar i{display:block;height:100%;background:var(--sol)}
+table{width:100%;border-collapse:collapse;font-size:.9rem}td,th{padding:6px;border-bottom:1px solid var(--linea);text-align:left}
+.tabs button.on{background:var(--ink)}.err{color:var(--mal);font-weight:600}.row{display:flex;gap:8px;align-items:center;justify-content:space-between}.s{font-size:.9rem;color:#4a625f}.wrap{overflow-x:auto}.editor-fondo{position:fixed;inset:0;background:#0009;display:flex;align-items:center;justify-content:center;padding:12px;z-index:1000}.editor-caja{width:min(680px,100%);max-height:94vh;overflow:auto;background:white;border-radius:12px;padding:22px;box-shadow:0 12px 40px #0004}.editor-caja label{display:block;font-weight:600;margin-top:8px}.editor-caja textarea{min-height:80px}.editor-acciones{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}.editor-caja .err{min-height:1em}
+.resumen-banco{display:grid;grid-template-columns:repeat(auto-fit,minmax(115px,1fr));gap:10px;margin:12px 0}.resumen-banco>div{padding:12px;background:#edf5ef;border-radius:10px;text-align:center}.resumen-banco b{display:block;font-size:1.7rem}.resumen-banco span{font-size:.85rem}
+.e2 input[type=checkbox]{width:auto;margin:0 6px 0 0}.e2 fieldset{padding:8px 12px}.e2-item{background:#f7faf8}.e2-lote{background:#0f5a3e}table.e2cob{border-collapse:collapse;width:100%;font-size:.9rem;margin:4px 0}table.e2cob th,table.e2cob td{border:1px solid var(--linea);padding:7px;text-align:center}table.e2cob td:first-child,table.e2cob th:first-child{text-align:left}table.e2cob th{background:#eef5f1}table.e2cob th.e2sel{background:#cfe6da}.e2ok{color:var(--ok);font-weight:600}.e2falta{color:#a15a00}.tabs{display:flex;flex-wrap:wrap}header h1{cursor:pointer}
+main{max-width:980px}
+.sal{display:flex;flex-wrap:wrap;gap:4px}.sal button{margin:2px}.sal button.on{background:var(--ink);color:#fff}
+.pasos{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}.pasos button{margin:0;background:#e4ebe1;color:var(--ink)}.pasos button.on{background:var(--ink);color:#fff}
+.matgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:12px}.matgrid .card{margin:0}
+.add{display:flex;gap:8px;align-items:flex-start}.add input{margin:0}.add button{white-space:nowrap;margin:0}
+.opts{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:10px;margin:8px 0}
+.opt{display:block;border:2px solid var(--linea);border-radius:12px;padding:12px 14px;cursor:pointer;background:#fff;margin:0}.opt input{width:auto;margin:0 8px 0 0}.opt span{display:block;font-size:.88rem;color:#4a625f;margin-top:4px;font-weight:400}.opt:has(input:checked){border-color:var(--hoja);background:#e8f4ec}
+.chip{display:inline-flex;align-items:center;background:#e8f3eb;border-radius:20px;padding:2px 2px 2px 12px;margin:3px}.chip button{margin:0;padding:2px 9px;background:transparent;color:var(--mal)}
+.checks{display:flex;gap:14px;flex-wrap:wrap;margin:6px 0 10px}.checks label{display:inline-flex;align-items:center;gap:5px;margin:0}.checks input{width:auto;margin:0}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px}
+details>summary{cursor:pointer;padding:4px 0}
+@media print{header,.tabs,button,input,select,.editor-fondo{display:none!important}body{background:#fff;color:#111}main{max-width:none;padding:0}.card{break-inside:avoid;border:0;padding:8px;margin:5px 0}table{font-size:11px}tr{break-inside:avoid}}
+.opts{grid-template-columns:repeat(2,minmax(0,1fr))}.opt{min-width:0;min-height:105px}.opt b{font-size:1rem}.matgrid{grid-template-columns:repeat(auto-fit,minmax(min(100%,240px),1fr))}.practicas-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,240px),1fr));gap:10px}.practicas-grid button{margin:0;width:100%;min-height:85px;text-align:left}.practica-hecha{background:#176344!important;color:#fff!important;border:2px solid #f1c453!important}.practica-hecha::after{content:"  ✓ Realizado";display:block;font-size:.78rem;margin-top:5px}@media(max-width:520px){.opts{grid-template-columns:1fr}}
+
+/* CIA: recorrido único del profesor, sin pestañas ni pantallas intermedias */
+.cia-ruta{display:flex;flex-wrap:wrap;gap:8px;margin:14px 0}.cia-ruta a{padding:10px 12px;background:#e8f2ef;color:#105c47;border-radius:9px;font-weight:700;text-decoration:none}.cia-ruta a:hover,.cia-ruta a:focus{background:#c8e6dc}.cia-ruta a[aria-selected="true"]{background:#17694f;color:white}.cia-etapa[hidden]{display:none!important}.cia-etapa{scroll-margin-top:12px;margin:18px 0}.cia-etapa>.card{margin-bottom:0}.cia-etapa #cia-administrar-periodos{margin-top:0}.cia-etapa #cia-administrar-periodos>hr{display:none}.cia-etapa #cia-panel-publicar{padding:12px}.cia-etapa #cia-administrar-periodos .cia-accesos #cia-nuevo-rapido{display:none}
+</style><style id="cia-periodos-mejora">
+#cia-administrar-periodos{background:#f1f8f4;border:2px solid #b8dccc;border-radius:16px;padding:18px;margin-top:18px;color:#173e31}
+#cia-administrar-periodos>h3{color:#12543e;font-size:1.35rem}
+#cia-administrar-periodos #cia-form-periodo{background:white;border:1px solid #c7dfd2;border-radius:14px;padding:16px;display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:12px;align-items:end}
+#cia-administrar-periodos #cia-form-periodo>label{font-weight:700;color:#20553f;display:flex;flex-direction:column;gap:5px}
+#cia-administrar-periodos #cia-form-periodo input:not([type=checkbox]),#cia-administrar-periodos #cia-form-periodo select{border:2px solid #c5dfd1;border-radius:9px;min-height:43px;padding:8px;background:#fff;width:100%}
+#cia-administrar-periodos #cia-form-periodo input:focus,#cia-administrar-periodos #cia-form-periodo select:focus{outline:2px solid #1b8a61}
+#cia-administrar-periodos #cia-guardar-periodo{background:#167447;color:white;font-weight:800;padding:12px;border-radius:10px}
+#cia-administrar-periodos #cia-periodo-mensaje:not(:empty){background:#e4f5ea;border-left:5px solid #198754;padding:12px;border-radius:8px;grid-column:1/-1}
+#cia-administrar-periodos #cia-lista-periodos{background:white;border-radius:12px;padding:8px;overflow-x:auto}
+#cia-administrar-periodos #cia-lista-periodos table{width:100%;border-collapse:separate;border-spacing:0 6px}
+#cia-administrar-periodos #cia-lista-periodos th{background:#135b43;color:white;padding:9px}
+#cia-administrar-periodos #cia-lista-periodos td{background:#f1f8f4;padding:9px;border-bottom:1px solid #d6e8dd}
+#cia-administrar-periodos #cia-lista-periodos button{margin:3px;padding:8px;border-radius:8px}
+#cia-administrar-periodos #cia-lista-periodos [data-ahora]{background:#126d42;color:white;font-weight:bold}
+#cia-administrar-periodos #cia-lista-periodos [data-pb]{background:#fff0f0;color:#a62020;border:1px solid #efb4b4}
+#cia-administrar-periodos .cia-estado-periodo{font-weight:800;border-radius:999px;padding:5px 9px;display:inline-block;white-space:nowrap}
+#cia-administrar-periodos .cia-estado-periodo.ok{background:#d7f5e4;color:#086538}
+#cia-administrar-periodos .cia-estado-periodo.off{background:#ffe8dc;color:#9a3a12}
+#cia-administrar-periodos .cia-estado-periodo.futuro{background:#e1edff;color:#204b9b}
+#cia-administrar-periodos .cia-accesos{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0}
+#cia-administrar-periodos .cia-accesos button{padding:10px;border-radius:10px;background:#225eae;color:white;font-weight:bold}
+#cia-administrar-periodos .cia-av-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:12px;margin-top:10px;align-items:end}#cia-administrar-periodos .cia-av-grid>label{font-weight:700;color:#20553f;display:flex;flex-direction:column;gap:5px}#cia-administrar-periodos .cia-av-grid>label:has(input[type=checkbox]){flex-direction:row;align-items:center}
+@media(max-width:600px){#cia-administrar-periodos{padding:10px}#cia-administrar-periodos #cia-form-periodo{grid-template-columns:1fr}}
+</style>
+</head><body>
+<header><h1 onclick="location.hash='';location.reload()" title="Ir al inicio">CIA · Ciencias IA</h1><p>C.E.B.G. El Jiral · Ciencias Naturales</p></header><nav style="text-align:center;padding:12px"><a href="catalogo-tecnicas.html" style="display:inline-block;background:#175d49;color:white;padding:11px 18px;border-radius:10px;font-weight:700;text-decoration:none">📋 Catálogo de 25 técnicas · trabajar una por una</a></nav><main id="app"></main>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<script type="module">
+import {createClient} from 'https://esm.sh/@supabase/supabase-js@2';
+// ▼▼ Pega aquí la URL del proyecto y la clave "anon/publishable" (NUNCA la service_role) ▼▼
+const CONFIG={url:'https://luewrpzgetqslxqmdcxv.supabase.co',key:'sb_publishable_zJc68aiTxJs7HBgaqeHxrQ_JDcm91xG'};
+const sb=createClient(CONFIG.url||'https://sin-configurar.supabase.co',CONFIG.key||'sin-configurar');
+const $=s=>document.querySelector(s),app=$('#app'),draw=h=>app.innerHTML=h;
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const norm=s=>String(s).toLowerCase().normalize('NFD').replace(/[^a-z0-9]/g,'');
+const TIPOS={multiple:'Selección múltiple',verdadero_falso:'Verdadero o falso',completar:'Completar el espacio',relacionar:'Relacionar columnas',ordenar:'Ordenar la secuencia'};
+const etiquetaEval=t=>t==='e3'?'Evaluación 3':t==='e2'?'Evaluación 2':'Evaluación 1';
+let MODO_E='e2'; // motor de técnicas que ve el estudiante: 'e2' o 'e3'
+const tecnicasDe=m=>m==='e3'?E3_TECNICAS:E2_TECNICAS;
+function claveMarca(tipo){const p=window.__ciaPeriodoActual;return 'cia-realizado:'+est?.id+':'+(p?.id||'sin-periodo')+':'+(p?.tecnica||'defecto')+':'+tipo;}
+function marcarRealizado(tipo){try{localStorage.setItem(claveMarca(tipo),'1');}catch(e){console.warn('No se pudo guardar marca local',e);}}
+async function recuperarRealizados(){
+ if(!est?.cedula)return;
+ try{const {data,error}=await sb.rpc('cia_marcas_realizadas',{p_cedula:est.cedula});
+ if(error)throw error;const p=window.__ciaPeriodoActual;
+ for(const x of (Array.isArray(data)?data:[])){if(String(x.periodo_id||'sin-periodo')===String(p?.id||'sin-periodo')){try{localStorage.setItem(claveMarca(x.tipo),'1')}catch(_){}}}
+ pintarRealizados();
+ }catch(e){console.warn('Marcas de servidor no disponibles; se mantienen las locales:',e.message)}
+}
+async function registrarRealizadoServidor(tipo){
+ try{
+  const {error}=await sb.rpc('cia_registrar_marca',{p_cedula:est.cedula,p_periodo:window.__ciaPeriodoActual?.id||null,p_tipo:tipo});
+  if(error)throw error;
+  marcarRealizado(tipo);
+  pintarRealizados();
+  return true;
+ }catch(e){console.warn('No se pudo sincronizar marca:',e.message||e);return false;}
+}
+function pintarRealizados(){document.querySelectorAll('[data-t],[data-e2t]').forEach(b=>{const tipo=b.dataset.t?'banco:'+b.dataset.t:MODO_E+':'+b.dataset.e2t;try{b.classList.toggle('practica-hecha',localStorage.getItem(claveMarca(tipo))==='1');}catch(e){}});}
+const META=18; // 18 por tipo x 5 tipos = 90 preguntas (mínimo pedido: 80)
+let est=null;
+const fmt=c=>Array.isArray(c)?(Array.isArray(c[0])?c.map(p=>p.join(' = ')).join('; '):c.join(' → ')):c;
+
+function inicio(){draw(`<div class=card><h2>¿Quién eres?</h2>${CONFIG.url?'':'<p class=err>Falta configurar Supabase en index.html (CONFIG).</p>'}<button class=big id=e>Soy estudiante</button><button class="big sec" id=d>Soy docente</button></div>`);$('#e').onclick=loginEst;$('#d').onclick=loginDoc;}
+
+/* ---------- ESTUDIANTE ---------- */
+function loginEst(){draw(`<div class=card><h2>Ingreso de estudiante</h2><p>Escribe tu cédula tal como aparece en la matrícula. El sistema identifica tu grado y salón automáticamente.</p><label>Cédula<input id=c inputmode=text autocomplete=off placeholder="Ejemplo: 3-123-456"></label><p class=err id=m></p><button id=go>Entrar</button><button class=sec id=b>Volver</button></div>`);
+$('#b').onclick=inicio;
+$('#c').onkeydown=e=>{if(e.key==='Enter')$('#go').click();};
+$('#go').onclick=async()=>{const c=$('#c').value.trim();if(!c)return $('#m').textContent='Escribe tu cédula.';
+ const boton=$('#go');boton.disabled=true;$('#m').textContent='Comprobando matrícula…';
+ try{const {data,error}=await sb.rpc('cia_ingresar_cedula',{p_cedula:c});if(error){$('#m').textContent=error.code==='PGRST202'?'Primero ejecute cia_acceso_solo_cedula.sql en Supabase.':error.message;return;}
+ if(!data||!data.id){$('#m').textContent='No se encontró una cédula única en la matrícula. Consulte al profesor.';return;}
+ est={...data,cedula:c,nombreVerificacion:data.nombres};menu();}finally{boton.disabled=false;}};}
+async function tecnicaActiva(){try{const {data,error}=await sb.rpc('cia_tecnica_activa',{p_cedula:est.cedula});return !error&&(data==='e2'||data==='e3')?data:'banco';}catch{return 'banco';}}
+async function obtenerPeriodo(){
+ try{const {data,error}=await sb.rpc('cia_periodo_activo',{p_cedula:est.cedula});if(error)throw error;return {periodo:Array.isArray(data)?data[0]:data,error:null};}
+ catch(e){return {periodo:null,error:e.message||String(e)};}
+}
+function periodoHtml(p){if(!p)return '<div class="card"><h3>Prácticas para estudiantes</h3><p>No hay un periodo vigente para tu salón.</p></div>';
+ const cierre=p.fin||p.cierre,fecha=cierre?new Date(cierre):null;const sinFin=fecha&&fecha.getFullYear()>=2099;
+ return `<div class="card"><h3>${esc(p.titulo||'Periodo de práctica')}</h3><p class="s">${esc(p.inicio?new Date(p.inicio).toLocaleString('es-PA'):'')} — ${esc(fecha&&!isNaN(fecha)?(sinFin?'Sin fecha de cierre':fecha.toLocaleString('es-PA')):'')}</p><b id="periodo-reloj">Calculando tiempo…</b><div id="periodo-notas" class="wrap"><p class="s">Consultando notas…</p></div></div>`;
+}
+let periodoReloj=null;
+function iniciarReloj(p){if(periodoReloj)clearInterval(periodoReloj);if(!p)return;
+ const fin=new Date(p.fin||p.cierre).getTime();if(new Date(p.fin||p.cierre).getFullYear()>=2099){const el=$('#periodo-reloj');if(el)el.textContent='Práctica abierta · sin fecha de cierre';return;}const actualizar=()=>{const el=$('#periodo-reloj');if(!el){clearInterval(periodoReloj);periodoReloj=null;return;}if(!Number.isFinite(fin)){el.textContent='Cierre sin fecha válida';return;}let t=Math.max(0,Math.floor((fin-Date.now())/1000));if(!t){el.textContent='Cerrado';app.querySelectorAll('[data-t],[data-e2t]').forEach(b=>b.disabled=true);return;}const d=Math.floor(t/86400);t%=86400;el.textContent=`Te faltan ${d} días ${Math.floor(t/3600)} horas ${Math.floor(t%3600/60)} minutos`;};actualizar();periodoReloj=setInterval(actualizar,15000);
+}
+async function mostrarNotasPeriodo(){const el=$('#periodo-notas');if(!el)return;const {data,error}=await sb.rpc('cia_periodo_notas',{p_est:est.id});if(!$('#periodo-notas'))return;if(error){el.textContent='No se pudieron consultar las notas: '+error.message;return;}
+ const filas=Array.isArray(data)?data:(data?.practicas||data?.notas||[]);if(!Array.isArray(filas)||!filas.length){el.innerHTML='<p class="s">Todavía no hay notas para este periodo.</p>';return;}
+ const nota=x=>{const n=Number(x);return Number.isFinite(n)?n.toFixed(2):'1.00'};
+ const periodoActual=window.__ciaPeriodoActual;
+ const tipos=['e2','e3'].includes(periodoActual?.tecnica)?tecnicasDe(periodoActual.tecnica):TIPOS;
+ const detalle=filas.filter(f=>tipos[f.practica||f.tipo||f.tecnica||f.nombre]);
+ const completas=detalle.length===5;
+ const items=Object.entries(tipos).map(([clave,nombre])=>{
+   const f=detalle.find(x=>(x.practica||x.tipo||x.tecnica||x.nombre)===clave);
+   return `<tr><td>${esc(nombre)}</td><td>${nota(f?.mejor_nota??f?.nota_5??f?.nota??1)}</td></tr>`;
+ });
+ const promedio=Object.keys(tipos).reduce((suma,k)=>{
+   const f=detalle.find(x=>(x.practica||x.tipo||x.tecnica||x.nombre)===k);
+   return suma+Number(f?.mejor_nota??f?.nota_5??f?.nota??1);
+ },0)/5;
+ el.innerHTML=`<table><thead><tr><th>Práctica</th><th>Mejor nota</th></tr></thead><tbody>${items.join('')}</tbody></table><p><b>Nota final: ${nota(promedio)} / 5.00</b></p>${!completas?'<p class="s">Aviso: Supabase no está devolviendo el detalle de las cinco prácticas; las notas faltantes aparecen como 1.00 hasta corregir la función SQL.</p>':''}`;
+}
+async function menu(auto){const consulta=await obtenerPeriodo(),periodo=consulta.periodo;window.__ciaPeriodoActual=periodo;const activa=periodo?(['e2','e3'].includes(periodo.tecnica)?periodo.tecnica:'banco'):await tecnicaActiva();MODO_E=activa;const cerrado=periodo&&new Date(periodo.fin||periodo.cierre).getTime()<=Date.now();draw(`<div class=card><h2>Hola, ${esc(est.nombres)}</h2>${activa!=='banco'?`<p>Elige tu ejercicio. Cada intento trae 8 preguntas. Responde todas antes de enviar.</p>${e2PanelHTML()}`:`<p>Elige un ejercicio. Cada intento trae 8 preguntas distintas. Responde todas antes de enviar.</p>${`<h3>Evaluación 1</h3><div class="practicas-grid">`+Object.entries(TIPOS).map(([k,v])=>`<button class=big data-t=${k}>${v}</button>`).join('')+`</div>`}`}<p class=err id=m></p><button class=sec id=s>Salir</button></div>${periodoHtml(periodo)}`);if(periodo){iniciarReloj(periodo);await mostrarNotasPeriodo();}pintarRealizados();await recuperarRealizados();if(cerrado)app.querySelectorAll('[data-t],[data-e2t]').forEach(b=>b.disabled=true);
+const contenedor=document.createElement('div');contenedor.className='card';contenedor.innerHTML='<h2>Evaluaciones asignadas</h2><p id=ev-est-msg>Buscando evaluaciones vigentes…</p><div id=ev-est-list></div><button class=sec id=ev-est-recargar>Actualizar evaluaciones</button>';app.append(contenedor);
+ const historial=document.createElement('div');historial.className='card';historial.innerHTML='<h2>Mi historial de evaluaciones</h2><p id=hist-estado>Consultando intentos…</p><div class=wrap id=hist-tabla></div><button class=sec id=hist-actualizar>Actualizar historial</button>';app.append(historial);
+ const cargarHistorial=async()=>{const {data,error}=await sb.rpc('cia_eval_historial',{p_est:est.id,p_cedula:est.cedula,p_nombre:est.nombreVerificacion});const estado=$('#hist-estado'),tabla=$('#hist-tabla');if(!estado||!tabla)return;if(error){estado.textContent='Historial no disponible: '+error.message;return;}const filas=data||[];estado.textContent=filas.length?`${filas.length} intento(s) registrado(s). La mejor nota se calcula por evaluación y día.`:'Aún no hay intentos registrados.';tabla.innerHTML=filas.length?`<table><tr><th>Evaluación</th><th>Fecha</th><th>Estado</th><th>Nota</th><th>Mejor del día</th></tr>${filas.map(x=>`<tr><td>${esc(x.titulo)}</td><td>${esc(new Date(x.inicio).toLocaleString('es-PA'))}</td><td>${x.enviado_en?'Entregado':'Pendiente'}</td><td>${x.nota_5==null?'—':Number(x.nota_5).toFixed(2)}</td><td>${x.mejor_dia==null?'—':Number(x.mejor_dia).toFixed(2)}</td></tr>`).join('')}</table>`:'';};$('#hist-actualizar').onclick=cargarHistorial;await cargarHistorial();
+ const cargarEvaluaciones=async()=>{const {data,error}=await sb.rpc('cia_eval_listar',{p_est:est.id,p_cedula:est.cedula,p_nombre:est.nombreVerificacion});const msg=$('#ev-est-msg'),lista=$('#ev-est-list');if(!msg||!lista)return;if(error){msg.textContent='No se pudieron consultar evaluaciones: '+error.message;return;}const a=data||[];msg.textContent=a.length?`${a.length} evaluación(es) disponible(s) o pendiente(s).`:'No hay evaluaciones activas para tu salón en este momento.';lista.innerHTML=a.map(v=>`<div class=card><b>${esc(v.titulo)}</b><p>${esc(v.estado)} · ${v.duracion_min} minutos · ${v.preguntas} preguntas</p><button data-ev-iniciar="${esc(v.id)}" ${v.estado!=='Disponible'?'disabled':''}>Iniciar evaluación</button></div>`).join('');lista.querySelectorAll('[data-ev-iniciar]').forEach(b=>b.onclick=async()=>{b.disabled=true;const {data:r,error:er}=await sb.rpc('cia_eval_iniciar',{p_est:est.id,p_cedula:est.cedula,p_nombre:est.nombreVerificacion,p_eval:b.dataset.evIniciar});if(er){alert(er.message);b.disabled=false;return;}quizEvaluacion(r);});};$('#ev-est-recargar').onclick=cargarEvaluaciones;await cargarEvaluaciones();
+ app.querySelectorAll('[data-t]').forEach(b=>b.onclick=async()=>{if(cerrado)return $('#m').textContent='Periodo cerrado.';const {data,error}=await sb.rpc('cia_iniciar',{p_est:est.id,p_tipo:b.dataset.t});if(error)return $('#m').textContent=error.message;quiz(data,b.dataset.t);});if(activa!=='banco'&&!cerrado)e2Cablear();$('#s').onclick=()=>{est=null;inicio();};}
+// Mezcla Fisher-Yates: se aplica una sola vez por intento, nunca al volver atrás.
+function mezclarOpciones(valores){const a=[...valores];for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
+function quiz(d,tipoPractica){
+ const opcionesIntento=new Map();
+ for(const q of d.preguntas){const x=q.datos||{};
+  if(q.tipo==='multiple'||q.tipo==='completar')opcionesIntento.set(q.id,mezclarOpciones(x.opciones||[]));
+  else if(q.tipo==='verdadero_falso')opcionesIntento.set(q.id,mezclarOpciones(['Verdadero','Falso']));
+  else if(q.tipo==='relacionar')opcionesIntento.set(q.id,mezclarOpciones(x.der||[]));
+  else if(q.tipo==='ordenar')opcionesIntento.set(q.id,mezclarOpciones(x.items||[]));
+ }
+ let i=0;const R={};const inicioIntento=Date.now();let enviando=false;
+ const resumen=()=>{const total=d.preguntas.length,contestadas=d.preguntas.filter(q=>R[q.id]!==undefined).length;return `${contestadas} de ${total} respondidas`;};
+ const enviar=async()=>{if(enviando)return;const pendientes=d.preguntas.filter(q=>R[q.id]===undefined);if(pendientes.length){alert(`Faltan ${pendientes.length} preguntas por responder.`);return;}if(!confirm(`¿Enviar las ${d.preguntas.length} respuestas para calificar? No podrá modificarlas después.`))return;enviando=true;draw('<div class=card><h2>Guardando respuestas…</h2><p>Espere mientras Supabase calcula su resultado.</p></div>');const {data,error}=await sb.rpc('cia_enviar',{p_est:est.id,p_intento:d.intento,p_resp:R});if(error){enviando=false;draw(`<div class=card><h2>No se pudo enviar</h2><p class=err>${esc(error.message)}</p><button id=reintentar>Reintentar envío</button></div>`);$('#reintentar').onclick=enviar;return;}marcarRealizado("banco:"+tipoPractica);await registrarRealizadoServidor("banco:"+tipoPractica);resultado(data);};
+ const paso=()=>{const q=d.preguntas[i],x=q.datos;let cu='';
+  if(q.tipo=='multiple'||q.tipo=='completar')cu=opcionesIntento.get(q.id).map(o=>`<button class=op data-v="${esc(o)}">${esc(o)}</button>`).join('');
+  else if(q.tipo=='verdadero_falso')cu=opcionesIntento.get(q.id).map(o=>`<button class=op data-v="${o}">${o}</button>`).join('');
+  else if(q.tipo=='relacionar')cu=x.izq.map(a=>`<label>${esc(a)}<select data-a="${esc(a)}"><option value="">Elige…</option>${opcionesIntento.get(q.id).map(b=>`<option>${esc(b)}</option>`).join('')}</select></label>`).join('');
+  else{R[q.id]=R[q.id]||[...opcionesIntento.get(q.id)];cu='<div id=lst></div>';}
+  draw(`<div class=card><div class=bar><i style="width:${i/d.preguntas.length*100}%"></i></div><p class=s>Pregunta ${i+1} de ${d.preguntas.length} · ${resumen()}</p><h3>${esc(q.enunciado)}</h3>${cu}<p class=err id=m></p><button id=nx>${i<d.preguntas.length-1?'Siguiente':'Revisar y enviar'}</button><button class=sec id=anterior ${i===0?'disabled':''}>Anterior</button><p class=s>Tiempo transcurrido: ${Math.floor((Date.now()-inicioIntento)/60000)} minutos</p></div>`);
+  app.querySelectorAll('.op').forEach(b=>{b.classList.toggle('sel',R[q.id]===b.dataset.v);b.onclick=()=>{R[q.id]=b.dataset.v;app.querySelectorAll('.op').forEach(o=>o.classList.toggle('sel',o==b));};});
+  app.querySelectorAll('select').forEach(s=>{s.value=R[q.id]?.[s.dataset.a]||'';s.onchange=()=>{(R[q.id]=R[q.id]||{})[s.dataset.a]=s.value;};});
+  if(q.tipo=='ordenar'){const L=()=>{$('#lst').innerHTML=R[q.id].map((o,k)=>`<div class=row><span>${k+1}. ${esc(o)}</span><span><button class=sec data-m="${k}:-1" aria-label="Subir">▲</button><button class=sec data-m="${k}:1" aria-label="Bajar">▼</button></span></div>`).join('');
+   $('#lst').querySelectorAll('[data-m]').forEach(b=>b.onclick=()=>{const [k,s]=b.dataset.m.split(':').map(Number),a=R[q.id];if(a[k+s]===undefined)return;[a[k],a[k+s]]=[a[k+s],a[k]];L();});};L();}
+  $('#anterior').onclick=()=>{if(i>0){i--;paso();}};
+  $('#nx').onclick=()=>{const r=R[q.id];if(q.tipo==='relacionar'?(!r||x.izq.some(a=>!r[a])):r===undefined||r===null||r==='')return $('#m').textContent='Responde antes de continuar.';if(i<d.preguntas.length-1){i++;return paso();}const faltan=d.preguntas.filter(v=>R[v.id]===undefined).length;draw(`<div class=card><h2>Revisar intento</h2><p>${resumen()}</p><p>${faltan?'Aún faltan '+faltan+' respuestas.':'Todas las respuestas están registradas.'}</p><p>Tiempo transcurrido: ${Math.floor((Date.now()-inicioIntento)/60000)} minutos.</p><button id=confirmar ${faltan?'disabled':''}>Enviar y calificar</button><button class=sec id=volver>Volver a revisar</button></div>`);$('#confirmar').onclick=enviar;$('#volver').onclick=()=>{i=d.preguntas.length-1;paso();};};};
+ paso();}
+function quizEvaluacion(d){let pos=0,env=false;const respuestas={};const preguntas=d.preguntas||[];const opcionesEvaluacion=new Map(preguntas.map(q=>[q.id,mezclarOpciones(q.datos?.opciones|| (q.tipo==='verdadero_falso'?['Verdadero','Falso']:[]))]));const vence=new Date(d.vence).getTime();let reloj;
+ const tiempo=()=>Math.max(0,Math.ceil((vence-Date.now())/1000));
+ const entregar=async(forzado=false)=>{if(env)return;if(!forzado&&!confirm('¿Entregar la evaluación? Ya no podrá modificar sus respuestas.'))return;env=true;clearInterval(reloj);draw('<div class=card><h2>Calificando evaluación…</h2></div>');const {data,error}=await sb.rpc('cia_eval_entregar',{p_est:est.id,p_cedula:est.cedula,p_nombre:est.nombreVerificacion,p_intento:d.intento,p_respuestas:respuestas});if(error){draw(`<div class=card><h2>Problema al entregar</h2><p class=err>${esc(error.message)}</p><button id=reintentar>Reintentar</button></div>`);$('#reintentar').onclick=()=>{env=false;entregar(true)};return;}draw(`<div class=card><h2>Evaluación entregada</h2><p>Calificación: <b>${Number(data.nota_5).toFixed(2)} / 5.00</b></p><p>Aciertos: ${data.aciertos} de ${data.total}</p><button id=volver>Volver a mis actividades</button></div>`);$('#volver').onclick=menu;};
+ const mostrar=()=>{if(tiempo()<=0)return entregar(true);const q=preguntas[pos],op=opcionesEvaluacion.get(q.id);draw(`<div class=card><h2>${esc(d.titulo)}</h2><p>Pregunta ${pos+1} de ${preguntas.length} · <strong id=cronometro></strong></p><div class=bar><i style="width:${100*(pos+1)/preguntas.length}%"></i></div><h3>${esc(q.enunciado)}</h3>${op.map(o=>`<button class="op ${respuestas[q.id]===o?'sel':''}" data-resp="${esc(o)}">${esc(o)}</button>`).join('')}<p class=err id=aviso></p><button id=atras ${pos===0?'disabled':''}>Anterior</button><button id=adelante>${pos===preguntas.length-1?'Revisar y entregar':'Siguiente'}</button><button class=sec id=entregar>Entregar ahora</button></div>`);app.querySelectorAll('[data-resp]').forEach(b=>b.onclick=()=>{respuestas[q.id]=b.dataset.resp;app.querySelectorAll('[data-resp]').forEach(x=>x.classList.toggle('sel',x===b));});$('#atras').onclick=()=>{pos--;mostrar()};$('#adelante').onclick=()=>{if(pos<preguntas.length-1){pos++;mostrar()}else{const sin=preguntas.filter(x=>respuestas[x.id]===undefined).length;if(sin&&!confirm(`Quedan ${sin} preguntas sin responder. ¿Desea entregar?`))return;entregar()}};$('#entregar').onclick=()=>entregar();actualizar();};
+ $('#ev-asignar-preguntas').onclick=async()=>{const st=$('#ev-asignar-estado'),cat=$('#ev-catalogo').value;if(!cat)return st.textContent='Seleccione primero una evaluación del catálogo.';const materia=$('#ev-materia').value,grado=$('#ev-grupo').value.split('|')[0];if(!materia||!grado)return st.textContent='Seleccione materia y salón.';const elegibles=banco.filter(x=>{const c=clasePorId.get(x.id);return c&&c.materia_id===materia&&String(c.grado)===grado&&(!$('#ev-tema').value||(x.tema||'Sin tema')===$('#ev-tema').value)&&(!$('#ev-nivel').value||x.nivel===$('#ev-nivel').value);});if(!elegibles.length)return st.textContent='No hay preguntas con esos filtros.';if(!confirm(`¿Vincular ${elegibles.length} preguntas a esta evaluación?`))return;const ya=idsCatalogo.get(cat)||new Set(),nuevas=elegibles.filter(x=>!ya.has(String(x.id)));if(!nuevas.length)return st.textContent='Todas estas preguntas ya estaban vinculadas.';const b=$('#ev-asignar-preguntas');b.disabled=true;let total=0;for(let i=0;i<nuevas.length;i+=100){const lote=nuevas.slice(i,i+100).map(x=>({docente_id:uid,catalogo_id:Number(cat),pregunta_id:x.id}));const {error}=await sb.from('cia_catalogo_preguntas').insert(lote);if(error){st.textContent='Error: '+error.message;b.disabled=false;return;}for(const x of nuevas.slice(i,i+100))ya.add(String(x.id));total+=lote.length;}idsCatalogo.set(cat,ya);st.textContent=`${total} preguntas vinculadas correctamente.`;b.disabled=false;actualizar();};
+ const actualizar=()=>{const c=$('#cronometro');if(c)c.textContent=`Tiempo restante: ${Math.floor(tiempo()/60)}:${String(tiempo()%60).padStart(2,'0')}`;if(tiempo()<=0){clearInterval(reloj);entregar(true)}};mostrar();reloj=setInterval(actualizar,1000);
+}
+function resultado(r){const nota5=r.total?Math.max(1,Math.min(5,1+4*r.nota/r.total)):1;draw(`<div class=card><h2>Resultado: ${nota5.toFixed(2)} / 5.00</h2><p>Aciertos: ${r.nota} de ${r.total} (${r.total?Math.round(r.nota/r.total*100):0}%). Escala orientativa de 1 a 5; el registro oficial sigue dependiendo de Supabase.</p><button id=o>Hacer otro ejercicio</button></div>${r.detalle.map((q,k)=>`<div class="card ${q.ok?'bien':'mal'}"><b>${k+1}. ${esc(q.enunciado)}</b><p>${q.ok?'Correcta':'Incorrecta'}. Respuesta: <b>${esc(fmt(q.correcta))}</b></p><p class=s>${esc(q.explicacion)}</p></div>`).join('')}`);$('#o').onclick=menu;}
+
+/* ---------- DOCENTE ---------- */
+async function loginDoc(){const {data:{session}}=await sb.auth.getSession();if(session)return panel();
+ draw(`<div class=card><h2>Ingreso docente</h2><label>Correo<input id=em type=email></label><label>Contraseña<input id=pw type=password></label><p class=err id=m></p><button id=go>Entrar</button><button class=sec id=b>Volver</button></div>`);$('#b').onclick=inicio;
+ $('#go').onclick=async()=>{const {error}=await sb.auth.signInWithPassword({email:$('#em').value.trim(),password:$('#pw').value});if(error)return $('#m').textContent=error.message;panel();};}
+async function panel(){
+ const {data:ud,error:ue}=await sb.auth.getUser();
+ const user=ud?.user;
+ if(ue||!user){draw(`<div class=card><p class=err>No se pudo verificar la sesión: ${esc(ue?.message||'sesión no disponible')}.</p><button id=x>Volver</button></div>`);$('#x').onclick=loginDoc;return;}
+ const {data:dc,error:de}=await sb.from('cia_docentes').select('id').eq('id',user.id).maybeSingle();
+ if(de||!dc){
+  const detalle=de?`Error de consulta (${esc(de.code||'sin código')}): ${esc(de.message)}. ${esc(de.details||'')}`:'La consulta no devolvió el registro. Compruebe que la sesión pertenezca al mismo proyecto Supabase que contiene el docente.';
+  draw(`<div class=card><h2>No se pudo verificar el acceso docente</h2><p class=err>${detalle}</p><p class=s>Cuenta: ${esc(user.email||'sin correo')} · ID: ${esc(user.id)}</p><button id=x class=sec>Salir</button></div>`);
+  $('#x').onclick=async()=>{await sb.auth.signOut();inicio();};return;
+ }
+ draw(`<div class="card tabs"><button data-p=informe>Resumen</button><button data-p=mat>Materias</button><button data-p=est>Estudiantes</button><button data-p=cat>Catálogo de técnicas</button><button data-p=grupos>Equipos</button><button data-p=eval>Evaluaciones</button><button data-p=res>Resultados</button><button class=sec id=x>Salir</button></div><div id=v></div>`);
+ app.querySelectorAll('[data-p]').forEach(b=>b.onclick=()=>{app.querySelectorAll('[data-p]').forEach(o=>o.classList.toggle('on',o==b));history.replaceState(null,'','#docente/'+b.dataset.p);({informe:tInforme,mat:tMaterias,est:tEst,cat:tCatalogo,grupos:tEquipos,eval:tEvaluaciones,res:tRes})[b.dataset.p](user.id);});
+ $('#x').onclick=async()=>{await sb.auth.signOut();inicio();};const ini0=(location.hash.match(/^#docente\/(\w+)/)||[])[1],ini=['banco','e2'].includes(ini0)?'mat':ini0;(app.querySelector(`[data-p="${ini}"]`)||app.querySelector('[data-p=informe]')).click();}
+
+async function tCatalogo(uid){
+ $('#v').innerHTML=`<div class="card"><h2>Catálogo de técnicas por tipo</h2><p>Seleccione una técnica y trabájela una por una. El seguimiento del desarrollo se guarda en este navegador, no en Supabase.</p><p><a href="catalogo-tecnicas.html" target="_blank" rel="noopener">Abrir catálogo completo de 25 técnicas</a></p><p>Las técnicas todavía no implementadas no se habilitan automáticamente para los estudiantes.</p></div>`;
+}
+async function tEquipos(uid){
+ const v=$('#v');v.innerHTML='<div class="card"><h2>Equipos de estudiantes</h2><p>Cargando…</p></div>';
+ const [es,gs,ms]=await Promise.all([sb.from('cia_estudiantes').select('id,nombres,cedula,grado,seccion').eq('docente_id',uid).order('nombres'),sb.from('cia_equipos').select('id,nombre,grado,seccion').eq('docente_id',uid).order('nombre'),sb.from('cia_equipo_integrantes').select('equipo_id,estudiante_id').eq('docente_id',uid)]);
+ if(es.error){v.innerHTML='<div class="card"><p class="err">'+esc(es.error.message)+'</p></div>';return;}
+ if(gs.error||ms.error){v.innerHTML='<div class="card"><h2>Equipos</h2><p class="err">Falta instalar el archivo SQL de equipos o revisar permisos: '+esc(gs.error?.message||ms.error?.message)+'</p><p>Ejecute sql/07_cia_equipos.sql en Supabase.</p></div>';return;}
+ const alumnos=es.data||[],equipos=gs.data||[],integrantes=ms.data||[];
+ const salon=a=>String(a.grado||'')+'° '+String(a.seccion||'');
+ const salons=[...new Set(alumnos.map(salon))].sort();
+ v.innerHTML=`<div class="card"><h2>Equipos de trabajo</h2><p>Los integrantes se vinculan al registro del estudiante y a su cédula. Crear un equipo no asigna automáticamente una evaluación ni una nota.</p><label>Nombre del equipo<input id="eq-nombre" placeholder="Equipo 1"></label><label>Salón<select id="eq-salon">${salons.map(x=>`<option>${esc(x)}</option>`).join('')}</select></label><button id="eq-crear">Crear equipo</button><p id="eq-estado" role="status"></p></div><div class="card"><h3>Equipos registrados</h3>${equipos.map(g=>{const miembros=integrantes.filter(m=>m.equipo_id===g.id).map(m=>alumnos.find(a=>a.id===m.estudiante_id)).filter(Boolean);const disponibles=alumnos.filter(a=>salon(a)===String(g.grado)+'° '+String(g.seccion)&&!miembros.some(m=>m.id===a.id));return `<div class="card"><h3>${esc(g.nombre)} · ${esc(g.grado)}° ${esc(g.seccion)}</h3><p>${miembros.map(m=>esc(m.nombres)+' ('+esc(m.cedula)+')').join(' · ')||'Sin integrantes'}</p><label>Agregar estudiante<select data-eq-alumno="${esc(g.id)}"><option value="">Seleccione estudiante</option>${disponibles.map(a=>`<option value="${esc(a.id)}">${esc(a.nombres)} · ${esc(a.cedula)}</option>`).join('')}</select></label><button class="sec" data-eq-add="${esc(g.id)}">Agregar integrante</button><label>Retirar integrante<select data-eq-retirar="${esc(g.id)}"><option value="">Seleccione integrante</option>${miembros.map(a=>`<option value="${esc(a.id)}">${esc(a.nombres)}</option>`).join('')}</select></label><button class="sec" data-eq-remove="${esc(g.id)}">Retirar</button></div>`}).join('')||'<p>No hay equipos todavía.</p>'}</div>`;
+ $('#eq-crear').onclick=async()=>{const nombre=$('#eq-nombre').value.trim(),sel=$('#eq-salon').value;if(!nombre)return $('#eq-estado').textContent='Escriba el nombre del equipo.';const a=alumnos.find(a=>salon(a)===sel);if(!a)return;const {error}=await sb.from('cia_equipos').insert({docente_id:uid,nombre,grado:a.grado,seccion:a.seccion});if(error)$('#eq-estado').textContent=error.message;else tEquipos(uid);};
+ v.querySelectorAll('[data-eq-add]').forEach(b=>b.onclick=async()=>{const id=b.dataset.eqAdd,est=v.querySelector(`[data-eq-alumno="${id}"]`).value;if(!est)return;const {error}=await sb.from('cia_equipo_integrantes').insert({docente_id:uid,equipo_id:id,estudiante_id:est});if(error)alert(error.message);else tEquipos(uid);});
+ v.querySelectorAll('[data-eq-remove]').forEach(b=>b.onclick=async()=>{const id=b.dataset.eqRemove,est=v.querySelector(`[data-eq-retirar="${id}"]`).value;if(!est)return;const {error}=await sb.from('cia_equipo_integrantes').delete().eq('docente_id',uid).eq('equipo_id',id).eq('estudiante_id',est);if(error)alert(error.message);else tEquipos(uid);});
+}
+let texto='';
+const clavePregunta=s=>String(s||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]/g,'');
+const descargarArchivo=(nombre,contenido,tipo)=>{const url=URL.createObjectURL(new Blob([contenido],{type:tipo}));const a=document.createElement('a');a.href=url;a.download=nombre;a.click();setTimeout(()=>URL.revokeObjectURL(url),1500);};
+const csvCelda=v=>'"'+String(v??'').replace(/"/g,'""')+'"';
+const avisoError=(e)=>`<p class="err">Error de Supabase: ${esc(e.message)} (${esc(e.code||'')})</p>`;
+async function tInforme(uid){
+ $('#v').innerHTML='<div class=card><h2>Resumen general</h2><p>Consultando datos del proyecto…</p></div>';
+ const [p,e,i,x,r]=await Promise.all([
+  sb.from('cia_preguntas').select('id,tema,nivel').eq('docente_id',uid),
+  sb.from('cia_estudiantes').select('id,nombres,grado,seccion').eq('docente_id',uid),
+  sb.from('cia_intentos').select('id,nota,revision_pendiente,estudiante_id,creado_en').eq('docente_id',uid),
+  sb.from('cia_ejercicios').select('id,titulo').eq('docente_id',uid),
+  sb.from('cia8_intentos').select('id,estudiante_id,tipo,nota,creado_en,enviado_en').eq('docente_id',uid).not('enviado_en','is',null)
+ ]);
+ const error=[p,e,i,x,r].find(v=>v.error)?.error;
+ if(error){$('#v').innerHTML=`<div class=card>${avisoError(error)}</div>`;return;}
+ const grupos=new Map();e.data.forEach(a=>{const k=`${a.grado||'Sin grado'} ${a.seccion||''}`.trim();grupos.set(k,(grupos.get(k)||0)+1);});
+ const intentos=[...i.data.map(v=>({...v,escala:Math.max(1,Math.min(5,Number(v.nota)||0)),tipo:'General'})),...r.data.map(v=>({...v,escala:1+4*Math.max(0,Math.min(8,Number(v.nota)||0))/8,tipo:TIPOS[v.tipo]||v.tipo,creado_en:v.enviado_en||v.creado_en}))];
+ const promedio=intentos.length?(intentos.reduce((a,v)=>a+v.escala,0)/intentos.length).toFixed(2):'Sin notas';
+ const pendientes=i.data.filter(v=>v.revision_pendiente).length;
+ const porTema=new Map();p.data.forEach(q=>{const t=q.tema||'Sin tema';porTema.set(t,(porTema.get(t)||0)+1);});
+ const ultimos=intentos.sort((a,b)=>String(b.creado_en).localeCompare(String(a.creado_en))).slice(0,5);
+ const nombreEst=new Map(e.data.map(a=>[a.id,a.nombres||'Estudiante']));
+ $('#v').innerHTML=`<div class=card><h2>Panel de seguimiento</h2><p><b>${p.data.length}</b> preguntas generales · <b>${e.data.length}</b> estudiantes · <b>${x.data.length}</b> ejercicios generales · <b>${intentos.length}</b> intentos (${r.data.length} prácticas rápidas)</p><p>Promedio de notas: <b>${promedio}</b> / 5.00 · Revisiones pendientes: <b>${pendientes}</b></p><h3>Temas del banco</h3><p>${[...porTema.entries()].sort((a,b)=>b[1]-a[1]).map(([k,v])=>`${esc(k)}: <b>${v}</b>`).join(' · ')||'Sin preguntas'}</p><h3>Estudiantes por salón</h3><table><tr><th>Salón</th><th>Cantidad</th></tr>${[...grupos.entries()].sort((a,b)=>a[0].localeCompare(b[0])).map(([k,n])=>`<tr><td>${esc(k)}</td><td>${n}</td></tr>`).join('')||'<tr><td colspan=2>Sin matrícula</td></tr>'}</table><h3>Últimos cinco intentos</h3><table><tr><th>Estudiante</th><th>Ejercicio</th><th>Nota / 5</th><th>Fecha</th></tr>${ultimos.map(v=>`<tr><td>${esc(nombreEst.get(v.estudiante_id)||'ID '+v.estudiante_id)}</td><td>${esc(v.tipo)}</td><td>${v.escala.toFixed(2)}</td><td>${esc(v.creado_en?.slice(0,10)||'')}</td></tr>`).join('')||'<tr><td colspan=4>Sin intentos</td></tr>'}</table><p class=s>Prácticas rápidas y ejercicios generales; no incluye evaluaciones oficiales de otra tabla.</p><button id=imprimir-resumen class=sec>Imprimir resumen</button></div>`;
+ $('#imprimir-resumen').onclick=()=>window.print();
+}
+async function tBanco(uid){
+ const {data:pr,error}=await sb.from('cia_preguntas').select('id,enunciado,tema,nivel,creado_en').eq('docente_id',uid).order('creado_en',{ascending:false});
+ if(error){$('#v').innerHTML=`<div class=card>${avisoError(error)}</div>`;return;}
+ const niveles={facil:0,medio:0,dificil:0};const temas=new Map();
+ pr.forEach(p=>{if(p.nivel in niveles)niveles[p.nivel]++;const tema=(p.tema||'Sin tema').trim();temas.set(tema,(temas.get(tema)||0)+1);});
+ const temasOrdenados=[...temas.entries()].sort((a,b)=>b[1]-a[1]);
+ const conteos=new Map();pr.forEach(p=>{const k=clavePregunta(p.enunciado);conteos.set(k,(conteos.get(k)||0)+1);});
+ const repetidas=pr.filter(p=>conteos.get(clavePregunta(p.enunciado))>1).length;
+ $('#v').innerHTML=`<div class=card><h2>Banco de preguntas: ${pr.length}</h2><p class=s>Suba un PDF con texto y genere preguntas mediante Gemini (plan gratuito sujeto a límites).</p><label>PDF de la clase<input id=pdf type=file accept="application/pdf"></label><p id=fu class=s></p><label>Nombre del banco<input id=bn placeholder="Ej. La célula, 9.º grado"></label><label>Cantidad<select id=cant><option selected>20</option><option>40</option><option>60</option><option>80</option></select></label><label>Técnicas de preguntas<select id=tecnicas multiple size=6><option value="seleccion_multiple" selected>Selección múltiple</option><option value="verdadero_falso" selected>Verdadero o falso</option><option value="completar" selected>Completar</option><option value="relacionar" selected>Relacionar columnas</option><option value="ordenar" selected>Ordenar secuencia</option><option value="caso" selected>Casos prácticos</option></select></label><p class=s>Use Ctrl para seleccionar varias técnicas. Las preguntas se revisan antes de guardarse.</p><button id=gen disabled>Generar preguntas con IA</button><p class=s id=st role=status>Primero seleccione un PDF. Revise las preguntas antes de guardarlas.</p><div id=prev></div></div><div class=card><h3>Resumen del banco</h3><div class="resumen-banco"><div><b>${pr.length}</b><span>Total</span></div><div><b>${niveles.facil}</b><span>Fáciles</span></div><div><b>${niveles.medio}</b><span>Medias</span></div><div><b>${niveles.dificil}</b><span>Difíciles</span></div></div><p class=s><b>Temas:</b> ${temasOrdenados.map(([tema,cantidad])=>`${esc(tema)} (${cantidad})`).join(' · ')||'Sin preguntas'}</p><button id=pregunta-azar class=sec ${pr.length?'':'disabled'}>Revisar pregunta al azar</button><p id=azar-estado class=s role=status></p><button id=exportar-csv class=sec ${pr.length?'':'disabled'}>Exportar CSV</button><button id=exportar-filtradas class=sec ${pr.length?'':'disabled'}>Exportar preguntas filtradas CSV</button><button id=exportar-json class=sec ${pr.length?'':'disabled'}>Respaldar JSON completo</button><p class=s>Las exportaciones contienen únicamente preguntas del docente conectado. El JSON incluye respuestas y explicaciones: no lo comparta con estudiantes.</p><p id=estado-exportacion class=s role=status></p></div><div class=card><h3>Herramientas docentes · 5 etapas</h3><p class=s>Revisión y preparación de evaluaciones. Estas herramientas no modifican las notas ni las preguntas.</p><button id=auditar-banco class=sec>1. Auditar calidad</button><button id=descargar-auditoria class=sec>2. Descargar auditoría CSV</button><button id=practica-docente class=sec>3. Practicar 10 preguntas</button><button id=imprimir-banco class=sec>4. Imprimir banco filtrado</button><button id=descargar-practica class=sec>5. Exportar práctica JSON</button><p id=auditoria-resumen class=s role=status></p><div id=practica-panel></div></div><div class=card><h3>Preguntas guardadas</h3><p class=s>${repetidas} preguntas pertenecen a grupos con enunciados repetidos (revisión manual; no se elimina nada automáticamente).</p><label>Buscar pregunta o tema<input id=buscar-pregunta placeholder="Escriba para filtrar"></label><label>Filtrar por tema<select id=filtro-tema><option value="">Todos los temas</option>${temasOrdenados.map(([t])=>`<option value="${esc(t)}">${esc(t)}</option>`).join('')}</select></label><label>Filtrar por dificultad<select id=filtro-nivel><option value="">Todas</option><option value="facil">Fácil</option><option value="medio">Medio</option><option value="dificil">Difícil</option></select></label><label><input type=checkbox id=solo-repetidas> Mostrar solo repetidas</label><p id=contador-preguntas class=s></p><div id=lista-preguntas>${pr.map(p=>`<div class=row data-item data-busca="${esc((p.enunciado+' '+(p.tema||'')).toLowerCase())}" data-tema="${esc((p.tema||'Sin tema').trim())}" data-nivel="${esc(p.nivel||'')}" data-duplicada="${conteos.get(clavePregunta(p.enunciado))>1?'si':'no'}"><span><b>${esc(p.tema||'Sin tema')}</b> · ${esc(p.nivel||'Sin nivel')}<p>${esc(p.enunciado)}</p></span><span><button class=sec data-ver="${p.id}">Vista previa</button><button class=sec data-e="${p.id}">Editar</button><button class=sec data-del="${p.id}">Eliminar</button></span></div><hr>`).join('')||'<p>Aún no hay preguntas.</p>'}</div></div>`;
+ // Etapa 2: publicación individual con revisión explícita del docente.
+ const panelPublicacion=document.createElement('div');
+ panelPublicacion.className='card';
+ panelPublicacion.innerHTML='<h3>Enviar preguntas a prácticas rápidas</h3><p class="s">Solo se publican preguntas compatibles y aprobadas. No modifica preguntas ni notas existentes.</p><button id="ver-candidatas" class="sec">Consultar candidatas</button><p id="estado-candidatas" class="s" role="status"></p><div id="lista-candidatas"></div>';
+ $('#v').appendChild(panelPublicacion);
+ $('#ver-candidatas').onclick=async()=>{
+  const estado=$('#estado-candidatas'),lista=$('#lista-candidatas');
+  estado.textContent='Consultando preguntas...';lista.innerHTML='';
+  const {data,error}=await sb.from('cia8_candidatas_desde_banco').select('pregunta_origen_id,enunciado,tipo_destino,estado').eq('docente_id',uid).order('enunciado');
+  if(error){estado.textContent='No se pudo consultar. Ejecute primero el SQL de Etapa 2: '+error.message;return;}
+  const candidatas=(data||[]).filter(x=>x.estado==='CANDIDATA_PARA_REVISION');
+  estado.textContent=`${candidatas.length} candidatas para aprobar · ${(data||[]).length-candidatas.length} existentes o pendientes de adaptación.`;
+  lista.innerHTML=candidatas.map(q=>`<div class="row"><span><b>${esc(q.tipo_destino)}</b><p>${esc(q.enunciado)}</p></span><button class="sec" data-publicar="${esc(q.pregunta_origen_id)}">Revisar y aprobar</button></div>`).join('')||'<p>No hay candidatas nuevas.</p>';
+  lista.querySelectorAll('[data-publicar]').forEach(b=>b.onclick=async()=>{
+   b.disabled=true;
+   const {data:p,error:e}=await sb.from('cia_preguntas').select('enunciado,correcta,distractores,explicacion,tema').eq('id',b.dataset.publicar).eq('docente_id',uid).single();
+   if(e){estado.textContent=e.message;b.disabled=false;return;}
+   const opciones=Array.isArray(p.distractores)?p.distractores:[];
+   if(!confirm(`REVISIÓN DOCENTE\n\n${p.enunciado}\n\nCorrecta: ${p.correcta}\nDistractores: ${opciones.join(' | ')}\n\n¿Aprobar y publicar esta pregunta para prácticas rápidas?`)){b.disabled=false;return;}
+   const origen=b.dataset.publicar;
+   try {
+    const {data:r,error:re}=await sb.rpc('cia8_publicar_desde_banco',{p_origen:origen});
+    if(re)throw new Error(re.message);
+    // Una respuesta RPC positiva por sí sola no confirma la persistencia.
+    const {data:v,error:ve}=await sb.from('cia8_origen_banco')
+      .select('pregunta_practica_id').eq('pregunta_origen_id',origen).limit(1);
+    if(ve)throw new Error('No se pudo verificar la publicación: '+ve.message);
+    const destino=v?.[0]?.pregunta_practica_id;
+    if(!destino){
+     estado.textContent='No se confirmó la publicación en cia8_origen_banco. La pregunta permanece pendiente. Resultado RPC: '+JSON.stringify(r??null);
+     b.disabled=false;return;
+    }
+    const {data:guardada,error:ge}=await sb.from('cia8_preguntas')
+      .select('id').eq('id',destino).maybeSingle();
+    if(ge)throw new Error('No se pudo verificar la pregunta publicada: '+ge.message);
+    if(!guardada){estado.textContent='La vinculación existe, pero falta la pregunta de práctica. Revise Supabase.';b.disabled=false;return;}
+    estado.textContent=r?.ya_existia?'Esta pregunta ya estaba publicada (verificada).':'Pregunta publicada y verificada en Supabase.';
+    b.closest('.row').remove();
+   }catch(err){estado.textContent='Publicación sin confirmar: '+err.message;b.disabled=false;}
+
+  });
+ };
+ const visiblesBanco=()=>{const ids=new Set([...app.querySelectorAll('[data-item]')].filter(el=>!el.hidden).map(el=>el.querySelector('[data-e]').dataset.e));return pr.filter(p=>ids.has(String(p.id)));};
+ const revisarCalidad=async()=>{const {data,error}=await sb.from('cia_preguntas').select('id,enunciado,correcta,distractores,explicacion,tema,nivel').eq('docente_id',uid);if(error)throw error;return(data||[]).map(p=>{const problemas=[];if(String(p.enunciado||'').trim().length<20)problemas.push('Enunciado corto');if(!String(p.correcta||'').trim())problemas.push('Sin respuesta');if(!String(p.explicacion||'').trim())problemas.push('Sin explicación');if(!String(p.tema||'').trim())problemas.push('Sin tema');if(!['facil','medio','dificil'].includes(p.nivel))problemas.push('Dificultad no reconocida');const opts=Array.isArray(p.distractores)?p.distractores:[];if(opts.length<2)problemas.push('Pocas opciones incorrectas');if(opts.some(x=>String(x).trim().toLowerCase()===String(p.correcta||'').trim().toLowerCase()))problemas.push('Respuesta repetida entre distractores');return {...p,problemas};});};
+ $('#auditar-banco').onclick=async()=>{const el=$('#auditoria-resumen');el.textContent='Revisando preguntas...';try{const a=await revisarCalidad(),mal=a.filter(p=>p.problemas.length);el.textContent=`Revisadas ${a.length} preguntas. ${a.length-mal.length} sin alertas y ${mal.length} para revisar. Las alertas son orientativas.`;$('#practica-panel').innerHTML=mal.slice(0,30).map(p=>`<p><b>${esc(p.tema||'Sin tema')}</b>: ${esc(p.enunciado)} <span class=err>(${esc(p.problemas.join(', '))})</span></p>`).join('')||'<p>No se encontraron alertas.</p>';}catch(e){el.textContent='No se pudo auditar: '+e.message;}};
+ $('#descargar-auditoria').onclick=async()=>{try{const a=await revisarCalidad();const filas=[['tema','nivel','enunciado','alertas'],...a.map(p=>[p.tema,p.nivel,p.enunciado,p.problemas.join('; ')])];descargarArchivo('cia_auditoria_preguntas.csv','\ufeff'+filas.map(r=>r.map(csvCelda).join(',')).join('\r\n'),'text/csv;charset=utf-8');$('#auditoria-resumen').textContent=`Auditoría exportada: ${a.length} preguntas.`;}catch(e){$('#auditoria-resumen').textContent=e.message;}};
+ const obtenerPractica=async()=>{const ids=new Set(visiblesBanco().map(p=>String(p.id)));const {data,error}=await sb.from('cia_preguntas').select('id,enunciado,correcta,distractores,explicacion,tema,nivel').eq('docente_id',uid);if(error)throw error;return(data||[]).filter(p=>ids.has(String(p.id))).sort(()=>Math.random()-.5).slice(0,10);};
+ $('#practica-docente').onclick=async()=>{const panel=$('#practica-panel');panel.textContent='Preparando práctica...';try{const qs=await obtenerPractica();if(!qs.length){panel.textContent='No hay preguntas con los filtros actuales.';return;}panel.innerHTML='<h3>Práctica del docente (sin nota)</h3>'+qs.map((p,i)=>{const opts=[p.correcta,...(Array.isArray(p.distractores)?p.distractores:[])].map(x=>String(x)).sort(()=>Math.random()-.5);return `<fieldset style="margin:12px 0;padding:12px;border:1px solid #cfd9cc;border-radius:8px"><legend>${i+1}. ${esc(p.enunciado)}</legend>${opts.map((x,j)=>`<label style="display:block"><input type=radio name="practica-${i}" value="${j}"> ${esc(x)}</label>`).join('')}<p class=s data-solucion="${i}" hidden>Correcta: ${esc(p.correcta)}. ${esc(p.explicacion||'')}</p></fieldset>`;}).join('')+'<button id=corregir-practica>Ver respuestas</button>';panel.querySelector('#corregir-practica').onclick=()=>{panel.querySelectorAll('[data-solucion]').forEach(x=>x.hidden=false);};}catch(e){panel.textContent='Error: '+e.message;}};
+ $('#imprimir-banco').onclick=()=>{const filas=visiblesBanco();if(!filas.length)return alert('No hay preguntas para imprimir.');const ventana=window.open('','_blank');if(!ventana)return alert('Permita las ventanas emergentes para imprimir.');ventana.document.write('<!doctype html><html lang="es"><meta charset="utf-8"><title>Banco de preguntas</title><style>body{font:14px Arial;margin:32px}li{margin:12px 0}</style><h1>Banco de preguntas · CIA</h1><p>'+filas.length+' preguntas</p><ol>'+filas.map(p=>'<li><b>'+esc(p.enunciado)+'</b> ('+esc(p.tema||'')+' · '+esc(p.nivel||'')+')</li>').join('')+'</ol></html>');ventana.document.close();ventana.focus();ventana.print();};
+ $('#descargar-practica').onclick=async()=>{try{const qs=await obtenerPractica();if(!qs.length)return alert('No hay preguntas filtradas.');descargarArchivo('cia_practica_docente.json',JSON.stringify({tipo:'practica_docente',fecha:new Date().toISOString(),preguntas:qs.map(({enunciado,correcta,distractores,explicacion,tema,nivel})=>({enunciado,correcta,distractores,explicacion,tema,nivel}))},null,2),'application/json');$('#auditoria-resumen').textContent=`Práctica exportada: ${qs.length} preguntas. Contiene respuestas; no compartir con estudiantes.`;}catch(e){$('#auditoria-resumen').textContent=e.message;}};
+ $('#pregunta-azar').onclick=()=>{const p=pr[Math.floor(Math.random()*pr.length)];$('#azar-estado').textContent=`Tema: ${p.tema||'Sin tema'} · Dificultad: ${p.nivel||'Sin nivel'} · ${p.enunciado}`;};
+ $('#exportar-csv').onclick=()=>{const cab=['tema','nivel','enunciado'];const filas=pr.map(p=>[p.tema,p.nivel,p.enunciado]);descargarArchivo('cia_preguntas_resumen.csv','\ufeff'+[cab,...filas].map(f=>f.map(csvCelda).join(',')).join('\r\n'),'text/csv;charset=utf-8');$('#estado-exportacion').textContent='Resumen CSV descargado.';};
+ $('#exportar-filtradas').onclick=()=>{const visibles=new Set([...app.querySelectorAll('[data-item]')].filter(el=>!el.hidden).map(el=>el.querySelector('[data-e]').dataset.e));const filas=pr.filter(p=>visibles.has(String(p.id))).map(p=>[p.tema,p.nivel,p.enunciado]);descargarArchivo('cia_preguntas_filtradas.csv','\ufeff'+[['tema','nivel','enunciado'],...filas].map(r=>r.map(csvCelda).join(',')).join('\r\n'),'text/csv;charset=utf-8');$('#estado-exportacion').textContent=`Exportadas ${filas.length} preguntas visibles.`;};
+ $('#exportar-json').onclick=async()=>{const b=$('#exportar-json');b.disabled=true;$('#estado-exportacion').textContent='Preparando respaldo...';try{const {data,error}=await sb.from('cia_preguntas').select('enunciado,correcta,distractores,explicacion,tema,nivel,metadatos').eq('docente_id',uid).order('creado_en',{ascending:false});if(error)throw error;descargarArchivo('cia_banco_respaldo.json',JSON.stringify({version:1,fecha:new Date().toISOString(),preguntas:data},null,2),'application/json');$('#estado-exportacion').textContent=`Respaldo descargado: ${data.length} preguntas.`;}catch(e){$('#estado-exportacion').textContent='Error al exportar: '+e.message;}finally{b.disabled=false;}};
+ const filtrar=()=>{const bus=$('#buscar-pregunta').value.toLowerCase().trim(),nivel=$('#filtro-nivel').value,tema=$('#filtro-tema').value,solo=$('#solo-repetidas').checked;let visibles=0;app.querySelectorAll('[data-item]').forEach(el=>{const mostrar=el.dataset.busca.includes(bus)&&(!nivel||el.dataset.nivel===nivel)&&(!tema||el.dataset.tema===tema)&&(!solo||el.dataset.duplicada==='si');el.hidden=!mostrar;if(mostrar)visibles++;});$('#contador-preguntas').textContent=`Mostrando ${visibles} de ${pr.length} preguntas`;};
+ $('#buscar-pregunta').oninput=filtrar;$('#filtro-nivel').onchange=filtrar;$('#filtro-tema').onchange=filtrar;$('#solo-repetidas').onchange=filtrar;filtrar();
+ app.querySelectorAll('[data-ver]').forEach(b=>b.onclick=async()=>{const {data:p,error}=await sb.from('cia_preguntas').select('enunciado,correcta,distractores,explicacion,tema,nivel').eq('id',b.dataset.ver).eq('docente_id',uid).single();if(error){alert(error.message);return;}const fondo=document.createElement('div');fondo.className='editor-fondo';const opts=[p.correcta,...(Array.isArray(p.distractores)?p.distractores:[])];fondo.innerHTML=`<section class="editor-caja" role="dialog" aria-modal="true"><h2>Vista previa para el docente</h2><p class=s>${esc(p.tema||'')} · ${esc(p.nivel||'')}</p><h3>${esc(p.enunciado)}</h3>${opts.map((x,i)=>`<p>${i+1}. ${esc(typeof x==='string'?x:JSON.stringify(x))}</p>`).join('')}<hr><p><b>Respuesta correcta:</b> ${esc(typeof p.correcta==='string'?p.correcta:JSON.stringify(p.correcta))}</p><p><b>Explicación:</b> ${esc(p.explicacion||'Sin explicación')}</p><button id=cerrar-vista>Cerrar</button></section>`;document.body.appendChild(fondo);fondo.querySelector('#cerrar-vista').onclick=()=>fondo.remove();fondo.onclick=e=>{if(e.target===fondo)fondo.remove();};});
+ app.querySelectorAll('[data-del]').forEach(b=>b.onclick=async()=>{const p=pr.find(x=>x.id===b.dataset.del);if(!p)return;if(!confirm(`¿Eliminar definitivamente esta pregunta?\\n\\n${p.enunciado}\\n\\nEsta acción no se puede deshacer.`))return;b.disabled=true;const {data,error}=await sb.from('cia_preguntas').delete().eq('id',p.id).eq('docente_id',uid).select('id');if(error||!data?.length){alert('No se pudo eliminar: '+(error?.message||'Revise los permisos de Supabase.'));b.disabled=false;return;}await tBanco(uid);});
+ $('#pdf').onchange=async e=>{try{const file=e.target.files[0];if(!file)return;if(file.size>10*1024*1024)throw Error('El PDF supera 10 MB');pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';const doc=await pdfjsLib.getDocument({data:await file.arrayBuffer()}).promise;let t=[];for(let i=1;i<=doc.numPages;i++){const c=await(await doc.getPage(i)).getTextContent();t.push(c.items.map(x=>x.str).join(' '));}texto=t.join('\n').slice(0,45000);if(texto.trim().length<150)throw Error('No se detectó texto suficiente. Para PDF escaneado se requiere OCR.');$('#fu').textContent=`PDF leído: ${doc.numPages} páginas, ${texto.length} caracteres.`;$('#gen').disabled=false;}catch(err){$('#fu').textContent=err.message;$('#gen').disabled=true;}};
+ $('#gen').onclick=async()=>{const st=$('#st'),gen=$('#gen');gen.disabled=true;st.textContent='Generando preguntas. Puede tardar varios minutos...';try{const {data,error}=await sb.functions.invoke('cia-generar',{body:{texto,tema:$('#bn').value.trim()||'Ciencias Naturales',grado:'9',cantidad:Number($('#cant').value),tecnicas:[...$('#tecnicas').selectedOptions].map(o=>o.value)}});if(error){let detalle=data?.error||error.message;try{if(error.context){const j=await error.context.json();detalle=j.error||detalle;}}catch{}throw Error(detalle);}if(data?.error)throw Error(data.error);const qs=(data.preguntas||[]).map(q=>({enunciado:String(q.enunciado||q.pregunta||'').trim(),correcta:typeof (q.correcta??q.respuesta)==='string'?(q.correcta??q.respuesta).trim():JSON.stringify(q.correcta??q.respuesta??''),distractores:Array.isArray(q.distractores)?q.distractores:(Array.isArray(q.opciones)?q.opciones.filter(o=>o!==q.respuesta).slice(0,3):[]),explicacion:q.explicacion||'',tema:q.tema||$('#bn').value.trim()||'Ciencias Naturales',nivel:({facil:'facil',medio:'medio',dificil:'dificil'})[q.nivel||q.dificultad]||'medio',tipo:q.tipo||'seleccion_multiple'})).filter(q=>q.enunciado&&q.correcta);if(!qs.length)throw Error('La IA no devolvió preguntas');st.textContent=`${qs.length} preguntas generadas. Revise, edite o descarte antes de guardar. No se han guardado todavía.`;$('#prev').innerHTML=qs.map((q,i)=>`<div class=card><label><input type=checkbox data-keep="${i}" checked> Guardar pregunta ${i+1}</label><textarea data-q="${i}" rows=3 style="width:100%;font:inherit;padding:10px">${esc(q.enunciado)}</textarea><p class=s>Tipo: ${esc(q.tipo)} · ${esc(q.nivel)}</p><label>Respuesta correcta<textarea data-a="${i}" rows=2>${esc(q.correcta)}</textarea></label><label>Opciones o distractores (una por línea)<textarea data-o="${i}" rows=4>${esc(q.distractores.join("\n"))}</textarea></label><p class=s>${esc(q.explicacion)}</p></div>`).join('')+'<button id=save>Guardar preguntas seleccionadas</button>';
+ $('#save').onclick=async()=>{const nombre=$('#bn').value.trim()||'Banco generado desde PDF';const selected=qs.map((q,i)=>({...q,enunciado:app.querySelector(`[data-q="${i}"]`).value.trim(),correcta:app.querySelector(`[data-a="${i}"]`).value.trim(),distractores:app.querySelector(`[data-o="${i}"]`).value.split('\n').map(x=>x.trim()).filter(Boolean),keep:app.querySelector(`[data-keep="${i}"]`).checked})).filter(q=>q.keep&&q.enunciado&&q.correcta);if(!selected.length)return st.textContent='Seleccione al menos una pregunta.';const existentes=new Set(pr.map(p=>clavePregunta(p.enunciado)));const vistos=new Set();const nuevos=selected.filter(q=>{const k=clavePregunta(q.enunciado);if(existentes.has(k)||vistos.has(k))return false;vistos.add(k);return true;});if(!nuevos.length)return st.textContent='Todas las preguntas seleccionadas ya existen o están repetidas. No se guardó ningún duplicado.';if(nuevos.length<selected.length&&!confirm(`Se detectaron ${selected.length-nuevos.length} preguntas repetidas. Se guardarán solo ${nuevos.length} nuevas. ¿Continuar?`))return;$('#save').disabled=true;try{const {data:b,error:be}=await sb.from('cia_bancos').insert({docente_id:uid,nombre,fuente:'PDF / Gemini'}).select('id').single();if(be)throw be;const filas=nuevos.map(q=>({docente_id:uid,banco_id:b.id,enunciado:q.enunciado,correcta:q.correcta,explicacion:q.explicacion,distractores:q.distractores||[],tema:q.tema||nombre,nivel:q.nivel||'medio',metadatos:{origen:'gemini_pdf',tipo:q.tipo||'seleccion_multiple'}}));const {error:pe}=await sb.from('cia_preguntas').insert(filas);if(pe)throw pe;await tBanco(uid);}catch(e){st.textContent='No se pudo guardar: '+e.message;$('#save').disabled=false;}};
+ }catch(e){st.textContent='Error de generación: '+e.message;gen.disabled=false;}};
+ app.querySelectorAll('[data-e]').forEach(b=>b.onclick=async()=>{
+  const id=b.dataset.e;
+  const {data:p,error:consultaError}=await sb.from('cia_preguntas')
+    .select('id,enunciado,correcta,explicacion,distractores,tema,nivel,metadatos')
+    .eq('id',id).eq('docente_id',uid).single();
+  if(consultaError){alert('No se pudo abrir la pregunta: '+consultaError.message);return;}
+  const fondo=document.createElement('div');fondo.className='editor-fondo';
+  fondo.innerHTML=`<section class="editor-caja" role="dialog" aria-modal="true" aria-labelledby="editor-titulo">
+    <h2 id="editor-titulo">Editar pregunta</h2>
+    <p class="s">Cambie los datos y pulse Guardar. Las modificaciones se guardan en Supabase.</p>
+    <label for="ed-enunciado">Enunciado</label><textarea id="ed-enunciado" rows="3" required>${esc(p.enunciado)}</textarea>
+    <label for="ed-correcta">Respuesta correcta</label><textarea id="ed-correcta" rows="2" required>${esc(typeof p.correcta==='string'?p.correcta:JSON.stringify(p.correcta??''))}</textarea>
+    <label for="ed-distractores">Opciones incorrectas (una por línea)</label><textarea id="ed-distractores" rows="4">${esc(Array.isArray(p.distractores)?p.distractores.map(x=>typeof x==='string'?x:JSON.stringify(x)).join('\n'):'')}</textarea>
+    <label for="ed-explicacion">Explicación</label><textarea id="ed-explicacion" rows="3">${esc(p.explicacion||'')}</textarea>
+    <label for="ed-tema">Tema</label><input id="ed-tema" value="${esc(p.tema||'')}">
+    <label for="ed-nivel">Dificultad</label><select id="ed-nivel"><option value="facil">Fácil</option><option value="medio">Medio</option><option value="dificil">Difícil</option></select>
+    <p id="ed-error" class="err" role="alert"></p>
+    <div class="editor-acciones"><button class="sec" id="ed-cancelar">Cancelar</button><button id="ed-guardar">Guardar cambios</button></div>
+  </section>`;
+  document.body.appendChild(fondo);
+  const get=x=>fondo.querySelector(x);
+  get('#ed-nivel').value=['facil','medio','dificil'].includes(p.nivel)?p.nivel:'medio';
+  const cerrar=()=>fondo.remove();
+  get('#ed-cancelar').onclick=cerrar;
+  fondo.addEventListener('click',e=>{if(e.target===fondo)cerrar();});
+  get('#ed-enunciado').focus();
+  get('#ed-guardar').onclick=async()=>{
+    const enunciado=get('#ed-enunciado').value.trim();
+    const correcta=get('#ed-correcta').value.trim();
+    const distractores=get('#ed-distractores').value.split('\n').map(x=>x.trim()).filter(Boolean);
+    const explicacion=get('#ed-explicacion').value.trim();
+    const tema=get('#ed-tema').value.trim();
+    if(!enunciado||!correcta){get('#ed-error').textContent='El enunciado y la respuesta correcta son obligatorios.';return;}
+    if(distractores.some(x=>x.toLowerCase()===correcta.toLowerCase())){get('#ed-error').textContent='La respuesta correcta no debe repetirse entre las incorrectas.';return;}
+    const guardar=get('#ed-guardar');guardar.disabled=true;
+    get('#ed-error').textContent='Guardando...';
+    const {data:actualizada,error}=await sb.from('cia_preguntas').update({enunciado,correcta,distractores,explicacion,tema,nivel:get('#ed-nivel').value})
+      .eq('id',p.id).eq('docente_id',uid).select('id');
+    if(error||!actualizada?.length){get('#ed-error').textContent='No se pudo guardar: '+(error?.message||'Sin permiso para modificar esta pregunta.');guardar.disabled=false;return;}
+    cerrar();await tBanco(uid);
+  };
+});
+}
+/* ======== ESTUDIANTES · ordenado por salón ======== */
+let salonEst='',avisoEst='';
+const salonTxt=a=>a.grado?`${a.grado}.º ${a.seccion||''}`.trim():'Sin salón';
+const salonOrden=(a,b)=>porGrado(a.grado,b.grado)||String(a.seccion||'').localeCompare(String(b.seccion||''));
+function descargarPlantillaEst(){
+ const wb=XLSX.utils.book_new(),ws=XLSX.utils.aoa_to_sheet([['nombres','cedula','grado','seccion'],['Nombre Apellido (ejemplo, se ignora)','0-000-0000','9','A']]);
+ ws['!cols']=[{wch:36},{wch:16},{wch:8},{wch:9}];XLSX.utils.book_append_sheet(wb,ws,'Importar');XLSX.writeFile(wb,'plantilla_estudiantes_cia.xlsx');
+}
+async function tEst(uid){
+ const v=$('#v');v.innerHTML='<div class=card><p>Cargando estudiantes…</p></div>';
+ const {data,error}=await sb.from('cia_estudiantes').select('id,nombres,cedula,grado,seccion').eq('docente_id',uid).order('nombres');
+ if(error){v.innerHTML=`<div class=card>${avisoError(error)}</div>`;return;}
+ const L=data||[],salones=new Map();
+ L.forEach(a=>{const k=salonTxt(a);if(!salones.has(k))salones.set(k,{a,n:0});salones.get(k).n++;});
+ const claves=[...salones.entries()].sort((x,y)=>salonOrden(x[1].a,y[1].a)).map(([k,o])=>[k,o.n]);
+ if(salonEst&&!salones.has(salonEst))salonEst='';
+ v.innerHTML=`${avisoEst?`<div class="card bien"><p>${esc(avisoEst)}</p></div>`:''}
+<div class=card><h2>Estudiantes</h2><p class=s>Cada salón con su lista. Se usan para que el estudiante entre con su cédula.</p>
+<div class=resumen-banco><div><b>${L.length}</b><span>Estudiantes</span></div><div><b>${salones.size}</b><span>Salones</span></div></div>
+<div class=sal><button class="${salonEst?'sec':'on'}" data-s="">Todos (${L.length})</button>${claves.map(([k,n])=>`<button class="${salonEst===k?'on':'sec'}" data-s="${esc(k)}">${esc(k)} (${n})</button>`).join('')}</div></div>
+<div class=card><details ${L.length?'':'open'}><summary><b>Cargar o actualizar la lista</b></summary>
+<ol><li>Descarga la plantilla. <button class=sec id=pl>Descargar plantilla Excel</button></li>
+<li>Llénala con columnas <b>nombres, cedula, grado, seccion</b> (grado: 7, 8 o 9 · sección: A, B, C). También sirve el Excel del Portal 2027.</li>
+<li>Súbela y revisa la vista previa antes de confirmar. Si la cédula ya existe, se actualiza.</li></ol>
+<input id=f type=file accept=".xlsx,.xls,.csv"><div id=pv></div></details></div>
+<div class=card><div class=row><h3 style="margin:0">${salonEst?esc(salonEst):'Todos los salones'}</h3>${salonEst?'<button class=sec id=dsal>Eliminar este salón</button>':''}</div>
+<label>Buscar por nombre o cédula<input id=bq placeholder="Escribe para filtrar"></label><p id=cn class=s></p>
+<div class=wrap><table><tr><th>Nombre</th><th>Cédula</th><th>Salón</th><th></th></tr>${L.map(a=>`<tr data-r data-t="${esc((a.nombres+' '+a.cedula).toLowerCase())}" data-s="${esc(salonTxt(a))}"><td>${esc(a.nombres)}</td><td>${esc(a.cedula)}</td><td>${esc(salonTxt(a))}</td><td><button class=sec data-x="${esc(a.id)}">Eliminar</button></td></tr>`).join('')||'<tr><td colspan=4>Aún no hay estudiantes. Abre "Cargar o actualizar la lista".</td></tr>'}</table></div>
+<details><summary>Más opciones</summary><button class=sec id=ex>Exportar CSV</button><button class=sec id=ej>Respaldo JSON</button></details></div>`;
+ avisoEst='';
+ const filtrar=()=>{const q=$('#bq').value.toLowerCase().trim();let n=0;v.querySelectorAll('[data-r]').forEach(tr=>{tr.hidden=!(tr.dataset.t.includes(q)&&(!salonEst||tr.dataset.s===salonEst));if(!tr.hidden)n++;});$('#cn').textContent=`Mostrando ${n} de ${L.length}`;};
+ $('#bq').oninput=filtrar;filtrar();
+ v.querySelectorAll('.sal [data-s]').forEach(b=>b.onclick=()=>{salonEst=b.dataset.s;tEst(uid);});
+ $('#pl').onclick=descargarPlantillaEst;
+ $('#ex').onclick=()=>descargarArchivo('matricula_cia.csv','\ufeff'+[['nombres','cedula','grado','seccion'],...L.map(a=>[a.nombres,a.cedula,a.grado,a.seccion])].map(r=>r.map(csvCelda).join(',')).join('\r\n'),'text/csv;charset=utf-8');
+ $('#ej').onclick=()=>descargarArchivo('matricula_cia.json',JSON.stringify({fecha:new Date().toISOString(),estudiantes:L.map(({nombres,cedula,grado,seccion})=>({nombres,cedula,grado,seccion}))},null,2),'application/json');
+ const borrar=async(ids,texto)=>{if(!confirm(texto))return;const {data:d,error:e}=await sb.from('cia_estudiantes').delete().in('id',ids).eq('docente_id',uid).select('id');if(e||!d?.length){alert('No se pudo eliminar: '+(e?.message||'sin permiso (revise las políticas RLS de delete).')+'\nSi el estudiante ya tiene intentos o notas registradas, el sistema puede impedir borrarlo.');return;}avisoEst=`${d.length} estudiante(s) eliminado(s).`;tEst(uid);};
+ v.querySelectorAll('[data-x]').forEach(b=>b.onclick=()=>{const a=L.find(x=>String(x.id)===b.dataset.x);borrar([a.id],`¿Eliminar a ${a.nombres}?`);});
+ if($('#dsal'))$('#dsal').onclick=()=>{const ids=L.filter(a=>salonTxt(a)===salonEst).map(a=>a.id);borrar(ids,`¿Eliminar los ${ids.length} estudiantes de ${salonEst}?\n\nPodrás volver a cargarlos con la plantilla.`);};
+ $('#f').onchange=async e=>{
+  const pv=$('#pv');pv.innerHTML='';
+  try{
+   const arch=e.target.files[0];if(!arch)return;
+   const wb=XLSX.read(await arch.arrayBuffer()),hoja=wb.Sheets[wb.SheetNames.includes('Importar')?'Importar':wb.SheetNames[0]];
+   const rows=XLSX.utils.sheet_to_json(hoja,{defval:'',raw:false}),g=(r,k)=>{const key=Object.keys(r).find(x=>norm(x)===k);return key?String(r[key]).trim():'';};
+   const vistos=new Set(),filas=[],omitidas=[];
+   rows.forEach((r,i)=>{const f={docente_id:uid,nombres:g(r,'nombres')||g(r,'nombre'),cedula:g(r,'cedula'),grado:(g(r,'grado').match(/\d+/)||[''])[0],seccion:g(r,'seccion').toUpperCase().replace(/[^A-ZÑ]/g,'').slice(0,2)};
+    if(!f.nombres&&!f.cedula)return;
+    if(!f.nombres||!f.cedula)return omitidas.push(`Fila ${i+2}: falta nombre o cédula`);
+    if(f.cedula==='0-000-0000')return;
+    if(vistos.has(f.cedula))return omitidas.push(`Fila ${i+2}: cédula repetida en el archivo (${f.cedula})`);
+    vistos.add(f.cedula);filas.push(f);});
+   if(!filas.length){pv.innerHTML=`<p class=err>No hay filas válidas. Revisa que existan las columnas nombres y cedula.</p>${omitidas.map(o=>`<p class=s>${esc(o)}</p>`).join('')}`;return;}
+   const ids=new Map(L.filter(x=>x.cedula).map(x=>[x.cedula,x.id])),nuevos=filas.filter(f=>!ids.has(f.cedula)),actual=filas.filter(f=>ids.has(f.cedula));
+   pv.innerHTML=`<p><b>${filas.length}</b> estudiantes listos: <b>${nuevos.length}</b> nuevos y <b>${actual.length}</b> por actualizar.${omitidas.length?` <span class=err>${omitidas.length} fila(s) omitidas.</span>`:''}</p>${omitidas.slice(0,5).map(o=>`<p class=s>${esc(o)}</p>`).join('')}<div class=wrap><table><tr><th>Nombre</th><th>Cédula</th><th>Salón</th></tr>${filas.slice(0,8).map(f=>`<tr><td>${esc(f.nombres)}</td><td>${esc(f.cedula)}</td><td>${esc(salonTxt(f))}</td></tr>`).join('')}</table></div>${filas.length>8?`<p class=s>… y ${filas.length-8} más.</p>`:''}<button id=ok>Importar ${filas.length} estudiantes</button><button class=sec id=no>Cancelar</button><p id=pst class=s role=status></p>`;
+   $('#no').onclick=()=>{pv.innerHTML='';$('#f').value='';};
+   $('#ok').onclick=async()=>{const b=$('#ok');b.disabled=true;const st=$('#pst');
+    try{
+     for(let i=0;i<nuevos.length;i+=100){st.textContent=`Guardando nuevos… ${Math.min(i+100,nuevos.length)} de ${nuevos.length}`;const {error:ie}=await sb.from('cia_estudiantes').insert(nuevos.slice(i,i+100));if(ie)throw ie;}
+     let k=0;for(const f of actual){st.textContent=`Actualizando… ${++k} de ${actual.length}`;const {error:ue}=await sb.from('cia_estudiantes').update({nombres:f.nombres,grado:f.grado,seccion:f.seccion}).eq('id',ids.get(f.cedula)).eq('docente_id',uid);if(ue)throw ue;}
+     avisoEst=`Importación lista: ${nuevos.length} nuevos y ${actual.length} actualizados.`;tEst(uid);
+    }catch(err){st.textContent='Error: '+err.message+'. Puedes volver a subir el archivo; los ya guardados se actualizarán, no se duplican.';b.disabled=false;}};
+  }catch(err){pv.innerHTML=`<p class=err>Error al leer el archivo: ${esc(err.message)}</p>`;}
+ };
+}
+
+async function tEvaluaciones(uid){
+ const [q,e,al,ma,as,pm]=await Promise.all([sb.from('cia_preguntas').select('id,tema,nivel,enunciado').eq('docente_id',uid),sb.from('cia_evaluaciones').select('*').eq('docente_id',uid).order('creado_en',{ascending:false}),sb.from('cia_estudiantes').select('grado,seccion').eq('docente_id',uid),sb.from('cia_materias').select('id,nombre').eq('docente_id',uid),sb.from('cia_materia_salones').select('materia_id,grado,seccion').eq('docente_id',uid),sb.from('cia_pregunta_materia').select('pregunta_id,materia_id,grado').eq('docente_id',uid)]);
+ if(e.error){$('#v').innerHTML=`<div class=card><h2>Evaluaciones</h2>${avisoError(e.error)}<p>Instale primero el SQL <code>cia_evaluaciones_etapas.sql</code> en Supabase.</p></div>`;return;}
+ if(q.error||al.error){$('#v').innerHTML=`<div class=card>${avisoError(q.error||al.error)}</div>`;return;}
+ const grupos=[...new Set((al.data||[]).map(x=>`${x.grado||''}|${x.seccion||''}`))].filter(x=>x!=='|').sort();
+ if(ma.error||as.error||pm.error){$('#v').innerHTML=`<div class=card><h2>Evaluaciones</h2>${avisoError(ma.error||as.error||pm.error)}<p>Compruebe el SQL multimateria de las etapas 1 a 3.</p></div>`;return;}
+ const materias=ma.data||[],asignaciones=as.data||[],clasificaciones=pm.data||[],clasePorId=new Map(clasificaciones.map(x=>[x.pregunta_id,x]));
+ const items=e.data||[],banco=q.data||[];
+ const catalogoResp=await sb.from('cia_catalogo_evaluaciones').select('id,nombre,motor,activa,orden').eq('docente_id',uid).eq('activa',true).order('orden',{ascending:true});
+ const catalogo=catalogoResp.error?[]:(catalogoResp.data||[]);
+ const vinculosResp=await sb.from('cia_catalogo_preguntas').select('catalogo_id,pregunta_id').eq('docente_id',uid);
+ const vinculos=vinculosResp.error?[]:(vinculosResp.data||[]);
+ const idsCatalogo=new Map();for(const v of vinculos){if(!idsCatalogo.has(String(v.catalogo_id)))idsCatalogo.set(String(v.catalogo_id),new Set());idsCatalogo.get(String(v.catalogo_id)).add(String(v.pregunta_id));}
+
+ // Panel de cobertura: cuenta vínculos únicos sin confundirlos con preguntas E2.
+ const resumenCatalogo=catalogo.map(c=>{
+  const ids=new Set(vinculos.filter(v=>String(v.catalogo_id)===String(c.id)).map(v=>String(v.pregunta_id)));
+  return {nombre:c.nombre,motor:c.motor,orden:c.orden,conteo:ids.size};
+ });
+ const tablaCobertura=`<div class=card><h3>Control de bancos por evaluación</h3><p class=s>Los conteos corresponden a preguntas vinculadas en el banco general; para Enlace 2 no verifican las preguntas de sus cinco técnicas.</p><div style="overflow-x:auto"><table style="width:100%"><thead><tr><th>Orden</th><th>Evaluación</th><th>Motor</th><th>Preguntas vinculadas</th></tr></thead><tbody>${resumenCatalogo.map(r=>`<tr><td>${Number(r.orden)||'—'}</td><td>${esc(r.nombre)}</td><td>${r.motor==='e3'?'Evaluación 3':r.motor==='e2'?'Evaluación 2':'Evaluación 1'}</td><td>${r.conteo}${r.conteo===0?' · Sin vínculos':''}</td></tr>`).join('')||'<tr><td colspan="4">Todavía no hay evaluaciones activas.</td></tr>'}</tbody></table></div><button type="button" class=sec id=ev-exportar-cobertura>Exportar resumen CSV</button><p class=s>El informe es de configuración; no representa notas ni intentos de estudiantes.</p></div>`;
+
+
+ $('#v').innerHTML=tablaCobertura+`<div class=card><h2>Evaluaciones por salón</h2><p class=s>Etapas: crear · seleccionar preguntas · asignar salón · programar · activar o desactivar.</p><label>Evaluación del catálogo<select id=ev-catalogo><option value="">Nueva evaluación independiente</option>${catalogo.map(x=>`<option value="${esc(String(x.id))}">${esc(x.nombre)} (${x.motor==='e3'?'Motor 3':x.motor==='e2'?'Motor 2':'Motor 1'})</option>`).join('')}</select></label><p class=s>Seleccione una evaluación del catálogo para asociarla a una evaluación oficial con preguntas, horario e intentos propios. Las prácticas rápidas del Motor 2 no se convierten automáticamente en preguntas del banco.</p><label>Título<input id=ev-titulo maxlength=120 placeholder="Evaluación de la célula"></label><label>Grado y salón<select id=ev-grupo><option value="">Seleccione un salón</option>${grupos.map(x=>`<option value="${esc(x)}">${esc(x.replace('|',' '))}</option>`).join('')}</select></label><label>Materia<select id=ev-materia><option value="">Seleccione una materia</option>${materias.map(m=>`<option value="${esc(m.id)}">${esc(m.nombre)}</option>`).join('')}</select></label><p class=s>Solo se podrán utilizar preguntas clasificadas para la materia y el grado del salón.</p><label>Tema<select id=ev-tema><option value="">Todos los temas</option>${[...new Set(banco.map(x=>x.tema||'Sin tema'))].sort().map(x=>`<option>${esc(x)}</option>`).join('')}</select></label><label>Dificultad<select id=ev-nivel><option value="">Todas</option><option value=facil>Fácil</option><option value=medio>Media</option><option value=dificil>Difícil</option></select></label><label>Preguntas que usará esta evaluación (el banco se conserva)<input id=ev-cantidad type=number min=1 value=10></label><label>Inicio<input id=ev-inicio type=datetime-local></label><label>Fin<input id=ev-fin type=datetime-local></label><label>Duración en minutos<input id=ev-duracion type=number min=1 max=240 value=30></label><label><input type=checkbox id=ev-activa> Activar evaluación al crearla</label><p id=ev-disponibles class=s></p><div class=card><b>Banco exclusivo de la evaluación</b><p class=s>Selecciona una evaluación del catálogo y usa «Asignar preguntas» para vincular preguntas existentes filtradas por materia, grado, tema y dificultad. Después podrás crear su evaluación oficial.</p><button class=sec id=ev-asignar-preguntas>Asignar preguntas filtradas</button><p class=s id=ev-asignar-estado></p></div><button id=ev-guardar>Crear evaluación</button><p id=ev-estado role=status class=s></p></div><div class=card><h3>Evaluaciones creadas: ${items.length}</h3><p class=s>Activas: ${items.filter(x=>x.activa).length} · Inactivas: ${items.filter(x=>!x.activa).length} · Total de preguntas asignadas: ${items.reduce((n,x)=>n+(x.preguntas?.length||0),0)}</p><button class=sec id=ev-exportar>Exportar evaluaciones CSV</button><p id=ev-detalle class=s role=status></p><div class=wrap><table><tr><th>Título</th><th>Salón</th><th>Preguntas</th><th>Programación</th><th>Estado</th><th>Acción</th></tr>${items.map(x=>`<tr><td>${esc(x.titulo)}</td><td>${esc(x.grado)} ${esc(x.seccion)}</td><td>${x.preguntas?.length||0}</td><td>${esc(new Date(x.inicio).toLocaleString('es-PA'))} – ${esc(new Date(x.fin).toLocaleString('es-PA'))}</td><td>${x.activa?'Activa':'Inactiva'}</td><td><button class=sec data-ev-toggle="${x.id}" data-activa="${x.activa}">${x.activa?'Desactivar':'Activar'}</button> <button class=sec data-ev-ver="${x.id}">Ver</button> <button class=sec data-ev-copiar="${x.id}">Duplicar</button> <button class=sec data-ev-editar="${x.id}">Editar</button> <button class=sec data-ev-borrar="${x.id}">Eliminar</button></td></tr>`).join('')||'<tr><td colspan=6>Aún no hay evaluaciones.</td></tr>'}</table></div></div>`;
+
+ const exportarCobertura=$('#ev-exportar-cobertura');
+ if(exportarCobertura)exportarCobertura.onclick=()=>{
+  const csv=[['orden','evaluacion','motor','preguntas_vinculadas'],...resumenCatalogo.map(r=>[r.orden,r.nombre,r.motor,r.conteo])]
+   .map(f=>f.map(v=>'"'+String(v??'').replace(/"/g,'""')+'"').join(',')).join('\r\n');
+  const blob=new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8'});
+  const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='cia_cobertura_evaluaciones.csv';a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
+ };
+ $('#ev-catalogo').onchange=()=>{const item=catalogo.find(x=>String(x.id)===$('#ev-catalogo').value);if(item)$('#ev-titulo').value=item.nombre;actualizar();};
+ const disponibles=()=>{const materia=$('#ev-materia').value,grupo=$('#ev-grupo').value,grado=grupo.split('|')[0];return banco.filter(x=>{const c=clasePorId.get(x.id);return materia&&grupo&&c&&c.materia_id===materia&&String(c.grado)===String(grado)&&(!$('#ev-tema').value||(x.tema||'Sin tema')===$('#ev-tema').value)&&(!$('#ev-nivel').value||x.nivel===$('#ev-nivel').value)&&(!$('#ev-catalogo').value||(idsCatalogo.get($('#ev-catalogo').value)||new Set()).has(String(x.id)));});};
+ const actualizar=()=>$('#ev-disponibles').textContent=`${disponibles().length} preguntas disponibles con los filtros elegidos.`;
+ $('#ev-tema').onchange=actualizar;$('#ev-nivel').onchange=actualizar;$('#ev-materia').onchange=actualizar;$('#ev-grupo').onchange=actualizar;actualizar();
+ $('#ev-guardar').onclick=async()=>{const st=$('#ev-estado'),titulo=$('#ev-titulo').value.trim(),grupo=$('#ev-grupo').value,cantidad=Number($('#ev-cantidad').value),inicio=$('#ev-inicio').value,fin=$('#ev-fin').value,duracion=Number($('#ev-duracion').value),pool=disponibles();const materia=$('#ev-materia').value;if(!titulo||!grupo||!materia||!inicio||!fin)return st.textContent='Complete título, materia, salón, inicio y fin.';const [gradoAsignado,seccionAsignada]=grupo.split('|');if(!asignaciones.some(a=>a.materia_id===materia&&String(a.grado)===gradoAsignado&&a.seccion===seccionAsignada))return st.textContent='Esta materia no está asignada al salón. Asígnela primero desde Administración de materias.';if(new Date(fin)<=new Date(inicio))return st.textContent='La fecha de fin debe ser posterior al inicio.';if(new Date(fin).getTime()-new Date(inicio).getTime()<60000)return st.textContent='La ventana de evaluación debe durar al menos un minuto.';if(!Number.isInteger(cantidad)||cantidad<1||cantidad>pool.length)return st.textContent=`Seleccione entre 1 y ${pool.length} preguntas.`;if(!Number.isInteger(duracion)||duracion<1||duracion>240)return st.textContent='Duración válida: 1 a 240 minutos.';const [grado,seccion]=grupo.split('|');const preguntas=[...pool].sort(()=>Math.random()-.5).slice(0,cantidad).map(x=>x.id);$('#ev-guardar').disabled=true;const {error}=await sb.from('cia_evaluaciones').insert({docente_id:uid,titulo,grado,seccion,materia_id:materia,preguntas,inicio:new Date(inicio).toISOString(),fin:new Date(fin).toISOString(),duracion_min:duracion,activa:$('#ev-activa').checked,catalogo_id:$('#ev-catalogo').value?Number($('#ev-catalogo').value):null});if(error){st.textContent='No se pudo crear: '+error.message;$('#ev-guardar').disabled=false;return;}await tEvaluaciones(uid);};
+ const reporte=document.createElement('div');reporte.className='card';reporte.innerHTML='<h3>Historial de evaluaciones y mejores notas</h3><p id=ev-reporte-estado>Consultando resultados…</p><div class=wrap id=ev-reporte-tabla></div><button class=sec id=ev-reporte-csv disabled>Descargar resultados CSV</button>';$('#v').append(reporte);
+ const {data:hist,error:he}=await sb.from('cia_eval_intentos').select('id,evaluacion_id,estudiante_id,inicio,enviado_en,nota_5,aciertos,total').in('evaluacion_id',items.length?items.map(x=>x.id):['00000000-0000-0000-0000-000000000000']).order('inicio',{ascending:false}).limit(1000);
+ if(he){$('#ev-reporte-estado').textContent='No se pudo consultar el historial: '+he.message;}else{const {data:estudiantes}=await sb.from('cia_estudiantes').select('id,nombres,cedula').eq('docente_id',uid);const noms=new Map((estudiantes||[]).map(a=>[a.id,a]));const titulos=new Map(items.map(a=>[a.id,a.titulo]));const mejor=new Map();(hist||[]).forEach(x=>{if(x.nota_5===null)return;const k=x.estudiante_id+'|'+x.evaluacion_id+'|'+x.inicio.slice(0,10);mejor.set(k,Math.max(mejor.get(k)||0,Number(x.nota_5)));});const filas=(hist||[]).map(x=>[noms.get(x.estudiante_id)?.nombres||'Estudiante',noms.get(x.estudiante_id)?.cedula||'',titulos.get(x.evaluacion_id)||'Evaluación',x.inicio.slice(0,10),x.enviado_en?'Entregado':'Pendiente',x.nota_5??'',mejor.get(x.estudiante_id+'|'+x.evaluacion_id+'|'+x.inicio.slice(0,10))??'']);$('#ev-reporte-estado').textContent=`${filas.length} intentos (últimos 1000). Mejor nota por evaluación, estudiante y día.`;$('#ev-reporte-tabla').innerHTML=`<table><tr>${['Nombre','Cédula','Evaluación','Fecha','Estado','Nota 1–5','Mejor del día'].map(x=>`<th>${x}</th>`).join('')}</tr>${filas.map(r=>`<tr>${r.map(c=>`<td>${esc(c)}</td>`).join('')}</tr>`).join('')}</table>`;$('#ev-reporte-csv').disabled=!filas.length;$('#ev-reporte-csv').onclick=()=>descargarArchivo('cia_historial_evaluaciones.csv','\ufeff'+[['nombre','cedula','evaluacion','fecha','estado','nota','mejor_dia'],...filas].map(r=>r.map(csvCelda).join(',')).join('\r\n'),'text/csv;charset=utf-8');}
+ $('#ev-exportar').onclick=()=>{const filas=[['titulo','grado','seccion','preguntas','inicio','fin','duracion_min','activa'],...items.map(x=>[x.titulo,x.grado,x.seccion,(x.preguntas||[]).length,x.inicio,x.fin,x.duracion_min,x.activa?'Sí':'No'])];descargarArchivo('cia_evaluaciones.csv','\ufeff'+filas.map(r=>r.map(csvCelda).join(',')).join('\r\n'),'text/csv;charset=utf-8');};
+ app.querySelectorAll('[data-ev-ver]').forEach(b=>b.onclick=()=>{const x=items.find(v=>v.id===b.dataset.evVer);if(!x)return;const qs=(x.preguntas||[]).map(id=>banco.find(q=>q.id===id));$('#ev-detalle').innerHTML=`<b>${esc(x.titulo)}</b> · ${esc(x.grado)} ${esc(x.seccion)} · ${x.duracion_min} minutos<ol>${qs.map(q=>`<li>${esc(q?.enunciado||'Pregunta no disponible (ID '+String(x.preguntas[qs.indexOf(q)])+')')}</li>`).join('')}</ol>`;});
+ app.querySelectorAll('[data-ev-copiar]').forEach(b=>b.onclick=async()=>{const x=items.find(v=>v.id===b.dataset.evCopiar);if(!x)return;if(!confirm('¿Duplicar esta evaluación como inactiva para editarla después?'))return;b.disabled=true;const {id,creado_en,...base}=x;const {error}=await sb.from('cia_evaluaciones').insert({...base,titulo:x.titulo+' (copia)',activa:false});if(error){alert(error.message);b.disabled=false;}else await tEvaluaciones(uid);});
+ app.querySelectorAll('[data-ev-editar]').forEach(b=>b.onclick=async()=>{const x=items.find(v=>v.id===b.dataset.evEditar);if(!x)return;const titulo=prompt('Nuevo título:',x.titulo);if(titulo===null)return;if(!titulo.trim())return alert('El título no puede estar vacío.');const minutos=prompt('Duración en minutos (1 a 240):',x.duracion_min);if(minutos===null)return;const duracion=Number(minutos);if(!Number.isInteger(duracion)||duracion<1||duracion>240)return alert('Duración inválida.');b.disabled=true;const {error}=await sb.from('cia_evaluaciones').update({titulo:titulo.trim(),duracion_min:duracion}).eq('id',x.id).eq('docente_id',uid);if(error){alert(error.message);b.disabled=false;}else await tEvaluaciones(uid);});
+ app.querySelectorAll('[data-ev-borrar]').forEach(b=>b.onclick=async()=>{const x=items.find(v=>v.id===b.dataset.evBorrar);if(!x)return;if(!confirm(`¿Eliminar definitivamente la evaluación "${x.titulo}"? Esta acción no se puede deshacer.`))return;b.disabled=true;const {data,error}=await sb.from('cia_evaluaciones').delete().eq('id',x.id).eq('docente_id',uid).select('id');if(error||!data?.length){alert(error?.message||'No se pudo eliminar. Revise permisos.');b.disabled=false;}else await tEvaluaciones(uid);});
+ app.querySelectorAll('[data-ev-toggle]').forEach(b=>b.onclick=async()=>{b.disabled=true;const {error}=await sb.from('cia_evaluaciones').update({activa:b.dataset.activa!=='true'}).eq('id',b.dataset.evToggle).eq('docente_id',uid);if(error){alert(error.message);b.disabled=false;}else await tEvaluaciones(uid);});
+}
+
+/* Resultados por periodo: módulo independiente de los resultados históricos. */
+async function ciaResultadosPeriodos(uid){
+ const host=document.querySelector('#cia-resultados-periodos');
+ if(!host)return;
+ const {data:periodos,error}=await sb.from('cia_periodos').select('id,titulo,tecnica,grado,seccion,inicio,fin').eq('docente_id',uid).order('inicio',{ascending:false});
+ if(error){host.innerHTML='<p class=s>No se pudieron cargar los periodos: '+esc(error.message)+'</p>';return;}
+ if(!periodos?.length){host.innerHTML='<p class=s>No hay periodos de práctica registrados.</p>';return;}
+ host.innerHTML='<h2>Estadísticas y notas por periodo</h2><p class=s>Resultados reales consultados desde Supabase. Seleccione un periodo para revisar las notas de su salón y exportar el CSV. Si una consulta falla, no se inventan calificaciones.</p><label>Periodo<select id="cia-periodo-resultado">'+periodos.map(p=>'<option value="'+esc(p.id)+'">'+esc(p.titulo+' · '+p.grado+'° '+(p.seccion||'Todas')+' · '+etiquetaEval(p.tecnica))+'</option>').join('')+'</select></label><p class=s id="cia-periodo-estado"></p><div class=wrap id="cia-periodo-tabla"></div><button id="cia-periodo-csv" disabled>Exportar periodo CSV</button>';
+ const selector=host.querySelector('#cia-periodo-resultado'),estado=host.querySelector('#cia-periodo-estado'),tabla=host.querySelector('#cia-periodo-tabla'),boton=host.querySelector('#cia-periodo-csv');
+ const resumen=document.createElement('div');resumen.id='cia-estadisticas-salon';resumen.setAttribute('aria-live','polite');tabla.before(resumen);
+ let exportRows=[],exportHeaders=[];
+ async function cargar(){
+  const id=selector.value,p=periodos.find(x=>String(x.id)===id);
+  estado.textContent='Cargando notas…';tabla.innerHTML='';resumen.innerHTML='';boton.disabled=true;
+  try{
+   /* La función SQL del docente debe aceptar p_periodo y verificar la identidad del docente. */
+   const {data,error}=await sb.rpc('cia_periodo_resultados_v2',{p_periodo:id});
+   if(error)throw error;
+   const filas=Array.isArray(data)?data:(Array.isArray(data?.estudiantes)?data.estudiantes:[]);
+   const tipos=p.tecnica==='e3'?['errores3','mision3','prediccion3','clasificacion3','evidencia3']:p.tecnica==='e2'?['detective','quien','causa','mito','casos']:['multiple','verdadero_falso','completar','relacionar','ordenar'];
+   const nombres=p.tecnica==='e3'?['Errores 3','Misión 3','Predicción 3','Clasificación 3','Evidencia 3']:p.tecnica==='e2'?['Detective','Quién soy','Causa','Mito','Casos']:['Selección múltiple','Verdadero/Falso','Completar','Relacionar','Ordenar'];
+   const nota=(r,t,i)=>{const x=r[t]??r['nota_'+t]??r['nota'+(i+1)]??r.notas?.[t]??r.notas?.[i];return x===undefined||x===null?'—':Number(x).toFixed(2);};
+   exportHeaders=['Nombre','Cédula','Grado','Sección',...nombres,'Nota final'];
+   exportRows=filas.map(r=>{const ns=tipos.map((t,i)=>nota(r,t,i));const validas=ns.filter(n=>n!=='—').map(Number);const promedio=validas.length?validas.reduce((a,n)=>a+n,0)/validas.length:null;const final=r.nota_final??r.final??promedio;return [r.nombres??r.nombre??'',r.cedula??'',r.grado??p.grado,r.seccion??p.seccion??'',...ns,final==null?'—':Number(final).toFixed(2)];});
+   tabla.innerHTML='<table><thead><tr>'+exportHeaders.map(h=>'<th>'+esc(h)+'</th>').join('')+'</tr></thead><tbody>'+(exportRows.map(row=>'<tr>'+row.map(v=>'<td>'+esc(String(v))+'</td>').join('')+'</tr>').join('')||'<tr><td colspan="9">Sin estudiantes para este periodo</td></tr>')+'</tbody></table>';
+   const {data:estadisticas,error:errorEst}=await sb.rpc('cia_periodo_estadisticas_v2',{p_periodo:id});
+   if(errorEst){resumen.innerHTML='<p class=s role=alert>Estadísticas no disponibles: '+esc(errorEst.message)+'</p>';}
+   else {
+     const datos=Array.isArray(estadisticas)?estadisticas:[];
+     resumen.innerHTML='<h3>Estadísticas reales por salón</h3>'+(datos.length?'<div class=wrap><table><thead><tr><th>Grado</th><th>Salón</th><th>Estudiantes</th><th>Con entregas</th><th>Promedio</th></tr></thead><tbody>'+datos.map(r=>'<tr><td>'+esc(String(r.grado??''))+'</td><td>'+esc(String(r.seccion??''))+'</td><td>'+esc(String(r.estudiantes??0))+'</td><td>'+esc(String(r.con_entregas??0))+'</td><td>'+esc(r.promedio==null?'—':Number(r.promedio).toFixed(2))+'</td></tr>').join('')+'</tbody></table></div>':'<p class=s>Sin estadísticas para este periodo.</p>');
+   }
+   estado.textContent=filas.length+' estudiante(s) · Sin entrega: — (no se calcula nota ficticia en el navegador) · '+new Date(p.inicio).toLocaleString('es-PA')+' – '+new Date(p.fin).toLocaleString('es-PA');
+   boton.disabled=!filas.length;
+  }catch(e){resumen.innerHTML='';estado.textContent='No se pudieron obtener las notas del periodo: '+e.message+'. Verifique el nombre y parámetros de la función SQL del docente.';exportRows=[];}
+ }
+ selector.onchange=cargar;
+ boton.onclick=()=>descargarArchivo('cia_periodo_'+selector.value+'.csv','\ufeff'+[exportHeaders,...exportRows].map(r=>r.map(csvCelda).join(',')).join('\r\n'),'text/csv;charset=utf-8');
+ await cargar();
+}
+
+async function tRes(uid){
+ const [base,rapidos,est,ej]=await Promise.all([
+  sb.from('cia_intentos').select('id,estudiante_id,ejercicio_id,nota,creado_en,revision_pendiente').eq('docente_id',uid).order('creado_en',{ascending:false}),
+  sb.from('cia8_intentos').select('id,estudiante_id,tipo,nota,creado_en,enviado_en').eq('docente_id',uid).not('enviado_en','is',null).order('creado_en',{ascending:false}),
+  sb.from('cia_estudiantes').select('id,nombres,cedula,grado,seccion').eq('docente_id',uid),
+  sb.from('cia_ejercicios').select('id,titulo,max_nota').eq('docente_id',uid)
+ ]);
+ const error=base.error||rapidos.error||est.error||ej.error;
+ if(error){$('#v').innerHTML=`<div class=card id=cia-resultados-periodos></div><div class=card><h2>Resultados</h2>${avisoError(error)}<p>Compruebe los permisos de lectura de los intentos de práctica.</p></div>`;await ciaResultadosPeriodos(uid);return;}
+ const alumnos=new Map((est.data||[]).map(a=>[a.id,a]));
+ const ejercicios=new Map((ej.data||[]).map(e=>[e.id,e]));
+ const filas=[];
+ for(const r of base.data||[]){const a=alumnos.get(r.estudiante_id)||{},e=ejercicios.get(r.ejercicio_id)||{};
+  filas.push({id:r.id,estudiante:r.estudiante_id,nombre:a.nombres||'Sin estudiante',cedula:a.cedula||'',salon:[a.grado,a.seccion].filter(Boolean).join(' '),tipo:'Ejercicio general',ejercicio:e.titulo||'Sin título',nota:Number(r.nota),max:Number(e.max_nota)||5,fecha:r.creado_en||'',revision:r.revision_pendiente?'Pendiente':'—'});
+ }
+ for(const r of rapidos.data||[]){const a=alumnos.get(r.estudiante_id)||{};
+  filas.push({id:r.id,estudiante:r.estudiante_id,nombre:a.nombres||'Sin estudiante',cedula:a.cedula||'',salon:[a.grado,a.seccion].filter(Boolean).join(' '),tipo:'Práctica rápida',ejercicio:TIPOS[r.tipo]||r.tipo,nota:Number(r.nota),max:8,fecha:r.enviado_en||r.creado_en||'',revision:'—'});
+ }
+ filas.sort((a,b)=>b.fecha.localeCompare(a.fecha));
+ const escala=r=>Number.isFinite(r.nota)&&r.max>0?(1+4*Math.max(0,Math.min(1,r.nota/r.max))).toFixed(2):'—';
+ $('#v').innerHTML=`<div class=card id=cia-resultados-periodos></div><div class=card><h2>Resultados: ${filas.length}</h2><p class=s>Estudiantes con resultados: ${new Set(filas.map(r=>r.estudiante)).size} · Prácticas rápidas: ${rapidos.data.length} · Ejercicios generales: ${base.data.length} · Revisiones pendientes: ${filas.filter(r=>r.revision==='Pendiente').length}</p>
+ <label>Buscar estudiante o ejercicio<input id=buscar-resultado placeholder="Nombre, cédula o ejercicio"></label>
+ <label>Tipo<select id=tipo-resultado><option value="">Todos</option><option>Práctica rápida</option><option>Ejercicio general</option></select></label>
+ <label>Salón<select id=salon-resultado><option value="">Todos los salones</option>${[...new Set(filas.map(r=>r.salon).filter(Boolean))].sort().map(t=>`<option>${esc(t)}</option>`).join('')}</select></label>
+ <label>Ejercicio<select id=filtro-ejercicio><option value="">Todos los ejercicios</option>${[...new Set(filas.map(r=>r.ejercicio))].sort().map(t=>`<option>${esc(t)}</option>`).join('')}</select></label>
+ <label>Desde<input type=date id=fecha-desde></label><label>Hasta<input type=date id=fecha-hasta></label>
+ <label>Estado<select id=estado-resultado><option value="">Todos</option><option value="Pendiente">Pendiente de revisión</option><option value="—">Sin revisión pendiente</option></select></label>
+ <p id=cuenta-resultados class=s></p><button class=sec id=exportar-resultados-json>Exportar resultados filtrados JSON</button><button class=sec id=imprimir-resultados>Imprimir resultados</button><button class=sec id=exportar-mejores>Exportar mejores notas CSV</button><button id=ex>Exportar CSV</button></div>
+ <div class="card wrap"><table><thead><tr><th>Nombre</th><th>Cédula</th><th>Salón</th><th>Tipo</th><th>Ejercicio</th><th>Nota / 5</th><th>Aciertos</th><th>Fecha</th><th>Revisión</th></tr></thead><tbody>${filas.map((r,i)=>`<tr data-resultado="${i}"><td>${esc(r.nombre)}</td><td>${esc(r.cedula)}</td><td>${esc(r.salon)}</td><td>${esc(r.tipo)}</td><td>${esc(r.ejercicio)}</td><td>${esc(escala(r))}</td><td>${Number.isFinite(r.nota)?esc(r.nota+' / '+r.max):'—'}</td><td>${esc(r.fecha?new Date(r.fecha).toLocaleString('es-PA'):'')}</td><td>${esc(r.revision)}</td></tr>`).join('')||'<tr><td colspan=9>Sin resultados registrados</td></tr>'}</tbody></table></div>`;
+ const visibles=()=>filas.filter((r,i)=>!app.querySelector(`[data-resultado="${i}"]`).hidden);
+ const filtrar=()=>{const q=$('#buscar-resultado').value.toLowerCase().trim(),t=$('#tipo-resultado').value,s=$('#salon-resultado').value,e=$('#filtro-ejercicio').value,d=$('#fecha-desde').value,h=$('#fecha-hasta').value,v=$('#estado-resultado').value;filas.forEach((r,i)=>{app.querySelector(`[data-resultado="${i}"]`).hidden=!( [r.nombre,r.cedula,r.ejercicio].join(' ').toLowerCase().includes(q)&&(!t||r.tipo===t)&&(!s||r.salon===s)&&(!e||r.ejercicio===e)&&(!d||r.fecha.slice(0,10)>=d)&&(!h||r.fecha.slice(0,10)<=h)&&(!v||r.revision===v));});$('#cuenta-resultados').textContent=`Mostrando ${visibles().length} de ${filas.length} resultados`;};
+ ['buscar-resultado','tipo-resultado','salon-resultado','filtro-ejercicio','fecha-desde','fecha-hasta','estado-resultado'].forEach(id=>{$('#'+id).addEventListener('input',filtrar)});filtrar();
+ const cab=['Nombre','Cedula','Salon','Tipo','Ejercicio','Nota sobre 5','Aciertos','Total','Fecha','Revision'];
+ const csvRows=rs=>[cab,...rs.map(r=>[r.nombre,r.cedula,r.salon,r.tipo,r.ejercicio,escala(r),r.nota,r.max,r.fecha,r.revision])];
+ const csv=rs=>'\ufeff'+csvRows(rs).map(row=>row.map(csvCelda).join(',')).join('\r\n');
+ $('#ex').onclick=()=>descargarArchivo('cia_resultados.csv',csv(visibles()),'text/csv;charset=utf-8');
+ $('#exportar-resultados-json').onclick=()=>descargarArchivo('cia_resultados.json',JSON.stringify({fecha:new Date().toISOString(),resultados:visibles().map(r=>({...r,nota_5:escala(r)}))},null,2),'application/json');
+ $('#exportar-mejores').onclick=()=>{const m=new Map();for(const r of visibles()){const k=r.estudiante+'|'+r.tipo+'|'+r.ejercicio;if(!m.has(k)||Number(escala(r))>Number(escala(m.get(k))))m.set(k,r);}descargarArchivo('cia_mejores_notas.csv',csv([...m.values()]),'text/csv;charset=utf-8');};
+ $('#imprimir-resultados').onclick=()=>window.print();
+ await ciaResultadosPeriodos(uid);
+}
+
+/* ======== ENLACE 2 · DOCENTE (banco de técnicas con Gemini) ======== */
+const E4_TECNICAS={matematica4:'Matemática científica',espanol4:'Español científico',crucigrama4:'Crucigrama científico',rompecabezas4:'Rompecabezas científico',decisiones4:'Reto de decisiones'};
+const E3_TECNICAS={errores3:'Detective de errores aplicado',mision3:'Misión científica',prediccion3:'¿Qué pasaría si…?',clasificacion3:'Clasificación científica',evidencia3:'Encuentra la evidencia'};
+const E2_TECNICAS={detective:'Detective de errores',quien:'¿Quién soy?',causa:'Causa y efecto',mito:'Mito o ciencia',casos:'Casos prácticos'};
+const E2_META=8,E2_GRADOS=['7','8','9','10','11','12'];
+const e2Sin=s=>String(s??'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().trim();
+const e2Clave=s=>e2Sin(s).replace(/[^a-z0-9]+/g,' ').trim();
+
+function e2Normalizar(p){
+ if(!p||typeof p!=='object')return{error:'Registro vacío o inválido'};
+ const clave=e2Sin(p.tipo??p.tecnica??p.tipo_pregunta).replace(/[^a-z0-9]+/g,'_');
+ const mapa={errores3:'errores3',mision3:'mision3',prediccion3:'prediccion3',clasificacion3:'clasificacion3',evidencia3:'evidencia3',detective:'detective',detective_de_errores:'detective',error:'detective',quien:'quien',quien_soy:'quien',quien_soy_:'quien',causa:'causa',causa_efecto:'causa',causa_y_efecto:'causa',mito:'mito',mito_o_ciencia:'mito',caso:'casos',casos:'casos',casos_practicos:'casos',caso_practico:'casos'};
+ const tipo=mapa[clave];if(!tipo)return{error:'Técnica no reconocida: '+String(p.tipo??p.tecnica??'sin tipo')};
+ const pregunta=String(p.pregunta??p.enunciado??'').trim();if(!pregunta)return{error:'Enunciado vacío'};
+ const fuente=p.opciones??p.alternativas??[];
+ let opciones=Array.isArray(fuente)?fuente.map(x=>typeof x==='string'?x:String(x?.texto??x?.valor??'')).map(x=>x.trim()).filter(Boolean):[];
+ let respuesta=String(p.respuesta??p.respuesta_correcta??p.correcta??'').trim();
+ if(/^[A-D]$/i.test(respuesta)&&opciones.length>=respuesta.toUpperCase().charCodeAt(0)-64)respuesta=opciones[respuesta.toUpperCase().charCodeAt(0)-65];
+ const igual=(a,b)=>e2Sin(a).replace(/\s+/g,' ')===e2Sin(b).replace(/\s+/g,' ');
+ const existente=opciones.find(x=>igual(x,respuesta));if(existente)respuesta=existente;
+ if(!respuesta)return{error:'Sin respuesta correcta'};
+ if(!opciones.some(x=>igual(x,respuesta)))opciones.unshift(respuesta);
+ opciones=opciones.filter((x,i)=>opciones.findIndex(y=>igual(x,y))===i);
+ if(opciones.length<3)return{error:'Menos de tres alternativas distintas'};
+ opciones=[respuesta,...opciones.filter(x=>!igual(x,respuesta)).slice(0,2)];
+ for(let i=opciones.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[opciones[i],opciones[j]]=[opciones[j],opciones[i]]}
+ return{tipo,pregunta,opciones,respuesta,explicacion:String(p.explicacion??p.justificacion??'').trim(),guardada:false};
+}
+
+/* ======== MATERIAS · flujo guiado: materia → salones → PDF, grado y técnica → preguntas ======== */
+const SECCIONES=['A','B','C','D'];
+const BANCO_TIPOS={seleccion_multiple:'Selección múltiple',verdadero_falso:'Verdadero o falso',completar:'Completar el espacio'};
+const NIVELES=['facil','medio','dificil'];
+let matActual=null,pdfCache=null;
+const porGrado=(a,b)=>(Number(a)||0)-(Number(b)||0);
+async function leerPdf(file){
+ if(!file||file.type!=='application/pdf')throw Error('Seleccione un archivo PDF');
+ if(file.size>10*1024*1024)throw Error('El PDF supera 10 MB');
+ if(!window.pdfjsLib)throw Error('No se cargó el lector de PDF; revise la conexión');
+ pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+ const doc=await pdfjsLib.getDocument({data:await file.arrayBuffer()}).promise;
+ const pag=[];for(let n=1;n<=doc.numPages;n++){const c=await(await doc.getPage(n)).getTextContent();pag.push(c.items.map(x=>x.str).join(' '));}
+ const texto=pag.join('\n').slice(0,45000);
+ if(texto.trim().length<150)throw Error('PDF sin texto suficiente; los PDF escaneados requieren OCR');
+ return {nombre:file.name,texto,paginas:doc.numPages};
+}
+async function invocarIA(body){
+ const {data,error}=await sb.functions.invoke('cia-generar',{body});
+ if(error){let msg=error.message;try{const j=await error.context.json();if(j?.error)msg=j.error}catch{}throw Error(msg)}
+ if(data?.error)throw Error(data.error);return data;
+}
+function bancoNormalizar(p){
+ if(!p||typeof p!=='object')return{error:'Registro inválido'};
+ const tipo=String(p.tipo||'').trim();if(!BANCO_TIPOS[tipo])return{error:'Tipo no reconocido: '+tipo};
+ const enunciado=String(p.pregunta??p.enunciado??'').trim();if(!enunciado)return{error:'Enunciado vacío'};
+ let ops=(Array.isArray(p.opciones)?p.opciones:[]).map(x=>String(x??'').trim()).filter(Boolean);
+ ops=ops.filter((x,i)=>ops.findIndex(y=>e2Sin(y)===e2Sin(x))===i);
+ let correcta=String(p.respuesta??p.correcta??'').trim();
+ const ex=ops.find(x=>e2Sin(x)===e2Sin(correcta));if(ex)correcta=ex;
+ if(!correcta||!ops.includes(correcta))return{error:'La respuesta no está entre las opciones'};
+ if(tipo==='verdadero_falso'){if(ops.length!==2)return{error:'Verdadero/falso mal formado'};}
+ else if(ops.length<3)return{error:'Menos de tres opciones'};
+ return{tipo,enunciado,opciones:ops,correcta,explicacion:String(p.explicacion??'').trim(),nivel:NIVELES.includes(p.dificultad)?p.dificultad:'medio'};
+}
+const e2Unificar=r=>{const p=e2Normalizar(r);return p.error?p:{tipo:p.tipo,enunciado:p.pregunta,opciones:p.opciones,correcta:p.respuesta,explicacion:p.explicacion,nivel:'medio'};};
+
+async function tecnicaDocente(uid){
+ const box=$('#tcard');
+ const {data,error}=await sb.from('cia_config').select('tecnica_activa').eq('docente_id',uid).maybeSingle();
+ if(error){box.innerHTML='<h3>Técnica que ven los estudiantes</h3><p class=err>Falta instalar esta función: ejecuta <b>sql/cia_tecnica_activa.sql</b> en Supabase (SQL Editor). Mientras tanto, los estudiantes ven el Banco de preguntas.</p>';return;}
+ // Una sola fuente de verdad: los periodos de práctica determinan la evaluación visible.
+ box.innerHTML='<h3>Evaluación visible para estudiantes</h3><p class="s">Utilice únicamente <b>Activar para estudiantes</b> en la lista de periodos. La evaluación activa del periodo es la que verá el estudiante de ese salón.</p>';
+ await ciaCatalogoEvaluaciones(uid,box);
+ await ciaAdministrarPeriodos(uid,box);
+}
+
+/* Catálogo configurable: evaluaciones adicionales basadas en los motores existentes. */
+async function ciaCatalogoEvaluaciones(uid,box){
+ const panel=document.createElement('section');panel.id='cia-catalogo';box.append(panel);
+ const cargar=async()=>{
+  const {data,error}=await sb.from('cia_catalogo_evaluaciones').select('id,nombre,motor,orden,activa').eq('docente_id',uid).order('orden',{ascending:true}).order('id',{ascending:true});
+  if(error){panel.innerHTML='<hr><h3>Evaluaciones adicionales</h3><p class=err>No se pudo consultar el catálogo. Ejecute sql/cia_catalogo_evaluaciones.sql. '+esc(error.message)+'</p>';return;}
+  const items=data||[];
+  panel.innerHTML=`<hr><h3>Evaluaciones adicionales</h3><p class=s>Las evaluaciones 1 y 2 se conservan. Las evaluaciones adicionales pueden usar el motor Enlace 2 o el Banco. Su catálogo y orden se guardan en Supabase. Las prácticas Enlace 2 todavía comparten el motor de intentos; no son calificaciones independientes por catálogo. Puede pausar o duplicar una configuración sin afectar las notas.</p><div class=row style="flex-wrap:wrap"><input id=cia-cat-nombre maxlength=100 placeholder="Evaluación ${items.length+3}" aria-label="Nombre de la nueva evaluación"><select id=cia-cat-motor aria-label="Tipo de ejercicios"><option value=banco>Ejercicios de Evaluación 1</option><option value=e2>Ejercicios de Evaluación 2</option><option value=e3>Ejercicios de Evaluación 3</option></select><button id=cia-cat-crear>Agregar evaluación</button></div><p id=cia-cat-estado class=s role=status></p><div class=wrap><table><thead><tr><th>Orden</th><th>Nombre</th><th>Tipo</th><th>Estado</th><th>Acciones</th></tr></thead><tbody>${items.map((x,i)=>`<tr><td>${i+3}</td><td>${esc(x.nombre)}</td><td>${x.motor==='e3'?'Evaluación 3':x.motor==='e2'?'Evaluación 2':'Evaluación 1 · Banco'}</td><td>${x.activa?'Activa':'Pausada'}</td><td><button class=sec data-cat-up="${esc(String(x.id))}" ${i===0?'disabled':''}>↑</button> <button class=sec data-cat-down="${esc(String(x.id))}" ${i===items.length-1?'disabled':''}>↓</button> <button class=sec data-cat-edit="${esc(String(x.id))}">Renombrar</button> <button class=sec data-cat-toggle="${esc(String(x.id))}">${x.activa?'Pausar':'Activar'}</button> <button class=sec data-cat-copy="${esc(String(x.id))}">Duplicar</button> <button class=sec data-cat-del="${esc(String(x.id))}">Eliminar</button></td></tr>`).join('')||'<tr><td colspan=4>No hay evaluaciones adicionales. Las evaluaciones 1, 2 y 3 ya están disponibles.</td></tr>'}</tbody></table></div>`;
+  // Vista previa de las cinco técnicas disponibles para las evaluaciones Enlace 2.
+  const e2Items=items.filter(x=>x.motor==='e2');
+  if(e2Items.length){const preview=document.createElement('div');preview.className='card';preview.innerHTML='<h4>Evaluaciones que usan Enlace 2</h4><p class=s>Estas evaluaciones usan las cinco técnicas existentes: Detective de errores, ¿Quién soy?, Causa y efecto, Mito o ciencia y Casos prácticos. Las preguntas se administran en Materias → Preguntas. La independencia de intentos requiere una función SQL adicional.</p>'+e2Items.map(x=>'<p><b>'+esc(x.nombre)+'</b> · '+(x.activa?'Activa':'Pausada')+'</p>').join('');panel.append(preview);}
+  const msg=panel.querySelector('#cia-cat-estado');
+  panel.querySelector('#cia-cat-crear').onclick=async()=>{const nombre=panel.querySelector('#cia-cat-nombre').value.trim()||`Evaluación ${items.length+3}`,motor=panel.querySelector('#cia-cat-motor').value;if(nombre.length>100)return;const {error:e}=await sb.from('cia_catalogo_evaluaciones').insert({docente_id:uid,nombre,motor,orden:items.length+3});if(e)return msg.textContent=e.message;await cargar();};
+  const guardar=async(a,b)=>{const {error:e}=await sb.rpc('cia_catalogo_intercambiar',{p_primero:a.id,p_segundo:b.id});if(e)return msg.textContent='No se pudo ordenar: '+e.message+' (ejecute el SQL de esta etapa)';await cargar();};
+  panel.querySelectorAll('[data-cat-up],[data-cat-down]').forEach(b=>b.onclick=async()=>{const id=b.dataset.catUp||b.dataset.catDown,i=items.findIndex(x=>String(x.id)===id),j=i+(b.dataset.catUp?-1:1);if(i<0||j<0||j>=items.length)return;await guardar(items[i],items[j]);});
+  panel.querySelectorAll('[data-cat-edit]').forEach(b=>b.onclick=async()=>{const x=items.find(x=>String(x.id)===b.dataset.catEdit);if(!x)return;const nombre=prompt('Nombre de la evaluación:',x.nombre)?.trim();if(!nombre||nombre.length>100)return;const {error:e}=await sb.from('cia_catalogo_evaluaciones').update({nombre}).eq('id',x.id).eq('docente_id',uid);if(e)return msg.textContent=e.message;await cargar();});
+  panel.querySelectorAll('[data-cat-toggle]').forEach(b=>b.onclick=async()=>{const x=items.find(x=>String(x.id)===b.dataset.catToggle);if(!x)return;b.disabled=true;const {error:e}=await sb.from('cia_catalogo_evaluaciones').update({activa:!x.activa}).eq('id',x.id).eq('docente_id',uid);if(e){b.disabled=false;return msg.textContent=e.message;}await cargar();});
+  panel.querySelectorAll('[data-cat-copy]').forEach(b=>b.onclick=async()=>{const x=items.find(x=>String(x.id)===b.dataset.catCopy);if(!x)return;b.disabled=true;const siguiente=Math.max(2,...items.map(i=>Number(i.orden)||2))+1;const {error:e}=await sb.from('cia_catalogo_evaluaciones').insert({docente_id:uid,nombre:(x.nombre+' (copia)').slice(0,100),motor:x.motor,orden:siguiente,activa:false});if(e){b.disabled=false;return msg.textContent=e.message;}await cargar();});
+  panel.querySelectorAll('[data-cat-del]').forEach(b=>b.onclick=async()=>{const x=items.find(x=>String(x.id)===b.dataset.catDel);if(!x||!confirm('¿Eliminar la configuración «'+x.nombre+'»? Si tiene evaluaciones oficiales vinculadas, Supabase impedirá borrarla.'))return;const {error:e}=await sb.from('cia_catalogo_evaluaciones').delete().eq('id',x.id).eq('docente_id',uid);if(e)return msg.textContent=e.message;await cargar();});
+ };await cargar();
+}
+
+
+/* Periodos de práctica: administración desde Materias, sin alterar otras pantallas. */
+async function ciaAdministrarPeriodos(uid,box){
+ const cont=document.createElement('section');cont.id='cia-administrar-periodos';
+ cont.innerHTML=`<hr><h3>Prácticas para estudiantes</h3><p class=s><b>Último paso:</b> guarda la programación sin publicarla; después pulsa «Activar para estudiantes» cuando el banco esté completo.</p>
+ <div class="s" style="padding:9px;border:1px solid #d6e6d9;border-radius:8px;margin:10px 0">Para elegir cuál ve el estudiante, pulsa <b>Activar para estudiantes</b> en el periodo deseado: ese queda visible y los otros periodos vigentes de su salón se desactivan (puedes reactivarlos después). Para reordenar fechas usa <b>↑ Primero</b> o <b>↓ Después</b>. Se intercambian las fechas de los dos periodos, sin cambiar sus técnicas ni sus notas.</div>
+ <div id="cia-estado-visible" class="card" role="status" aria-live="polite"><b>Visible para estudiantes</b><p class="s">Consultando prácticas activas…</p></div><div class="cia-accesos"><button type="button" id="cia-comprobar-cobertura">✅ Comprobar banco E3</button><button type="button" id="cia-completar-e3" style="background:#217b50;color:white">➕ Completar preguntas E3</button><button type="button" id="cia-ver-tecnicas">📋 Ver técnicas</button><button type="button" id="cia-nuevo-rapido">➕ Nueva práctica</button><button type="button" id="cia-recargar-periodos">🔄 Actualizar estados</button></div>
+ <form id="cia-form-periodo"><label>Nombre automático de la práctica<input name="titulo" maxlength="120" readonly placeholder="Se asigna automáticamente"></label>
+ <label>Evaluación que verán los estudiantes<select name="tecnica" required><option value="banco">Evaluación 1</option><option value="e2">Evaluación 2</option><option value="e3">Evaluación 3</option></select></label>
+ <label>Grado<select name="grado" required><option value="">Seleccionar grado</option><option value="7">7.º</option><option value="8">8.º</option><option value="9">9.º</option></select></label>
+ <label>Sección<select name="seccion"><option value="">Todas las secciones</option><option value="A">A</option><option value="B">B</option><option value="C">C</option></select></label>
+ <details id="cia-avanzado" open style="grid-column:1/-1"><summary style="cursor:pointer;font-weight:700;color:#254574">⚙️ Materia y fechas de disponibilidad</summary><div class="cia-av-grid">
+ <label>Materia de la evaluación<select name="materia_id" required><option value="">Seleccionar materia</option></select></label>
+ <label>Disponibilidad<select name="modalidad"><option value="abierta">🟢 Sin fechas — hasta desactivar</option><option value="fechas">🔵 Inicio y cierre programados</option><option value="inicio">🟠 Inicio programado, sin cierre</option></select></label><div id="cia-fechas" style="display:none;grid-template-columns:repeat(auto-fit,minmax(175px,1fr));gap:8px"><label>Inicio<input name="inicio" type="datetime-local"></label><label id="cia-cierre-label">Cierre<input name="fin" type="datetime-local"></label></div><p class="s" id="cia-ayuda-modalidad">Disponible inmediatamente y sin vencimiento, hasta que lo desactive.</p>
+ <input type="checkbox" name="activo" hidden>
+ </div></details>
+ <button type="submit" id="cia-guardar-periodo">Crear práctica</button><button type="button" class="sec" id="cia-cancelar-periodo" hidden>Cancelar edición</button>
+ <p id="cia-periodo-mensaje" role="status" class=s></p><div id="cia-cobertura-visible" role="status" aria-live="polite" class="s" style="padding:10px;border:1px solid #d3e2ef;border-radius:8px;margin:8px 0">Selecciona materia y grado; pulsa «Comprobar banco E3» antes de activar.</div></form><h3>Prácticas creadas</h3><p id="cia-lista-msg" role="status" style="font-weight:700;margin:6px 0"></p><div id="cia-lista-periodos">Cargando…</div>`;
+ box.appendChild(cont);
+ const form=cont.querySelector('form'),msg=cont.querySelector('#cia-periodo-mensaje'),list=cont.querySelector('#cia-lista-periodos');
+ const campo=n=>form.elements.namedItem(n);
+ const FECHA_LIBRE_INICIO='2000-01-01T00:00:00.000Z',FECHA_LIBRE_FIN='2099-12-31T23:59:59.000Z';
+ const esSinInicio=p=>p.inicio&&new Date(p.inicio).getTime()<=new Date('2000-01-02').getTime();
+ const esSinFin=p=>p.fin&&new Date(p.fin).getTime()>=new Date('2099-12-30').getTime();
+ const cambiarModalidad=()=>{const modo=campo('modalidad').value;cont.querySelector('#cia-fechas').style.display=modo==='abierta'?'none':'grid';cont.querySelector('#cia-cierre-label').style.display=modo==='fechas'?'block':'none';campo('inicio').required=modo!=='abierta';campo('fin').required=modo==='fechas';cont.querySelector('#cia-ayuda-modalidad').textContent=modo==='abierta'?'Disponible inmediatamente hasta que lo desactive.':modo==='inicio'?'Se abre en la fecha indicada y no vence.':'Disponible solo entre las dos fechas indicadas.';};
+ campo('modalidad').onchange=cambiarModalidad;cambiarModalidad();
+ let editando=null,periodos=[];
+ const nombreSiguiente=()=>{
+  const usados=new Set(periodos.map(p=>String(p.titulo||'').trim().toLowerCase()));
+  let numero=1;
+  // Reutiliza el siguiente número libre; se recalcula al guardar para evitar colisiones.
+  while(usados.has(`práctica ${numero}`)||usados.has(`practica ${numero}`))numero++;
+  return `Práctica ${numero}`;
+ };
+ const actualizarNombre=()=>{if(!editando)campo('titulo').value=nombreSiguiente();};
+ {const lm=cont.querySelector('#cia-lista-msg');new MutationObserver(()=>{const t=msg.textContent||'';lm.textContent=t;lm.style.color=/^(Error|No se)/.test(t)?'#a62020':'#0b5a34';}).observe(msg,{childList:true,characterData:true,subtree:true});}
+ cont.querySelector('#cia-ver-tecnicas').onclick=()=>ciaVerTecnicas(uid,periodos);
+ cont.querySelector('#cia-nuevo-rapido').onclick=()=>{limpiar();const hoy=new Date();hoy.setMinutes(hoy.getMinutes()-1);campo('modalidad').value='abierta';cambiarModalidad();campo('inicio').value=localFecha(hoy);const fin=new Date(Date.now()+7*86400000);campo('fin').value=localFecha(fin);campo('titulo').value=nombreSiguiente();form.scrollIntoView({behavior:'smooth',block:'center'});campo('grado').focus();};
+ cont.querySelector('#cia-recargar-periodos').onclick=()=>cargar();
+ const {data:materias,error:errMat}=await sb.from('cia_materias').select('id,nombre').eq('docente_id',uid).order('nombre');
+ const materiasDisponibles=errMat?[]:(materias||[]);
+ if(!errMat)campo('materia_id').innerHTML='<option value="">Seleccionar materia</option>'+(materias||[]).map(m=>`<option value="${esc(String(m.id))}">${esc(m.nombre)}</option>`).join('');
+ // Cobertura real del banco E3 para una materia y grado (sin modificar datos).
+ async function coberturaE3(grado,materiaId){
+  const materias=materiaId?[{id:materiaId,nombre:'Materia seleccionada'}]:(materiasDisponibles||[]);
+  if(!materias.length)throw Error('No hay materias asignadas para comprobar.');
+  const tecnicas=Object.keys(E3_TECNICAS),faltas=[];
+  for(const m of materias){
+   const {data,error}=await sb.from('cia14_preguntas').select('tecnica,grado,activa,enunciado').eq('docente_id',uid).eq('materia_id',m.id).eq('grado',String(grado)).in('tecnica',tecnicas).eq('activa',true).limit(5000);
+   if(error)throw error;
+   for(const t of tecnicas){const n=new Set((data||[]).filter(x=>x.tecnica===t).map(x=>String(x.enunciado||'').trim().toLowerCase())).size;
+    if(n<E2_META)faltas.push(`${m.nombre} · ${E3_TECNICAS[t]}: ${n}/${E2_META} (faltan ${E2_META-n})`);
+   }
+  }
+  return faltas;
+ }
+ const mostrarCobertura=async()=>{
+  const panel=cont.querySelector('#cia-cobertura-visible');
+  const grado=campo('grado').value,materia=campo('materia_id').value;
+  if(!grado||!materia){panel.textContent='Selecciona primero una materia y un grado.';return false;}
+  panel.textContent='Consultando las cinco técnicas…';
+  try{
+   const faltas=await coberturaE3(grado,materia);
+   if(faltas.length){panel.textContent='⚠️ Evaluación 3 todavía no está lista: '+faltas.join(' | ');return false;}
+   panel.textContent='✅ Evaluación 3 lista: las cinco técnicas tienen al menos '+E2_META+' preguntas activas y distintas para esta materia y grado.';
+   return true;
+  }catch(e){panel.textContent='No se pudo verificar el banco: '+e.message;return false;}
+ };
+ cont.querySelector('#cia-completar-e3').onclick=async()=>{
+  const materia=campo('materia_id').value,grado=campo('grado').value;
+  if(!materia||!grado){cont.querySelector('#cia-cobertura-visible').textContent='Selecciona primero materia y grado.';return;}
+  const listo=await mostrarCobertura();
+  if(listo){cont.querySelector('#cia-cobertura-visible').textContent='Las cinco técnicas E3 están completas. Ya puedes activar la práctica.';return;}
+  const enlace=document.querySelector('.cia-ruta a[href="#cia-etapa-2"]');
+  if(!enlace){cont.querySelector('#cia-cobertura-visible').textContent+=' Abre el paso 2 · Generar.';return;}
+  enlace.click();
+  const selector=document.querySelector('#cia-panel-generar input[name="gtec"][value="e3"]');
+  if(selector){selector.checked=true;selector.dispatchEvent(new Event('change',{bubbles:true}));}
+  const gradoGenerar=document.querySelector('#cia-panel-generar #gg');
+  if(gradoGenerar&&[...gradoGenerar.options].some(o=>o.value===grado))gradoGenerar.value=grado;
+  const mensaje=document.querySelector('#cia-panel-generar #ges');
+  if(mensaje)mensaje.textContent='Evaluación 3 seleccionada. Sube el PDF y genera preguntas; el sistema evita enunciados duplicados. Después comprueba el banco antes de activar.';
+ }; 
+ cont.querySelector('#cia-comprobar-cobertura').onclick=mostrarCobertura;
+ campo('grado').addEventListener('change',()=>{cont.querySelector('#cia-cobertura-visible').textContent='Grado cambiado: comprueba de nuevo el banco.'});
+ campo('materia_id').addEventListener('change',()=>{cont.querySelector('#cia-cobertura-visible').textContent='Materia cambiada: comprueba de nuevo el banco.'});
+ const localFecha=fecha=>{if(!fecha)return '';const d=new Date(fecha);return new Date(d.getTime()-d.getTimezoneOffset()*60000).toISOString().slice(0,16)};
+ const limpiar=()=>{editando=null;form.reset();campo('activo').checked=false;campo('modalidad').value='abierta';cambiarModalidad();cont.querySelector('#cia-avanzado').open=true;actualizarNombre();const g=box.querySelector('[name=ta]:checked');if(g)campo('tecnica').value=g.value;cont.querySelector('#cia-guardar-periodo').textContent='Crear práctica';cont.querySelector('#cia-cancelar-periodo').hidden=true;};
+ async function cargar(){
+  const {data,error}=await sb.from('cia_periodos').select('id,docente_id,materia_id,titulo,tecnica,grado,seccion,inicio,fin,activo').eq('docente_id',uid).order('inicio',{ascending:true});
+  if(error){list.textContent='No se pudieron consultar los periodos: '+error.message;return;}
+  periodos=data||[];actualizarNombre();
+  const estadoVisible=cont.querySelector('#cia-estado-visible');
+  const ahoraVisible=Date.now();
+  const visibles=periodos.filter(p=>p.activo&&new Date(p.inicio).getTime()<=ahoraVisible&&new Date(p.fin).getTime()>ahoraVisible);
+  const nombresTecnicas={banco:Object.values(TIPOS),e2:Object.values(E2_TECNICAS),e3:Object.values(E3_TECNICAS)};
+  estadoVisible.innerHTML='<b>Qué ven los estudiantes ahora</b>'+(visibles.length?visibles.map(p=>{
+   const modo=['e2','e3'].includes(p.tecnica)?p.tecnica:'banco';
+   const salon=esc(String(p.grado))+'º '+esc(p.seccion||'Todas las secciones');
+   return '<div style="border-top:1px solid #c7dfd2;padding:9px 0"><strong>🟢 '+esc(p.titulo)+'</strong> · '+esc(etiquetaEval(modo))+' · '+salon+'<p class="s" style="margin:4px 0">Materia: '+esc((materias||[]).find(m=>String(m.id)===String(p.materia_id))?.nombre||'No especificada')+'</p><p class="s" style="margin:4px 0"><b>Técnicas:</b> '+(nombresTecnicas[modo]||[]).map(esc).join(' · ')+'</p><small>Visible por programación; cada tarjeta necesita preguntas suficientes y los permisos correctos para abrir.</small></div>';
+  }).join(''):'<p class="s">🔴 No hay prácticas activas dentro de sus fechas. Ninguna práctica está confirmada como publicada.</p>');
+  {const ahoraMs=Date.now(),vig=periodos.filter(p=>p.activo&&new Date(p.inicio).getTime()<=ahoraMs&&new Date(p.fin).getTime()>ahoraMs);const el=document.querySelector('#cia-vigente');if(el)el.textContent=vig.length?'Ahora mismo los estudiantes ven: '+vig.map(p=>'«'+p.titulo+'» → '+etiquetaEval(p.tecnica)+' ('+p.grado+'.º '+(p.seccion||'Todas')+')').join(' · '):'No hay periodo vigente: los estudiantes ven la técnica por defecto.';}
+  if(!editando&&campo('modalidad').value==='fechas'&&!campo('inicio').value&&periodos.length){const ult=periodos[periodos.length-1];const siguiente=new Date(new Date(ult.fin).getTime()+60000);campo('inicio').value=localFecha(siguiente);}
+  if(!periodos.length){list.textContent='Todavía no hay prácticas registradas.';return;}
+  list.innerHTML='<div class="wrap"><table><thead><tr><th>Orden</th><th>Periodo</th><th>Salón</th><th>Técnica</th><th>Inicio</th><th>Cierre</th><th>Estado</th><th>Acciones</th></tr></thead><tbody>'+periodos.map((p,i)=>`<tr><td><b>${i+1}.º</b></td><td>${esc(p.titulo)}</td><td>${esc(String(p.grado))}.º ${esc(p.seccion||'Todas')}</td><td>${p.tecnica==='e3'?'Evaluación 3':p.tecnica==='e2'?'Evaluación 2':'Evaluación 1'}</td><td>${esSinInicio(p)?'Sin fecha':esc(new Date(p.inicio).toLocaleString('es-PA'))}</td><td>${esSinFin(p)?'Sin fecha':esc(new Date(p.fin).toLocaleString('es-PA'))}</td><td><span class="cia-estado-periodo ${!p.activo?'off':new Date(p.inicio).getTime()>Date.now()?'futuro':new Date(p.fin).getTime()<=Date.now()?'off':'ok'}">${!p.activo?'⛔ Desactivado':new Date(p.inicio).getTime()>Date.now()?'🕒 Programado':new Date(p.fin).getTime()<=Date.now()?'⌛ Vencido':'🟢 Abierto'}</span></td><td><button type="button" class="sec" data-up="${esc(String(p.id))}" ${i===0?'disabled':''} title="Poner antes de la práctica anterior">↑ Primero</button><button type="button" class="sec" data-down="${esc(String(p.id))}" ${i===periodos.length-1?'disabled':''} title="Poner después de la siguiente práctica">↓ Después</button><button type="button" data-ahora="${esc(String(p.id))}" ${p.activo&&new Date(p.inicio).getTime()<=Date.now()&&new Date(p.fin).getTime()>Date.now()?'disabled':''}>${p.activo&&new Date(p.inicio).getTime()<=Date.now()&&new Date(p.fin).getTime()>Date.now()?'✓ Activa y visible':'Activar para estudiantes'}</button><button type="button" class="sec" data-apagar="${esc(String(p.id))}" ${!p.activo?'disabled':''}>Desactivar</button><button type="button" data-pe="${esc(String(p.id))}">Editar</button><button type="button" class="sec" data-pb="${esc(String(p.id))}">Borrar</button></td></tr>`).join('')+'</tbody></table></div>';
+  // Orden cronológico: intercambia exclusivamente inicio/fin entre periodos.
+  // No exige columnas nuevas en Supabase y conserva título, técnica y notas.
+  async function moverPeriodo(id,direccion){
+   const i=periodos.findIndex(p=>String(p.id)===String(id)),j=i+direccion;
+   if(i<0||j<0||j>=periodos.length)return;
+   const a=periodos[i],b=periodos[j];
+   if(a.grado!==b.grado||(a.seccion||'')!==(b.seccion||'')){
+    msg.textContent='Para intercambiar fechas, ambos periodos deben corresponder al mismo grado y sección.';return;
+   }
+   if(!confirm('¿Intercambiar las fechas de «'+a.titulo+'» y «'+b.titulo+'»? Las técnicas y notas se conservan.'))return;
+   const guardar=(p,ini,fin)=>sb.from('cia_periodos').update({inicio:ini,fin:fin}).eq('id',p.id).eq('docente_id',uid);
+   const r1=await guardar(a,b.inicio,b.fin);
+   if(r1.error){msg.textContent='No se pudo cambiar el orden: '+r1.error.message;return;}
+   const r2=await guardar(b,a.inicio,a.fin);
+   if(r2.error){await guardar(a,a.inicio,a.fin);msg.textContent='No se completó el cambio: '+r2.error.message+'. Se intentó restaurar el periodo original.';await cargar();return;}
+   msg.textContent='Orden cambiado. Las fechas se intercambiaron correctamente.';
+   await cargar();
+  }
+  list.querySelectorAll('[data-ahora]').forEach(b=>b.onclick=async()=>{
+   const elegido=periodos.find(p=>String(p.id)===b.dataset.ahora);
+   if(!elegido)return;
+   const ahora=Date.now(),vigente=p=>p.activo&&new Date(p.inicio).getTime()<=ahora&&new Date(p.fin).getTime()>ahora;
+   // Un periodo para 'Todas' debe reemplazar cualquier periodo anterior del mismo grado.
+   // Normalizamos grado y secciones para evitar que 9, 9.º, 'Todas' y valores vacíos se comparen mal.
+   const gradoNormal=v=>(String(v??'').match(/\d+/)||[])[0]||String(v??'').trim();
+   const seccionNormal=v=>String(v??'').trim().toUpperCase().replace(/^SECCI[ÓO]N\s+/,'');
+   const esTodas=v=>!seccionNormal(v)||['TODAS','TODOS','TODAS LAS SECCIONES','ALL'].includes(seccionNormal(v));
+   const mismoSalon=p=>gradoNormal(p.grado)===gradoNormal(elegido.grado)&&(esTodas(p.seccion)||esTodas(elegido.seccion)||seccionNormal(p.seccion)===seccionNormal(elegido.seccion));
+   const otros=periodos.filter(p=>p.id!==elegido.id&&mismoSalon(p)&&vigente(p));
+   b.disabled=true;
+   if(elegido.tecnica==='e3'){try{if(!elegido.materia_id)throw Error('Este periodo no tiene materia asignada. Edita el periodo y selecciona Ciencias Naturales.');const faltas=await coberturaE3(elegido.grado,elegido.materia_id);if(faltas.length){msg.textContent='No se activó Evaluación 3. Completa el banco en Paso 2: '+faltas.join(' | ');b.disabled=false;return;}}catch(e){msg.textContent='No se activó: no fue posible verificar las preguntas. '+e.message;b.disabled=false;return;}}
+   const dur=Math.max(new Date(elegido.fin).getTime()-new Date(elegido.inicio).getTime(),86400000);
+   const cambios={activo:true};
+   if(!vigente(elegido)){if(!esSinInicio(elegido))cambios.inicio=new Date(ahora-60000).toISOString();if(!esSinFin(elegido))cambios.fin=new Date(ahora+dur).toISOString();}
+   const r1=await sb.from('cia_periodos').update(cambios).eq('id',elegido.id).eq('docente_id',uid);
+   if(r1.error){msg.textContent='Error: '+r1.error.message;b.disabled=false;return;}
+   for(const o of otros){const r=await sb.from('cia_periodos').update({activo:false}).eq('id',o.id).eq('docente_id',uid);if(r.error){msg.textContent='No se pudo ocultar «'+o.titulo+'»: '+r.error.message;await cargar();return;}}
+   const verificacion=await sb.from('cia_periodos').select('id,activo,inicio,fin').eq('id',elegido.id).eq('docente_id',uid).single();
+   if(verificacion.error){msg.textContent='Se envió la activación, pero no se pudo confirmar: '+verificacion.error.message;await cargar();return;}
+   const confirmado=verificacion.data?.activo&&new Date(verificacion.data.inicio).getTime()<=Date.now()&&new Date(verificacion.data.fin).getTime()>Date.now();
+   msg.textContent=confirmado?'✅ «'+elegido.titulo+'» está ACTIVA Y VISIBLE para el grado '+elegido.grado+' y sección '+(elegido.seccion||'Todas')+'. Actualiza la pantalla del estudiante para comprobar sus tarjetas.':'⚠️ Supabase no confirmó una práctica activa dentro de sus fechas. Revisa los permisos y la programación.';
+   await cargar();
+  });
+  list.querySelectorAll('[data-apagar]').forEach(b=>b.onclick=async()=>{
+   const p=periodos.find(x=>String(x.id)===b.dataset.apagar);if(!p)return;
+   b.disabled=true;
+   const {data,error}=await sb.from('cia_periodos').update({activo:false}).eq('id',p.id).eq('docente_id',uid).select('id,activo').single();
+   msg.textContent=error?'No se pudo desactivar: '+error.message:data?.activo===false?'✓ «'+p.titulo+'» desactivada. Ya no se publica como periodo activo.':'No se confirmó la desactivación.';
+   await cargar();
+  });
+  list.querySelectorAll('[data-up]').forEach(b=>b.onclick=()=>moverPeriodo(b.dataset.up,-1));
+  list.querySelectorAll('[data-down]').forEach(b=>b.onclick=()=>moverPeriodo(b.dataset.down,1));
+  list.querySelectorAll('[data-pe]').forEach(b=>b.onclick=()=>{const p=periodos.find(x=>String(x.id)===b.dataset.pe);if(!p)return;editando=p.id;for(const n of ['titulo','materia_id','grado','seccion'])campo(n).value=p[n]==null?'':String(p[n]);campo('modalidad').value=esSinInicio(p)&&esSinFin(p)?'abierta':esSinFin(p)?'inicio':'fechas';cambiarModalidad();campo('inicio').value=esSinInicio(p)?'':localFecha(p.inicio);campo('fin').value=esSinFin(p)?'':localFecha(p.fin);campo('activo').checked=false;cont.querySelector('#cia-avanzado').open=true;campo('tecnica').value=['e2','e3'].includes(p.tecnica)?p.tecnica:'banco';cont.querySelector('#cia-guardar-periodo').textContent='Guardar cambios';cont.querySelector('#cia-cancelar-periodo').hidden=false;msg.textContent='Editando: '+p.titulo;form.scrollIntoView({behavior:'smooth',block:'nearest'});});
+  
+  list.querySelectorAll('[data-pb]').forEach(b=>b.onclick=async()=>{const p=periodos.find(x=>String(x.id)===b.dataset.pb);if(!p||!confirm('¿Borrar el periodo «'+p.titulo+'»? Esta acción no se puede deshacer.'))return;b.disabled=true;const {error}=await sb.from('cia_periodos').delete().eq('id',p.id).eq('docente_id',uid);msg.textContent=error?'Error: '+error.message:'Periodo eliminado.';if(!error&&String(editando)===String(p.id))limpiar();await cargar();});
+ }
+ cont.querySelector('#cia-cancelar-periodo').onclick=()=>{limpiar();msg.textContent='Edición cancelada.'};
+ form.onsubmit=async ev=>{ev.preventDefault();const modo=campo('modalidad').value;const inicio=modo==='abierta'?new Date(FECHA_LIBRE_INICIO):new Date(campo('inicio').value),fin=modo!=='fechas'?new Date(FECHA_LIBRE_FIN):new Date(campo('fin').value);if(!Number.isFinite(+inicio)||!Number.isFinite(+fin)||fin<=inicio){msg.textContent='El cierre debe ser posterior al inicio.';return;}
+ if(!editando)actualizarNombre();const payload={titulo:editando?campo('titulo').value.trim():nombreSiguiente(),materia_id:campo('materia_id').value||null,tecnica:['e2','e3'].includes(campo('tecnica').value)?campo('tecnica').value:'banco',grado:campo('grado').value,seccion:campo('seccion').value||null,inicio:inicio.toISOString(),fin:fin.toISOString(),activo:campo('activo').checked};
+ if(!payload.grado||!payload.materia_id){msg.textContent='Selecciona materia y grado para crear la práctica.';return;}
+ if(payload.activo&&payload.tecnica==='e3'){try{const faltas=await coberturaE3(payload.grado,payload.materia_id);if(faltas.length){msg.textContent='Periodo no activado: '+faltas.join(' | ');return;}}catch(e){msg.textContent='No se pudo verificar el banco: '+e.message;return;}}
+ const boton=cont.querySelector('#cia-guardar-periodo');boton.disabled=true;
+ const consulta=editando?sb.from('cia_periodos').update(payload).eq('id',editando).eq('docente_id',uid):sb.from('cia_periodos').insert({...payload,docente_id:uid});
+ const {error}=await consulta;boton.disabled=false;msg.textContent=error?'No se pudo guardar: '+error.message:'Práctica guardada. Pulsa «Activar para estudiantes» en la lista cuando esté listo el banco.';if(!error){limpiar();await cargar();}
+ };
+ await cargar();
+}
+
+/* Vista de técnicas por evaluación: qué contiene cada una y cuáles se repiten. */
+async function ciaVerTecnicas(uid,periodos){
+ const fondo=document.createElement('div');fondo.className='editor-fondo';
+ fondo.innerHTML='<div class="editor-caja" role="dialog" aria-modal="true" aria-label="Técnicas por evaluación"><p>Cargando técnicas…</p></div>';
+ document.body.appendChild(fondo);
+ const caja=fondo.firstElementChild,cerrar=()=>fondo.remove();
+ fondo.onclick=e=>{if(e.target===fondo)cerrar();};
+ const [cat,q14,qb,cp]=await Promise.all([
+  sb.from('cia_catalogo_evaluaciones').select('id,nombre,motor,orden,activa').eq('docente_id',uid).order('orden',{ascending:true}),
+  sb.from('cia14_preguntas').select('tecnica,activa').eq('docente_id',uid).limit(5000),
+  sb.from('cia_preguntas').select('tipo').eq('docente_id',uid).limit(5000),
+  sb.from('cia_catalogo_preguntas').select('catalogo_id').eq('docente_id',uid).limit(5000)]);
+ const contar=(r,campo,clave,f)=>r.error?null:(r.data||[]).filter(x=>x[campo]===clave&&(!f||f(x))).length;
+ const motores={
+  banco:{nombre:'Evaluación 1',tecnicas:Object.fromEntries(Object.entries(TIPOS).map(([k,v])=>[k,[v,contar(qb,'tipo',k)]]))},
+  e2:{nombre:'Evaluación 2',tecnicas:Object.fromEntries(Object.entries(E2_TECNICAS).map(([k,v])=>[k,[v,contar(q14,'tecnica',k,x=>x.activa!==false)]]))},
+  e3:{nombre:'Evaluación 3',tecnicas:Object.fromEntries(Object.entries(E3_TECNICAS).map(([k,v])=>[k,[v,contar(q14,'tecnica',k,x=>x.activa!==false)]]))}
+ };
+ const items=cat.error?[]:(cat.data||[]);
+ const usos=m=>[
+  ...(periodos||[]).filter(x=>(['e2','e3'].includes(x.tecnica)?x.tecnica:'banco')===m).map(x=>'Periodo «'+x.titulo+'» ('+x.grado+'.º '+(x.seccion||'Todas')+(x.activo?'':' · inactivo')+')'),
+  ...items.filter(x=>x.motor===m).map(x=>'Evaluación adicional «'+x.nombre+'»'+(x.activa?'':' (pausada)'))
+ ];
+ const bloque=m=>{
+  const d=motores[m],u=usos(m);
+  const filas=Object.values(d.tecnicas).map(([n,c])=>'<tr><td>'+esc(n)+'</td><td style="text-align:right">'+(c==null?'—':c)+'</td></tr>').join('');
+  return '<div class="card" style="margin:10px 0"><h3>'+esc(d.nombre)+'</h3><div class="wrap"><table><thead><tr><th>Técnica</th><th style="text-align:right">Preguntas guardadas</th></tr></thead><tbody>'+filas+'</tbody></table></div>'
+   +'<p class="s"><b>Se usa en:</b> '+(u.length?u.map(esc).join(' · '):'ninguna evaluación o periodo todavía')+'</p>'
+   +(u.length>1?'<p class="s" style="color:#a15a00"><b>⚠ Repetida:</b> estos '+u.length+' usos comparten las mismas técnicas. Si no quieres repetir, elige otro tipo de evaluación.</p>':'')+'</div>';
+ };
+ const extra=items.length?'<h3>Evaluaciones adicionales</h3><div class="wrap"><table><thead><tr><th>Nombre</th><th>Tipo</th><th>Estado</th><th style="text-align:right">Preguntas vinculadas</th></tr></thead><tbody>'+items.map(x=>'<tr><td>'+esc(x.nombre)+'</td><td>'+etiquetaEval(x.motor)+'</td><td>'+(x.activa?'Activa':'Pausada')+'</td><td style="text-align:right">'+(contar(cp,'catalogo_id',x.id)??'—')+'</td></tr>').join('')+'</tbody></table></div>':'';
+ const sugerencia=['banco','e2','e3'].filter(m=>!usos(m).length).map(m=>motores[m].nombre);
+ caja.innerHTML='<h2>Técnicas de cada evaluación</h2><p class="s">Cada evaluación tiene su propio grupo de cinco técnicas. Las preguntas guardadas se comparten entre todos los periodos y evaluaciones que usan el mismo tipo.</p>'
+  +(sugerencia.length?'<p class="s"><b>Sin usar todavía:</b> '+sugerencia.map(esc).join(', ')+'.</p>':'')
+  +bloque('banco')+bloque('e2')+bloque('e3')+extra
+  +'<div class="row" style="justify-content:flex-end"><button type="button" id="cia-tec-cerrar">Cerrar</button></div>';
+ caja.querySelector('#cia-tec-cerrar').onclick=cerrar;
+ document.addEventListener('keydown',function esc2(e){if(e.key==='Escape'){cerrar();document.removeEventListener('keydown',esc2);}});
+}
+async function tMaterias(uid){matActual=null;pdfCache=null;await matLista(uid);}
+
+/* --- Lista de materias --- */
+async function matLista(uid){
+ const v=$('#v');v.innerHTML='<div class=card><p>Cargando materias…</p></div>';
+ const [m,s,b,e]=await Promise.all([
+  sb.from('cia_materias').select('id,nombre').eq('docente_id',uid).order('nombre'),
+  sb.from('cia_materia_salones').select('materia_id').eq('docente_id',uid),
+  sb.from('cia_pregunta_materia').select('materia_id').eq('docente_id',uid).limit(5000),
+  sb.from('cia14_preguntas').select('materia_id,activa').eq('docente_id',uid).limit(5000)]);
+ const err=[m,s,b,e].find(r=>r.error)?.error;
+ if(err){v.innerHTML=`<div class=card>${avisoError(err)}</div>`;return;}
+ const n=(r,id,f)=>(r.data||[]).filter(x=>String(x.materia_id)===String(id)&&(!f||f(x))).length;
+ v.innerHTML=`<div class=card><h2>Mis materias</h2><p class=s>Entra a una materia para trabajar dentro de ella: asignar salones, subir el PDF, elegir grado y técnica, y revisar las preguntas.</p><div class=add><input id=mn maxlength=90 placeholder="Nueva materia. Ej.: Ciencias Naturales" aria-label="Nueva materia"><button id=ma>Agregar materia</button></div><p id=mm class=err role=status></p></div><div class=card id=tcard><p class=s>Cargando…</p></div>${(m.data||[]).length?`<div class=matgrid>${m.data.map(x=>`<div class=card><h3>${esc(x.nombre)}</h3><p class=s>${n(s,x.id)} salón(es) · ${n(b,x.id)} en el banco · ${n(e,x.id,q=>q.activa!==false)} de Enlace 2</p><button data-ent="${esc(x.id)}">Entrar</button></div>`).join('')}</div>`:'<div class=card><p>Aún no tienes materias. Escribe el nombre de la primera arriba (por ejemplo, Ciencias Naturales).</p></div>'}`;
+ // Los periodos se administran dentro de cada materia, en el paso 4.
+ $('#ma').onclick=async()=>{const nombre=$('#mn').value.trim(),msg=$('#mm');
+  if(nombre.length<2||nombre.length>90){msg.textContent='Escribe un nombre de 2 a 90 caracteres.';return;}
+  if((m.data||[]).some(x=>e2Sin(x.nombre)===e2Sin(nombre))){msg.textContent='Ya existe una materia con ese nombre.';return;}
+  const {data,error}=await sb.from('cia_materias').insert({docente_id:uid,nombre}).select('id').single();
+  if(error){msg.textContent=error.message;return;}
+  data?.id?matEntrar(uid,data.id,1):matLista(uid);};
+ v.querySelectorAll('[data-ent]').forEach(btn=>btn.onclick=()=>matEntrar(uid,btn.dataset.ent));
+}
+
+/* --- Dentro de una materia --- */
+async function matEntrar(uid,id,paso){
+ matActual=id;const v=$('#v');
+ const volver=html=>{v.innerHTML=`<div class=card>${html}<button id=mv class=sec>← Todas las materias</button></div>`;$('#mv').onclick=()=>matLista(uid);};
+ const {data:mat,error}=await sb.from('cia_materias').select('id,nombre').eq('id',id).eq('docente_id',uid).maybeSingle();
+ if(error||!mat)return volver(error?avisoError(error):'<p class=err>No se encontró la materia.</p>');
+ const {data:sal,error:se}=await sb.from('cia_materia_salones').select('id,grado,seccion').eq('docente_id',uid).eq('materia_id',id);
+ if(se)return volver(avisoError(se));
+ const salones=sal||[],grados=[...new Set(salones.map(x=>String(x.grado)))].sort(porGrado);
+ v.innerHTML=`<div class="card"><div class="row"><button class="sec" id="mv">← Todas las materias</button><span><button class="sec" id="mr">Cambiar nombre</button><button class="sec" id="md">Eliminar materia</button></span></div><h2>${esc(mat.nombre)}</h2><p class="s">Selecciona una pestaña para trabajar. Solo se muestra el paso elegido, sin desplazamientos.</p><nav class="cia-ruta"><a href="#cia-etapa-1">1 · Salones</a><a href="#cia-etapa-2">2 · Generar</a><a href="#cia-etapa-3">3 · Revisar</a><a href="#cia-etapa-4">4 · Activar</a></nav></div><section id="cia-etapa-1" class="cia-etapa"><div id="cia-panel-salones"></div></section><section id="cia-etapa-2" class="cia-etapa"><div id="cia-panel-generar"></div></section><section id="cia-etapa-3" class="cia-etapa"><div id="cia-panel-preguntas"></div></section><section id="cia-etapa-4" class="cia-etapa"><div id="cia-panel-publicar" class="card"><h3>4 · Programar y activar para estudiantes</h3><p class="s">Cargando periodos…</p></div></section>`;
+ const c={uid,mat,salones,grados,recargar:p=>matEntrar(uid,id,p)};
+ // Todos los módulos originales siguen funcionando; solo cambia su disposición.
+ matSalones(c,$('#cia-panel-salones'));
+ matGenerar(c,$('#cia-panel-generar'));
+ matPreguntas(c,$('#cia-panel-preguntas'));
+ const publicar=$('#cia-panel-publicar');
+ await ciaAdministrarPeriodos(uid,publicar);
+ const formPublicar=publicar.querySelector('#cia-form-periodo');
+ if(formPublicar){
+  const materia=formPublicar.elements.namedItem('materia_id');
+  if(materia){materia.value=String(id);materia.dispatchEvent(new Event('change'));}
+  const grado=formPublicar.elements.namedItem('grado');
+  if(grado&&grados.length===1){grado.value=grados[0];grado.dispatchEvent(new Event('change'));}
+ }
+ $('#mv').onclick=()=>matLista(uid);
+ $('#mr').onclick=async()=>{const nombre=prompt('Nuevo nombre de la materia:',mat.nombre)?.trim();if(!nombre||nombre===mat.nombre)return;if(nombre.length<2||nombre.length>90)return alert('El nombre debe tener entre 2 y 90 caracteres.');const {error:e}=await sb.from('cia_materias').update({nombre}).eq('id',id).eq('docente_id',uid);if(e)return alert(e.message);c.recargar(paso);};
+ $('#md').onclick=async()=>{if(!confirm(`¿Eliminar la materia "${mat.nombre}"?\n\nSe quitan sus salones asignados. Si tiene preguntas guardadas, el sistema puede impedirlo: bórralas antes en el paso 3.`))return;await sb.from('cia_materia_salones').delete().eq('materia_id',id).eq('docente_id',uid);const {data,error:e}=await sb.from('cia_materias').delete().eq('id',id).eq('docente_id',uid).select('id');if(e||!data?.length)return alert('No se pudo eliminar: '+(e?.message||'sin permiso (revise las políticas RLS de delete en cia_materias).'));matLista(uid);};
+ // Navegación inmediata dentro de la misma pantalla.
+ const irPaso=(n)=>{
+  const elegido=Number(n)>=1&&Number(n)<=4?Number(n):1;
+  v.querySelectorAll('.cia-etapa').forEach(sec=>{sec.hidden=sec.id!=='cia-etapa-'+elegido;});
+  v.querySelectorAll('.cia-ruta a').forEach(a=>{const activo=a.getAttribute('href')==='#cia-etapa-'+elegido;a.setAttribute('aria-selected',String(activo));a.setAttribute('aria-current',activo?'step':'false');});
+ };
+ v.querySelectorAll('.cia-ruta a').forEach(a=>a.addEventListener('click',e=>{e.preventDefault();const n=Number(a.getAttribute('href').slice(-1));irPaso(n);}));
+ irPaso(paso||1);
+
+}
+
+/* Paso 1 · salones */
+function matSalones(c,root){
+ const porG=new Map();c.salones.forEach(s=>{const g=String(s.grado);if(!porG.has(g))porG.set(g,[]);porG.get(g).push(s);});
+ root.innerHTML=`<div class=card><h3>1 · ¿A qué grados y salones pertenece esta materia?</h3><p class=s>Marca el grado y los salones donde das esta materia. Puedes repetirlo con otro grado.</p><label>Grado<select id=sg>${E2_GRADOS.map(g=>`<option value=${g} ${g==='9'?'selected':''}>${g}.º</option>`).join('')}</select></label><b>Salones</b><div class=checks id=sc>${SECCIONES.map(x=>`<label><input type=checkbox value=${x} ${x!=='D'?'checked':''}> ${x}</label>`).join('')}</div><button id=sa>Asignar salones</button><p id=sm class=s role=status></p></div><div class=card><h3>Salones asignados</h3>${porG.size?[...porG.entries()].sort((a,b)=>porGrado(a[0],b[0])).map(([g,l])=>`<p><b>${esc(g)}.º</b> ${l.sort((a,b)=>String(a.seccion).localeCompare(String(b.seccion))).map(s=>`<span class=chip>${esc(s.seccion)}<button aria-label="Quitar ${esc(g)}.º ${esc(s.seccion)}" data-q="${esc(s.id)}">×</button></span>`).join('')}</p>`).join('')+'<button id=sn>Continuar: subir PDF →</button>':'<p class=s>Todavía no hay salones. Asigna al menos uno para continuar.</p>'}</div>`;
+ $('#sa').onclick=async()=>{const secs=[...root.querySelectorAll('#sc input:checked')].map(x=>x.value);if(!secs.length)return $('#sm').textContent='Marca al menos un salón.';
+  const {error}=await sb.from('cia_materia_salones').upsert(secs.map(seccion=>({docente_id:c.uid,materia_id:c.mat.id,grado:$('#sg').value,seccion})),{onConflict:'docente_id,materia_id,grado,seccion'});
+  if(error)return $('#sm').textContent=error.message;c.recargar(1);};
+ root.querySelectorAll('[data-q]').forEach(b=>b.onclick=async()=>{if(!confirm('¿Quitar este salón de la materia?'))return;const {error}=await sb.from('cia_materia_salones').delete().eq('id',b.dataset.q).eq('docente_id',c.uid);if(error)return alert(error.message);c.recargar(1);});
+ if($('#sn'))$('#sn').onclick=()=>document.querySelector('.cia-ruta a[href="#cia-etapa-2"]')?.click();
+}
+
+/* Paso 2 · Paquete de preguntas (JSON). Ya no se generan preguntas con Gemini: la IA externa las crea desde el prompt y aquí se suben. */
+/*PQ-INI*/
+const PQ_PROMPT="Eres un docente experto en evaluación escolar. Te adjunto un PDF de lectura. Crea un PAQUETE DE PREGUNTAS basado ÚNICAMENTE en ese PDF (sin inventar datos ni usar información externa).\n\nDATOS\n- Materia: {{MATERIA}}\n- Grado: {{GRADO}}\n- Cantidad total: {{CANTIDAD}}\n- Lenguaje claro y apropiado para el grado. Mezcla dificultad fácil, medio y difícil (aprox. 35 % / 40 % / 25 %).\n\nOBJETIVO\nEstas preguntas se subirán a una plataforma y el docente decidirá después con qué técnica las usa (Evaluación 1, 2, 3 o 4). Por eso TODAS las preguntas deben funcionar con alternativas, y las que corresponden a crucigrama o rompecabezas deben traer además sus datos extra.\n\nREGLAS GENERALES\n1. Recorre TODO el PDF de principio a fin y reparte las preguntas proporcionalmente entre sus secciones. No repitas preguntas ni hagas variantes casi iguales.\n2. Cada pregunta lleva un \"titulo\" corto, único y descriptivo (máx. 80 caracteres) con el que se guardará, por ejemplo: \"Función de la membrana celular\". No uses títulos genéricos como \"Pregunta 1\".\n3. Reparte las preguntas de forma equitativa entre estos tipos (campo \"tipo\"; usa exactamente estas palabras):\n   - seleccion_multiple, verdadero_falso, completar\n   - detective (presenta un error conceptual y pregunta cómo corregirlo)\n   - quien (¿Quién soy? con pistas para reconocer un concepto)\n   - causa (identificar causa o consecuencia)\n   - mito (afirmación: ¿mito o ciencia? con la explicación correcta)\n   - casos (situación práctica basada en el PDF)\n   - mision (resolver una misión con pistas)\n   - prediccion (¿qué pasaría si…?)\n   - clasificacion (identificar la categoría correcta)\n   - evidencia (elegir la evidencia que respalda una conclusión)\n   - matematica (problema numérico con datos del PDF)\n   - espanol (comprensión: idea principal, vocabulario, inferencia)\n   - crucigrama (incluye \"palabra\" y \"pista\")\n   - rompecabezas (incluye \"piezas\" y \"orden_correcto\")\n   - decisiones (reto de decisiones: elegir la mejor decisión científica)\n4. Opciones:\n   - Todas las preguntas tienen \"opciones\" con EXACTAMENTE 4 alternativas distintas y una sola correcta, salvo verdadero_falso, que usa exactamente [\"Verdadero\",\"Falso\"].\n   - \"respuesta\" debe ser TEXTUALMENTE idéntica a una de las opciones.\n   - Los distractores deben ser plausibles pero claramente incorrectos según el PDF. Varía la posición de la respuesta correcta.\n   - completar: el enunciado incluye un espacio \"_____\".\n5. Crucigrama: \"palabra\" = una sola palabra en minúsculas, sin tildes ni espacios, tomada del PDF; \"pista\" = definición clara. Además llena \"opciones\" y \"respuesta\" (la palabra correcta entre 4 alternativas).\n6. Rompecabezas: \"piezas\" = 3 a 5 elementos desordenados; \"orden_correcto\" = esos mismos elementos en el orden correcto (proceso, secuencia o jerarquía del PDF). Además llena \"opciones\" y \"respuesta\" (opciones = 4 órdenes posibles escritos con flechas, ej. \"Membrana → Citoplasma → Núcleo\"; respuesta = el correcto).\n7. Para los tipos que no son crucigrama ni rompecabezas, deja \"palabra\" y \"pista\" como \"\" y \"piezas\" y \"orden_correcto\" como [].\n8. Toda pregunta incluye \"explicacion\" breve (1 o 2 frases) que justifique la respuesta según el PDF, y \"pagina\" con el número aproximado de página del PDF donde está el contenido (o \"\" si no lo sabes).\n9. Si el PDF no da contenido suficiente para la cantidad pedida, genera menos y dime cuántas hiciste y por qué. No rellenes con preguntas inventadas.\n\nFORMATO DE SALIDA (MUY IMPORTANTE)\n- Responde SOLO con JSON válido, sin texto antes ni después, dentro de un bloque de código. Comillas dobles rectas, sin comas finales, sin comentarios.\n- Estructura exacta:\n\n{\n  \"paquete\": {\n    \"materia\": \"{{MATERIA}}\",\n    \"grado\": \"{{GRADO}}\",\n    \"tema\": \"\",\n    \"fuente\": \"nombre del PDF\",\n    \"total\": 0\n  },\n  \"preguntas\": [\n    {\n      \"id\": \"P001\",\n      \"titulo\": \"\",\n      \"tipo\": \"seleccion_multiple\",\n      \"tema\": \"\",\n      \"dificultad\": \"facil\",\n      \"enunciado\": \"\",\n      \"opciones\": [\"\", \"\", \"\", \"\"],\n      \"respuesta\": \"\",\n      \"explicacion\": \"\",\n      \"palabra\": \"\",\n      \"pista\": \"\",\n      \"piezas\": [],\n      \"orden_correcto\": [],\n      \"pagina\": \"\"\n    }\n  ]\n}\n\n- \"dificultad\" solo puede ser: \"facil\", \"medio\" o \"dificil\".\n- Los ids son consecutivos: P001, P002, P003…\n\nENTREGA DEL BANCO COMPLETO\nEntrega todas las preguntas solicitadas en un único objeto JSON con la estructura indicada. No te detengas en 25 preguntas ni pidas CONTINUAR. La cantidad solicitada corresponde al banco completo; el docente elegirá después cuántas usar en cada evaluación sin borrar las restantes.\nSi puedes crear archivos, entrega un único archivo .json completo para descargar. Si el contenido del PDF no alcanza, no inventes ni repitas: entrega las preguntas justificables e indica la limitación en paquete.tema. paquete.total debe ser exactamente igual a preguntas.length, nunca una cantidad prevista.\nAntes de entregar verifica JSON válido, respuestas idénticas a una opción, alternativas distintas, títulos únicos y fidelidad al PDF.";
+const pqPrompt=(mat,grado,cant)=>PQ_PROMPT.split('{{MATERIA}}').join(mat).split('{{GRADO}}').join(grado+'.º').split('{{CANTIDAD}}').join(cant==='todas'?'todas las que permita la lectura (mínimo 100 si el texto alcanza; máximo 200)':cant);
+const PQ_TIPOS={seleccion_multiple:'Selección múltiple',verdadero_falso:'Verdadero o falso',completar:'Completar el espacio',detective:'Detective de errores',quien:'¿Quién soy?',causa:'Causa y efecto',mito:'Mito o ciencia',casos:'Casos prácticos',mision:'Misión científica',prediccion:'¿Qué pasaría si…?',clasificacion:'Clasificación',evidencia:'Encuentra la evidencia',matematica:'Matemática científica',espanol:'Español científico',crucigrama:'Crucigrama científico',rompecabezas:'Rompecabezas científico',decisiones:'Reto de decisiones'};
+const PQ_SINON={multiple:'seleccion_multiple',opcion_multiple:'seleccion_multiple',seleccion:'seleccion_multiple',vf:'verdadero_falso',verdadero_o_falso:'verdadero_falso',errores:'detective',detective_de_errores:'detective',quien_soy:'quien',causa_efecto:'causa',causa_y_efecto:'causa',mito_o_ciencia:'mito',caso:'casos',casos_practicos:'casos',decision:'decisiones',reto_de_decisiones:'decisiones',matematica_cientifica:'matematica',espanol_cientifico:'espanol',crucigrama_cientifico:'crucigrama',rompecabezas_cientifico:'rompecabezas',que_pasaria_si:'prediccion',completar_el_espacio:'completar'};
+/* Cada tipo del paquete se asigna a la técnica más parecida de cada evaluación, así el mismo paquete sirve para cualquiera. */
+const PQ_MAPA={
+ e2:{seleccion_multiple:'casos',verdadero_falso:'mito',completar:'casos',detective:'detective',quien:'quien',causa:'causa',mito:'mito',casos:'casos',mision:'casos',prediccion:'causa',clasificacion:'quien',evidencia:'causa',matematica:'casos',espanol:'casos',crucigrama:'quien',rompecabezas:'causa',decisiones:'casos'},
+ e3:{seleccion_multiple:'evidencia3',verdadero_falso:'errores3',completar:'clasificacion3',detective:'errores3',quien:'clasificacion3',causa:'prediccion3',mito:'errores3',casos:'mision3',mision:'mision3',prediccion:'prediccion3',clasificacion:'clasificacion3',evidencia:'evidencia3',matematica:'mision3',espanol:'evidencia3',crucigrama:'clasificacion3',rompecabezas:'mision3',decisiones:'mision3'},
+ e4:{seleccion_multiple:'espanol4',verdadero_falso:'espanol4',completar:'espanol4',detective:'decisiones4',quien:'crucigrama4',causa:'decisiones4',mito:'espanol4',casos:'decisiones4',mision:'decisiones4',prediccion:'decisiones4',clasificacion:'rompecabezas4',evidencia:'espanol4',matematica:'matematica4',espanol:'espanol4',crucigrama:'crucigrama4',rompecabezas:'rompecabezas4',decisiones:'decisiones4'}};
+const PQ_EVALS={banco:'Evaluación 1',e2:'Evaluación 2',e3:'Evaluación 3',e4:'Evaluación 4'};
+const PQ_TERCERA='No se puede saber con la información del texto';
+function pqNormalizar(raw,i){
+ if(!raw||typeof raw!=='object')return{error:'Registro vacío o inválido'};
+ let t=e2Sin(raw.tipo??raw.tecnica??'').replace(/[^a-z0-9]+/g,'_').replace(/^_+|_+$/g,'');t=PQ_SINON[t]||t;
+ if(!PQ_TIPOS[t])return{error:'Tipo no reconocido: '+String(raw.tipo??'sin tipo')};
+ let enun=String(raw.enunciado??raw.pregunta??'').trim();if(!enun)return{error:'Enunciado vacío'};
+ let ops=(Array.isArray(raw.opciones??raw.alternativas)?(raw.opciones??raw.alternativas):[]).map(x=>typeof x==='string'?x:String(x?.texto??x??'')).map(x=>x.trim()).filter(Boolean);
+ ops=ops.filter((x,k)=>ops.findIndex(y=>e2Sin(y)===e2Sin(x))===k);
+ let cor=String(raw.respuesta??raw.correcta??raw.respuesta_correcta??'').trim();
+ if(/^[A-D]$/i.test(cor)&&ops.length>=cor.toUpperCase().charCodeAt(0)-64)cor=ops[cor.toUpperCase().charCodeAt(0)-65];
+ const ex=ops.find(x=>e2Sin(x)===e2Sin(cor));if(ex)cor=ex;
+ if(!cor)return{error:'Sin respuesta correcta'};
+ if(!ops.includes(cor))return{error:'La respuesta no coincide con ninguna opción'};
+ if(t==='verdadero_falso'){if(ops.length!==2)return{error:'Verdadero/falso debe tener 2 opciones'};}
+ else if(ops.length<3)return{error:'Menos de tres opciones'};
+ const lista=a=>(Array.isArray(a)?a:[]).map(x=>String(x??'').trim()).filter(Boolean);
+ const palabra=String(raw.palabra??'').trim(),pista=String(raw.pista??'').trim(),piezas=lista(raw.piezas),orden=lista(raw.orden_correcto);
+ if(t==='crucigrama'&&pista&&!e2Sin(enun).includes(e2Sin(pista)))enun='Crucigrama · Pista: '+pista+'. '+enun;
+ if(t==='rompecabezas'&&piezas.length&&!piezas.every(p=>e2Sin(enun).includes(e2Sin(p))))enun=enun+' Piezas: '+piezas.join(', ')+'.';
+ const nivel=['facil','medio','dificil'].includes(e2Sin(raw.dificultad??raw.nivel))?e2Sin(raw.dificultad??raw.nivel):'medio';
+ const titulo=String(raw.titulo??raw.title??'').trim().slice(0,100)||enun.replace(/\s+/g,' ').slice(0,70);
+ return{id:String(raw.id||'P'+String(i+1).padStart(3,'0')),titulo,tipo:t,tema:String(raw.tema??'').trim(),nivel,enunciado:enun,opciones:ops,correcta:cor,explicacion:String(raw.explicacion??raw.justificacion??'').trim(),palabra,pista,piezas,orden,pagina:String(raw.pagina??'').trim()};
+}
+function pqExtraer(texto){
+ const t=String(texto||'').replace(/^\uFEFF/,''),cand=[],re=/```(?:json)?\s*([\s\S]*?)```/gi;let m;
+ while((m=re.exec(t)))cand.push(m[1]);if(!cand.length)cand.push(t);
+ const preguntas=[];let paquete=null,fallos=0;
+ for(const c of cand){
+  let obj;
+  try{obj=JSON.parse(c.trim());}
+  catch{
+   try{obj=JSON.parse(c.slice(c.indexOf('{'),c.lastIndexOf('}')+1));}
+   catch{try{obj=JSON.parse(c.slice(c.indexOf('['),c.lastIndexOf(']')+1));}catch{fallos++;continue;}}
+  }
+  if(Array.isArray(obj))preguntas.push(...obj);
+  else if(obj&&typeof obj==='object'){if(obj.paquete&&!paquete)paquete=obj.paquete;if(Array.isArray(obj.preguntas))preguntas.push(...obj.preguntas);}
+ }
+ return{preguntas,paquete,fallos};
+}
+/*PQ-FIN*/
+function matGenerar(c,root){
+ if(!c.grados.length){root.innerHTML='<div class=card><h3>2 · Paquete de preguntas</h3><p>Primero asigna al menos un grado y salón a esta materia.</p><button id=ir1>Ir al paso 1</button></div>';$('#ir1').onclick=()=>c.recargar(1);return;}
+ root.innerHTML=`<div class=card><h3>2 · Prepara y sube tu paquete de preguntas</h3>
+<p class=s>Las preguntas ya no las genera Gemini. Copia el prompt, pásalo a tu IA con el PDF (100 a 200 preguntas) y sube aquí el JSON completo que te devuelva. Después elige cuántas usar en Evaluaciones por salón; las demás permanecen guardadas.</p>
+<label>② ¿A qué grado va este paquete?<select id=gg>${c.grados.map(g=>`<option value=${g}>${g}.º</option>`).join('')}</select></label>
+<label>Tamaño del banco completo (no de la evaluación)<select id=gq><option value=100>100</option><option value=150 selected>150</option><option value=200>200</option><option value=todas>Todas las que permita la lectura</option></select></label>
+<b>① Prompt para la IA</b>
+<textarea id=gprompt rows=9 readonly style="font-size:.8rem" aria-label="Prompt para la IA"></textarea>
+<button id=gcopy type=button>📋 Copiar prompt</button> <span id=gcm class=s role=status></span></div>
+<div class=card><h3>③ Sube el paquete</h3>
+<label>Archivo(s) .json (puedes subir varios lotes a la vez)<input id=gf type=file accept=".json,.txt,application/json,text/plain" multiple></label>
+<label>…o pega aquí el JSON (acepta varios bloques de código seguidos)<textarea id=gj rows=5 placeholder='{"paquete":{...},"preguntas":[...]}'></textarea></label>
+<button id=gleer type=button>Leer paquete</button><p id=gli class=s role=status></p><div id=gprev></div></div>
+<div class=card id=gdest style="display:none"><h3>④ ¿Dónde quieres que esté disponible?</h3>
+<label>Nombre del paquete / tema<input id=gt maxlength=120 placeholder="Ej. La célula animal y vegetal"></label>
+<b>Técnicas (puedes marcar varias; cada pregunta se adapta a la técnica)</b>
+<div class=opts>${Object.entries(PQ_EVALS).map(([k,n])=>`<label class=opt><input type=checkbox class=gtec value=${k} ${k==='banco'?'checked':''}><b>${n}</b><span>${k==='banco'?'Banco: se guardan todas con 4 alternativas, tal cual.':k==='e2'?'Detective, ¿Quién soy?, Causa y efecto, Mito o ciencia y Casos (3 alternativas).':k==='e3'?'Misión, predicción, clasificación, evidencia y detección de errores (3 alternativas).':'Matemática, Español, crucigrama, rompecabezas y reto de decisiones (3 alternativas). La vista del estudiante para esta evaluación aún no está conectada.'}</span></label>`).join('')}</div>
+<fieldset id=gsub style="border:1px solid var(--linea);border-radius:8px;margin:8px 0"></fieldset>
+<button id=gen type=button>⑤ Guardar paquete</button><p id=ges class=s role=status></p></div>`;
+ let pq={items:[],errores:[],paquete:null,fuentes:[]};
+ const pintarPrompt=()=>{$('#gprompt').value=pqPrompt(c.mat.nombre,$('#gg').value,$('#gq').value);};
+ $('#gg').onchange=pintarPrompt;$('#gq').onchange=pintarPrompt;pintarPrompt();
+ $('#gcopy').onclick=async()=>{const ta=$('#gprompt');try{await navigator.clipboard.writeText(ta.value);}catch{ta.select();document.execCommand('copy');}$('#gcm').textContent='Prompt copiado. Pégalo en tu IA y adjunta el PDF.';};
+ const pintarVista=()=>{
+  const porTipo={};pq.items.forEach(q=>porTipo[q.tipo]=(porTipo[q.tipo]||0)+1);
+  $('#gprev').innerHTML=`<p><b>${pq.items.length}</b> preguntas válidas de ${Number(pq.paquete?.total)||esc($('#gq').value)} solicitadas para el banco${pq.errores.length?` · <span class=err>${pq.errores.length} con problemas</span>`:''}${pq.paquete?.tema?' · Tema: '+esc(pq.paquete.tema):''}</p>
+  <p class=s>${Object.entries(porTipo).map(([k,n])=>esc(PQ_TIPOS[k])+': '+n).join(' · ')||'—'}</p>
+  ${pq.errores.length?`<details><summary class=err>Ver problemas (${pq.errores.length})</summary><ul class=s>${pq.errores.slice(0,40).map(e=>`<li>${esc(e)}</li>`).join('')}</ul></details>`:''}
+  <details><summary>Ver títulos (${pq.items.length})</summary><ol class=s>${pq.items.slice(0,300).map(q=>`<li><b>${esc(q.titulo)}</b> · ${esc(PQ_TIPOS[q.tipo])}</li>`).join('')}</ol></details>`;
+  $('#gdest').style.display=pq.items.length?'':'none';
+  if(pq.items.length){
+   if(!$('#gt').value)$('#gt').value=pq.paquete?.tema||pq.fuentes[0]?.replace(/\.(json|txt)$/i,'')||'';
+   const sel=new Set([...root.querySelectorAll('.gtip:checked')].map(x=>x.value));const primera=!root.querySelector('.gtip');
+   $('#gsub').innerHTML=`<legend>Tipos de pregunta a guardar</legend><div class=checks>${Object.keys(porTipo).map(k=>`<label><input type=checkbox class=gtip value=${k} ${primera||sel.has(k)?'checked':''}> ${esc(PQ_TIPOS[k])} (${porTipo[k]})</label>`).join('')}</div>`;
+  }
+ };
+ $('#gleer').onclick=async()=>{
+  const btn=$('#gleer'),li=$('#gli');btn.disabled=true;li.textContent='Leyendo…';
+  try{
+   const textos=[];pq.fuentes=[];
+   for(const f of [...$('#gf').files]){textos.push(await f.text());pq.fuentes.push(f.name);}
+   if($('#gj').value.trim())textos.push($('#gj').value);
+   if(!textos.length)throw Error('Sube un archivo .json o pega el JSON.');
+   const crudas=[];let paquete=null,fallos=0;
+   for(const t of textos){const r=pqExtraer(t);crudas.push(...r.preguntas);if(!paquete&&r.paquete)paquete=r.paquete;fallos+=r.fallos;}
+   if(!crudas.length)throw Error('No se encontraron preguntas. Revisa que el JSON tenga la lista "preguntas".'+(fallos?' Hubo '+fallos+' bloque(s) con JSON dañado.':''));
+   const vistos=new Set(),items=[],errores=[];
+   crudas.forEach((raw,i)=>{const q=pqNormalizar(raw,i);if(q.error){errores.push(`#${i+1} ${raw?.titulo?'«'+String(raw.titulo).slice(0,50)+'» ':''}${q.error}`);return;}
+    const k=e2Clave(q.enunciado);if(vistos.has(k)){errores.push(`#${i+1} «${q.titulo.slice(0,50)}» repetida (se omite)`);return;}vistos.add(k);items.push(q);});
+   if(fallos)errores.unshift(fallos+' bloque(s) de JSON dañado (se ignoraron)');
+   pq={items,errores,paquete,fuentes:pq.fuentes};
+   const objetivo=Number($('#gq').value)||Number(paquete?.total)||items.length;
+   li.textContent=items.length<objetivo?`Banco incompleto: ${items.length} de ${objetivo} preguntas válidas. Faltan ${objetivo-items.length}. Puedes guardar este avance o subir todos los lotes juntos. Cambiar el número total del JSON no añade preguntas.`:'Banco leído completo. Todas las preguntas válidas se pueden guardar; la cantidad de la evaluación se elige después.';pintarVista();
+  }catch(e){li.textContent='Error: '+(e.message||e);}
+  finally{btn.disabled=false;}
+ };
+ const barajar=a=>[...a].sort(()=>Math.random()-.5);
+ const guardarBanco=async(qs,grado,tema,st)=>{
+  const {data:prev,error:e0}=await sb.from('cia_preguntas').select('enunciado').eq('docente_id',c.uid).limit(5000);if(e0)throw e0;
+  const hay=new Set((prev||[]).map(x=>e2Clave(x.enunciado)));
+  const nuevas=qs.filter(q=>!hay.has(e2Clave(q.enunciado))),dup=qs.length-nuevas.length;
+  if(!nuevas.length)return `Evaluación 1: nada nuevo (${dup} ya estaban).`;
+  const {data:b,error:be}=await sb.from('cia_bancos').insert({docente_id:c.uid,nombre:`${c.mat.nombre} · ${grado}.º · ${tema}`.slice(0,150),fuente:'Paquete JSON'}).select('id').single();if(be)throw be;
+  let ok=0;const mal=[];
+  for(let i=0;i<nuevas.length;i+=40){
+   const lote=nuevas.slice(i,i+40);st.textContent=`Evaluación 1: guardando ${i+1}-${i+lote.length} de ${nuevas.length}…`;
+   const filas=lote.map(q=>({docente_id:c.uid,banco_id:b.id,enunciado:q.enunciado,correcta:q.correcta,explicacion:q.explicacion,distractores:q.opciones.filter(o=>o!==q.correcta),tema:q.tema||tema,nivel:q.nivel,metadatos:{origen:'paquete_json',tipo:q.tipo,titulo:q.titulo,id_paquete:q.id,pista:q.pista,palabra:q.palabra,piezas:q.piezas,orden_correcto:q.orden,pagina:q.pagina}}));
+   const {data:ins,error}=await sb.from('cia_preguntas').insert(filas).select('id');
+   if(error||!ins){mal.push(error?.message||'sin respuesta');continue;}
+   const {error:ce}=await sb.from('cia_pregunta_materia').upsert(ins.map(r=>({pregunta_id:r.id,docente_id:c.uid,materia_id:c.mat.id,grado})),{onConflict:'pregunta_id'});
+   if(ce){await sb.from('cia_preguntas').delete().eq('docente_id',c.uid).in('id',ins.map(r=>r.id));mal.push('No se pudo asignar a la materia: '+ce.message);continue;}
+   ok+=lote.length;
+  }
+  return `Evaluación 1: ${ok} guardadas${dup?`, ${dup} ya existían`:''}${mal.length?`, ${nuevas.length-ok} con error (${mal[0]})`:''}.`;
+ };
+ const guardarCia14=async(ev,qs,grado,st)=>{
+  const mapa=PQ_MAPA[ev],claves=[...new Set(Object.values(mapa))];
+  const {data:prev,error:e0}=await sb.from('cia14_preguntas').select('tecnica,enunciado').eq('docente_id',c.uid).eq('materia_id',c.mat.id).eq('grado',grado).in('tecnica',claves).limit(5000);if(e0)throw e0;
+  const hay=new Set((prev||[]).map(x=>x.tecnica+'|'+e2Clave(x.enunciado)));
+  const filas=[];let dup=0;
+  for(const q of qs){
+   const tecnica=mapa[q.tipo],k=tecnica+'|'+e2Clave(q.enunciado);if(hay.has(k)){dup++;continue;}hay.add(k);
+   const tres=barajar(q.opciones.filter(o=>o!==q.correcta)).slice(0,2);if(tres.length<2)tres.push(PQ_TERCERA);
+   filas.push({docente_id:c.uid,materia_id:c.mat.id,grado,tecnica,enunciado:q.enunciado,opciones:barajar([q.correcta,...tres]),correcta:q.correcta,explicacion:q.explicacion,activa:true,titulo:q.titulo});
+  }
+  if(!filas.length)return `${PQ_EVALS[ev]}: nada nuevo (${dup} ya estaban).`;
+  let ok=0,sinTitulo=false;const mal=[];
+  const insertar=async rows=>{let r=await sb.from('cia14_preguntas').insert(sinTitulo?rows.map(({titulo,...x})=>x):rows);
+   if(r.error&&!sinTitulo&&/titulo/i.test(r.error.message)){sinTitulo=true;r=await sb.from('cia14_preguntas').insert(rows.map(({titulo,...x})=>x));}return r.error;};
+  for(let i=0;i<filas.length;i+=40){
+   const lote=filas.slice(i,i+40);st.textContent=`${PQ_EVALS[ev]}: guardando ${i+1}-${i+lote.length} de ${filas.length}…`;
+   const err=await insertar(lote);
+   if(!err){ok+=lote.length;continue;}
+   for(const f of lote){const e=await insertar([f]);if(e)mal.push(e.message);else ok++;}
+  }
+  return `${PQ_EVALS[ev]}: ${ok} guardadas${dup?`, ${dup} ya existían`:''}${mal.length?`, ${mal.length} con error (${mal[0]})`:''}${sinTitulo?' · títulos no guardados: ejecuta sql/06_cia14_titulo.sql en Supabase':''}.`;
+ };
+ $('#gen').onclick=async()=>{
+  const btn=$('#gen'),st=$('#ges');btn.disabled=true;
+  try{
+   const techs=[...root.querySelectorAll('.gtec:checked')].map(x=>x.value),tipos=[...root.querySelectorAll('.gtip:checked')].map(x=>x.value);
+   const qs=pq.items.filter(q=>tipos.includes(q.tipo));
+   if(!qs.length)throw Error('Marca al menos un tipo de pregunta.');
+   if(!techs.length)throw Error('Marca al menos una técnica.');
+   const grado=$('#gg').value,tema=$('#gt').value.trim()||pq.paquete?.tema||'Paquete de preguntas',res=[];
+   for(const ev of techs){try{res.push(ev==='banco'?await guardarBanco(qs,grado,tema,st):await guardarCia14(ev,qs,grado,st));}catch(e){res.push(`${PQ_EVALS[ev]}: error (${e.message||e}).`);}}
+   st.textContent='✅ Listo. '+res.join(' ')+' Revisa el paso 3 para verlas.';
+  }catch(e){st.textContent='Error: '+(e.message||e);}
+  finally{btn.disabled=false;}
+ };
+}
+
+/* Paso 3 · preguntas guardadas */
+const diaDe=t=>t?new Date(t).toLocaleDateString('en-CA'):'';const diaTxt=d=>d?d.split('-').reverse().join('/'):'sin fecha';
+const ETQ=t=>E2_TECNICAS[t]||(E3_TECNICAS[t]?'Eval. 3 · '+E3_TECNICAS[t]:E4_TECNICAS[t]?'Eval. 4 · '+E4_TECNICAS[t]:t);
+async function matPreguntas(c,root){
+ root.innerHTML='<div class=card><p>Cargando preguntas…</p></div>';
+ const [e,pm]=await Promise.all([
+  (async()=>{const q=cols=>sb.from('cia14_preguntas').select(cols).eq('docente_id',c.uid).eq('materia_id',c.mat.id).order('creado_en',{ascending:false}).limit(1000);let r=await q('id,grado,tecnica,enunciado,correcta,activa,creado_en,titulo');if(r.error&&/titulo/i.test(r.error.message))r=await q('id,grado,tecnica,enunciado,correcta,activa,creado_en');return r;})(),
+  sb.from('cia_pregunta_materia').select('pregunta_id,grado').eq('docente_id',c.uid).eq('materia_id',c.mat.id).limit(1000)]);
+ const err=[e,pm].find(r=>r.error)?.error;if(err){root.innerHTML=`<div class=card>${avisoError(err)}</div>`;return;}
+ const ids=(pm.data||[]).map(x=>x.pregunta_id),bq=[];
+ for(let i=0;i<ids.length;i+=100){const r=await sb.from('cia_preguntas').select('id,enunciado,correcta,creado_en,metadatos').eq('docente_id',c.uid).in('id',ids.slice(i,i+100));if(r.error){root.innerHTML=`<div class=card>${avisoError(r.error)}</div>`;return;}bq.push(...(r.data||[]));}
+ const gMap=new Map((pm.data||[]).map(x=>[String(x.pregunta_id),String(x.grado)]));
+ const items=[...(e.data||[]).map(x=>({k:'e2',dia:diaDe(x.creado_en),id:x.id,grado:(String(x.grado??'').match(/\d+/)||[''])[0],tec:String(x.tecnica||'').trim().toLowerCase(),et:ETQ(x.tecnica),tit:x.titulo||'',enun:x.enunciado,cor:x.correcta,act:x.activa!==false})),...bq.map(x=>({k:'banco',dia:diaDe(x.creado_en),id:x.id,grado:gMap.get(String(x.id))||'',tec:'banco',et:'Banco de preguntas',tit:x.metadatos?.titulo||'',enun:x.enunciado,cor:x.correcta,act:true}))];
+ const gr=(c.grados.length?c.grados:[...new Set(items.map(i=>i.grado).filter(Boolean))]).sort(porGrado),tipos=[...Object.keys(E2_TECNICAS),...Object.keys(E3_TECNICAS),...Object.keys(E4_TECNICAS)];
+ const cnt=(t,g)=>items.filter(i=>i.tec===t&&i.grado===g&&i.act).length;
+ const cob=gr.length?`<div class=wrap><table class=e2cob><thead><tr><th>Técnica</th>${gr.map(g=>`<th>${g}.º</th>`).join('')}</tr></thead><tbody><tr><td>Banco de preguntas</td>${gr.map(g=>`<td>${cnt('banco',g)}</td>`).join('')}</tr>${tipos.map(t=>`<tr><td>${esc(ETQ(t))}</td>${gr.map(g=>{const n=cnt(t,g);return `<td class="${n>=E2_META?'e2ok':'e2falta'}">${n}/${E2_META}${n>=E2_META?' ✓':''}</td>`}).join('')}</tr>`).join('')}</tbody></table></div><p class=s>Evaluaciones 2 y 3: meta de ${E2_META} preguntas activas por técnica y grado. El banco no tiene meta fija.</p>`:'<p class=s>Asigna salones en el paso 1 para ver la cobertura por grado.</p>';
+ const grs=[...new Set([...gr,...items.map(i=>i.grado).filter(Boolean)])].sort(porGrado);
+ const dias=Object.entries(items.reduce((a,i)=>{if(i.dia)a[i.dia]=(a[i.dia]||0)+1;return a;},{})).sort((x,y)=>y[0].localeCompare(x[0]));
+ const sinContar=items.filter(i=>i.k==='e2'&&!(tipos.includes(i.tec)&&gr.includes(i.grado)&&i.act));
+ const grupos={};sinContar.forEach(i=>{const k=(tipos.includes(i.tec)?ETQ(i.tec):'técnica desconocida «'+i.tec+'»')+' · '+(gr.includes(i.grado)?i.grado+'.º':'grado «'+(i.grado||'vacío')+'»')+(i.act?'':' · inactiva');grupos[k]=(grupos[k]||0)+1;});
+ const aviso=sinContar.length?`<p class=err><b>⚠️ ${sinContar.length} pregunta(s) guardadas no se cuentan en la tabla</b> (por eso el total es mayor que la suma):</p><ul class=s>${Object.entries(grupos).map(([k,n])=>`<li>${esc(k)}: ${n}</li>`).join('')}</ul>`:'';
+ root.innerHTML=`<div class=card><h3>3 · Preguntas de ${esc(c.mat.nombre)}</h3><div class=resumen-banco><div><b>${items.filter(i=>i.k==='banco').length}</b><span>En el banco</span></div><div><b>${items.filter(i=>i.k==='e2').length}</b><span>Enlace 2</span></div></div>${cob}${aviso}</div>
+<div class=card id=bk><h3>🗑️ Eliminar preguntas en bloque</h3><p class=s>Borra de una vez las preguntas de esta materia. No se puede deshacer. No afecta estudiantes, periodos ni notas.</p><div class=grid2><label>¿Qué evaluación?<select id=bk-ev><option value=all>Todas las evaluaciones</option><option value=banco>Evaluación 1 (banco)</option><option value=e2>Evaluación 2</option><option value=e3>Evaluación 3</option><option value=e4>Evaluación 4</option></select></label><label>Grado<select id=bk-g><option value="">Todos los grados</option>${grs.map(g=>`<option value=${g}>${g}.º</option>`).join('')}</select></label><label>Técnica<select id=bk-t><option value="">Todas las técnicas</option><option value=banco>Banco de preguntas</option>${tipos.map(t=>`<option value=${t}>${esc(ETQ(t))}</option>`).join('')}</select></label><label>Fecha en que se crearon<select id=bk-d><option value="">Todas las fechas</option>${dias.map(([d,n])=>`<option value=${d}>${diaTxt(d)} · ${n} pregunta(s)</option>`).join('')}</select></label></div><p id=bk-n class=s></p><label style="display:flex;gap:8px;align-items:center;margin:10px 0"><input type=checkbox id=bk-ok style="width:auto"> Entiendo que se eliminarán definitivamente</label><button id=bk-b disabled style="background:#a62020;color:#fff">Eliminar preguntas</button><p id=bk-m class=s role=status></p></div>
+<div class=card><h3>Ver y eliminar preguntas</h3><div class=grid2><label>Técnica<select id=pt><option value="">Todas</option><option value=banco>Banco de preguntas</option>${tipos.map(t=>`<option value=${t}>${esc(ETQ(t))}</option>`).join('')}</select></label><label>Grado<select id=pg><option value="">Todos</option>${gr.map(g=>`<option value=${g}>${g}.º</option>`).join('')}</select></label></div><p id=pc class=s></p><div style="margin:8px 0 14px"><label style="display:flex;gap:8px;align-items:center;margin:6px 0"><input type=checkbox id=pq-ok style="width:auto"> Confirmo que quiero eliminarlas definitivamente</label><button id=pq-b disabled style="background:#a62020;color:#fff">🗑️ Eliminar las mostradas</button><p id=pq-m class=s role=status></p></div><div id=pl></div></div>
+`;
+ let vistas=[];
+ const pintarQ=()=>{const b=$('#pq-b');if(!b)return;b.textContent='🗑️ Eliminar las '+vistas.length+' preguntas mostradas';b.disabled=!vistas.length||!$('#pq-ok').checked;};
+ const borrarItems=async(v,m,bt)=>{if(!v.length)return;bt.disabled=true;m.textContent='Eliminando…';
+  try{const e2ids=v.filter(i=>i.k==='e2').map(i=>i.id),bids=v.filter(i=>i.k==='banco').map(i=>i.id);
+   for(let i=0;i<e2ids.length;i+=100){const r=await sb.from('cia14_preguntas').delete().eq('docente_id',c.uid).in('id',e2ids.slice(i,i+100)).select('id');if(r.error)throw r.error;}
+   for(let i=0;i<bids.length;i+=100){const part=bids.slice(i,i+100);let r=await sb.from('cia_pregunta_materia').delete().eq('docente_id',c.uid).in('pregunta_id',part);if(r.error)throw r.error;r=await sb.from('cia_preguntas').delete().eq('docente_id',c.uid).in('id',part).select('id');if(r.error)throw r.error;}
+   await matPreguntas(c,root);const mm=$('#pq-m');if(mm)mm.textContent='Listo: se eliminaron '+v.length+' pregunta(s).';
+  }catch(e){m.textContent='No se pudo eliminar: '+(e.message||e)+' (revisa los permisos de borrado en Supabase).';bt.disabled=false;}};
+ const lista=()=>{
+  const ft=$('#pt').value,fg=$('#pg').value,v=items.filter(i=>(!ft||i.tec===ft)&&(!fg||i.grado===fg));
+  vistas=v;pintarQ();$('#pc').textContent=v.length?`${v.length} pregunta(s)${v.length>100?' · se muestran las primeras 100':''}.`:'No hay preguntas con estos filtros.';
+  $('#pl').innerHTML=v.slice(0,100).map(i=>`<div class=card><b>${esc(i.tit||i.et)}</b> <span class=s>${i.tit?'· '+esc(i.et)+' ':''}· ${esc(i.grado)}.º · ${esc(diaTxt(i.dia))}</span><p>${esc(i.enun)}</p><p class=s>Correcta: ${esc(typeof i.cor==='string'?i.cor:JSON.stringify(i.cor))}</p><button class=sec data-del="${i.k}|${esc(i.id)}">Eliminar</button></div>`).join('');
+  $('#pl').querySelectorAll('[data-del]').forEach(b=>b.onclick=async()=>{
+   const [k,id]=b.dataset.del.split('|'),it=items.find(x=>x.k===k&&String(x.id)===id);
+   if(!confirm(`¿Eliminar definitivamente esta pregunta?\n\n${it?.enun||''}\n\nNo se puede deshacer.`))return;
+   b.disabled=true;let error,data;
+   if(k==='e2')({data,error}=await sb.from('cia14_preguntas').delete().eq('id',id).eq('docente_id',c.uid).select('id'));
+   else{await sb.from('cia_pregunta_materia').delete().eq('pregunta_id',id).eq('docente_id',c.uid);({data,error}=await sb.from('cia_preguntas').delete().eq('id',id).eq('docente_id',c.uid).select('id'));}
+   if(error||!data?.length){alert('No se pudo eliminar: '+(error?.message||'sin permiso (revise las políticas RLS de delete).'));b.disabled=false;return;}
+   matPreguntas(c,root);});
+ };
+ $('#pt').onchange=()=>{$('#pq-ok').checked=false;lista();};$('#pg').onchange=()=>{$('#pq-ok').checked=false;lista();};$('#pq-ok').onchange=pintarQ;$('#pq-b').onclick=()=>borrarItems(vistas,$('#pq-m'),$('#pq-b'));lista();
+ {const sel=()=>{const ev=$('#bk-ev').value,g=$('#bk-g').value,t=$('#bk-t').value,d=$('#bk-d').value;return items.filter(i=>(ev==='all'||(ev==='banco'?i.k==='banco':ev==='e2'?(i.k==='e2'&&!!E2_TECNICAS[i.tec]):(ev==='e3'?(i.k==='e2'&&!!E3_TECNICAS[i.tec]):(i.k==='e2'&&!!E4_TECNICAS[i.tec]))))&&(!g||i.grado===g)&&(!t||i.tec===t)&&(!d||i.dia===d));};
+  const pintar=()=>{const n=sel().length;$('#bk-n').textContent=n?`Se eliminarán ${n} pregunta(s).`:'No hay preguntas con esta selección.';$('#bk-b').disabled=!n||!$('#bk-ok').checked;};
+  ['#bk-ev','#bk-g','#bk-t','#bk-d'].forEach(x=>$(x).onchange=()=>{$('#bk-ok').checked=false;pintar();});$('#bk-ok').onchange=pintar;pintar();
+  $('#bk-b').onclick=async()=>{const v=sel();if(!v.length)return;const bt=$('#bk-b'),m=$('#bk-m');bt.disabled=true;m.textContent='Eliminando…';
+   try{const e2ids=v.filter(i=>i.k==='e2').map(i=>i.id),bids=v.filter(i=>i.k==='banco').map(i=>i.id);
+    for(let i=0;i<e2ids.length;i+=100){const r=await sb.from('cia14_preguntas').delete().eq('docente_id',c.uid).in('id',e2ids.slice(i,i+100)).select('id');if(r.error)throw r.error;}
+    for(let i=0;i<bids.length;i+=100){const part=bids.slice(i,i+100);let r=await sb.from('cia_pregunta_materia').delete().eq('docente_id',c.uid).in('pregunta_id',part);if(r.error)throw r.error;r=await sb.from('cia_preguntas').delete().eq('docente_id',c.uid).in('id',part).select('id');if(r.error)throw r.error;}
+    await matPreguntas(c,root);const mm=$('#bk-m');if(mm)mm.textContent='Listo: se eliminaron '+v.length+' pregunta(s).';
+   }catch(e){m.textContent='No se pudo eliminar: '+(e.message||e)+' (revisa los permisos de borrado en Supabase).';bt.disabled=false;}};}
+
+}
+
+/* ======== ENLACE 2 · ESTUDIANTE (práctica de 8 preguntas) ======== */
+const E2_DESC={detective:'Encuentra el error en cada afirmación.',quien:'Adivina el concepto a partir de las pistas.',causa:'Relaciona cada causa con su efecto.',mito:'Distingue lo que es mito de lo que es ciencia.',casos:'Aplica lo aprendido a situaciones reales.',
+ errores3:'Encuentra el error en una situación aplicada.',mision3:'Resuelve una misión científica paso a paso.',prediccion3:'Predice qué pasaría si cambia una condición.',clasificacion3:'Clasifica cada caso según su característica científica.',evidencia3:'Elige la evidencia que respalda la afirmación.'};
+const e2PanelHTML=()=>`<h3>${etiquetaEval(MODO_E)}</h3><label id=e2mw>Materia<select id=e2m><option>Cargando…</option></select></label>
+ <label id=e2cw>Evaluación<select id=e2catalogo><option value="">${etiquetaEval(MODO_E)} (original)</option></select></label><p id="e2-resumen-aviso" class="s" role="status" aria-live="polite"></p><div class=matgrid>${Object.entries(tecnicasDe(MODO_E)).map(([k,n])=>`<button class=big data-e2t="${k}" disabled style="text-align:left;display:block;width:100%;margin:6px 0"><b>${esc(n)}</b><br><span style="font-weight:400;font-size:.85rem">${esc(E2_DESC[k]||'')}</span><span class=e2-estado style="display:block;font-size:.8rem"></span></button>`).join('')}</div>`;
+async function e2Cablear(seleccionAnterior){
+ const {data,error}=await sb.rpc('cia14_materias',{p_cedula:est.cedula});
+ if(error){$('#m').textContent=error.message;return;}
+ const unicas=[...new Map((data||[]).map(x=>[x.materia_id||x.id,x])).values()].filter(x=>x.materia_id||x.id);
+ if(!unicas.length){$('#e2m').innerHTML='';$('#m').textContent='Tu salón aún no tiene materias asignadas. Consulta al profesor.';return;}
+ // El grado y el salón provienen de la matrícula; la materia se elige solo cuando hay varias.
+ $('#e2m').innerHTML=unicas.map(x=>`<option value="${esc(x.materia_id||x.id)}">${esc(x.materia||x.nombre||'Materia asignada')}</option>`).join('');
+ const selectorMateria=$('#e2m');
+ const avisoMateria=document.createElement('p');avisoMateria.className='s';avisoMateria.id='cia-aviso-materia';
+ selectorMateria.insertAdjacentElement('afterend',avisoMateria);
+ avisoMateria.textContent=unicas.length>1?'Tienes varias materias. Elige la que deseas practicar.':'Materia asignada automáticamente según tu matrícula.';
+ if(unicas.length===1){const mw=$('#e2mw');if(mw)mw.style.display='none';avisoMateria.style.display='none';}
+ const {data:cats,error:catError}=await sb.rpc('cia14_catalogos_estudiante',{p_cedula:est.cedula});
+ if(catError){$('#m').textContent='No se pudo cargar el catálogo: '+catError.message;return;}
+ const lista=(Array.isArray(cats)?cats:[]).filter(c=>MODO_E!=='e3'||!c.motor||c.motor==='e3');
+ $('#e2catalogo').innerHTML='<option value="">'+etiquetaEval(MODO_E)+' (original)</option>'+lista.map(c=>`<option value="${esc(c.id)}">${esc(c.nombre)}</option>`).join('');
+ {const w=$('#e2cw');if(w&&!lista.length)w.style.display='none';}
+ async function actualizarEstadoE2(){
+  const cat=$('#e2catalogo').value;
+  let resumen={};let servidorDisponible=false;let errorResumen='';
+  try {
+   const {data,error}=await sb.rpc('cia14_resumen_catalogo',{p_cedula:est.cedula,p_catalogo:cat?Number(cat):null});
+   if(error)throw error;
+   if(!Array.isArray(data))throw new Error('El resumen no devolvió una lista válida');
+   servidorDisponible=true;
+   for(const x of data)if(x&&x.tecnica)resumen[x.tecnica]=x;
+  }catch(e){errorResumen=e?.message||String(e);console.warn('Resumen E2:',errorResumen)}
+  const aviso=$('#e2-resumen-aviso');
+  if(aviso)aviso.textContent=servidorDisponible?'Puedes repetir cualquier técnica las veces que quieras.':'No se pudo consultar Supabase ('+errorResumen+'). Las marcas de este dispositivo son provisionales.';
+  document.querySelectorAll('[data-e2t]').forEach(b=>{
+   const x=resumen[b.dataset.e2t];const tipo=cat?MODO_E+':'+cat+':'+b.dataset.e2t:MODO_E+':'+b.dataset.e2t;
+   let local=false;try{local=localStorage.getItem(claveMarca(tipo))==='1'}catch(_){}
+   b.classList.toggle('practica-hecha',Boolean(x)||( !servidorDisponible && local));
+   const t=b.querySelector('.e2-estado');if(t)t.textContent=x?' ✓ Realizado · Mejor nota: '+(Number.isFinite(Number(x.mejor_nota))?Number(x.mejor_nota).toFixed(2):'sin dato'):(!servidorDisponible&&local)?' ✓ Realizado en este dispositivo (provisional)':'';
+  });
+ }
+ if(seleccionAnterior && [...$('#e2catalogo').options].some(o=>o.value===String(seleccionAnterior.catalogo))) $('#e2catalogo').value=String(seleccionAnterior.catalogo);
+ if(seleccionAnterior && [...$('#e2m').options].some(o=>o.value===String(seleccionAnterior.materia))) $('#e2m').value=String(seleccionAnterior.materia);
+ // Mostrar el banco vinculado a la evaluación seleccionada, sin impedir practicar si RLS no permite consultarlo.
+ const selectorCatalogo=$('#e2catalogo');
+ const estadoBanco=document.createElement('p');
+ estadoBanco.className='s';
+ estadoBanco.setAttribute('aria-live','polite');
+ estadoBanco.style.margin='8px 0';
+ selectorCatalogo.insertAdjacentElement('afterend',estadoBanco);
+ let consultaBancoVersion=0;
+ async function revisarBancoE2(){
+  const version=++consultaBancoVersion;
+  const catalogo=selectorCatalogo.value;
+  if(!catalogo){estadoBanco.textContent=etiquetaEval(MODO_E)+' original: utiliza su banco habitual.';return;}
+  estadoBanco.textContent='Comprobando preguntas vinculadas a esta evaluación…';
+  try{
+   const {count,error}=await sb.from('cia_catalogo_preguntas').select('pregunta_id',{count:'exact',head:true}).eq('catalogo_id',Number(catalogo));
+   if(version!==consultaBancoVersion)return;
+   if(error){estadoBanco.textContent='No se pudo consultar el número de preguntas. Puedes intentar la práctica.';return;}
+   estadoBanco.textContent=count===0?'Esta evaluación todavía no tiene preguntas vinculadas. El docente debe asignarlas.':`${count} pregunta(s) vinculada(s) a esta evaluación. Cada técnica requiere preguntas compatibles.`;
+  }catch(_){if(version===consultaBancoVersion)estadoBanco.textContent='No se pudo comprobar el banco. Puedes intentar la práctica.';}
+ }
+ $('#e2catalogo').onchange=()=>{actualizarEstadoE2();revisarBancoE2();};
+ // Evitar conservar marcas de otra materia en pantalla al cambiar la selección.
+ $('#e2m').onchange=()=>{actualizarEstadoE2();revisarBancoE2();};
+ pintarRealizados();$('#e2catalogo').onchange();if(unicas.length===1)$('#e2mw').style.display='none';
+ document.querySelectorAll('[data-e2t]').forEach(b=>{b.disabled=false;b.onclick=()=>iniciarE2(b.dataset.e2t);});
+}
+async function practicaE2(seleccionAnterior){
+ // Refrescar el periodo vigente al abrir ejercicios: no reutilizar el motor e2 de una visita anterior.
+ if(est?.cedula){
+  const consulta=await obtenerPeriodo();
+  if(consulta.periodo){
+   window.__ciaPeriodoActual=consulta.periodo;
+   MODO_E=['e2','e3'].includes(consulta.periodo.tecnica)?consulta.periodo.tecnica:'banco';
+  }else{
+   const activa=await tecnicaActiva();
+   if(['e2','e3'].includes(activa))MODO_E=activa;
+  }
+ }
+ draw(`<div class=card><h2>Elige tu ejercicio</h2><p class=s>Toca una tarjeta para empezar. Cada intento trae ocho preguntas. La nota es de práctica; no es una evaluación oficial.</p>${e2PanelHTML()}<p class=err id=m></p><button class=sec id=e2b>Volver al menú</button></div>`);
+ $('#e2b').onclick=()=>menu();
+ await e2Cablear(seleccionAnterior);
+}
+async function iniciarE2(tec){
+ document.querySelectorAll('[data-e2t]').forEach(b=>b.disabled=true);
+ {
+  const catalogo=$('#e2catalogo').value;
+  const materiaElegida=$('#e2m').value;
+  const {data:d,error:er}=catalogo
+   ?await sb.rpc('cia14_iniciar_catalogo',{p_cedula:est.cedula,p_materia:$('#e2m').value,p_tecnica:tec,p_catalogo:catalogo})
+   :await sb.rpc('cia14_iniciar',{p_cedula:est.cedula,p_materia:$('#e2m').value,p_tecnica:tec});
+  if(er){$('#m').textContent=/al menos ocho preguntas/i.test(er.message)?'Esta técnica aún no está lista: faltan preguntas activas para tu materia y grado. Informa al profesor; tus notas anteriores se conservan.':er.message;document.querySelectorAll('[data-e2t]').forEach(b=>b.disabled=false);return;}
+  if(!d||!Array.isArray(d.preguntas)||d.preguntas.length!==8||!d.intento){$('#m').textContent='La evaluación no devolvió exactamente ocho preguntas. Informa al profesor; no se iniciará una evaluación incompleta.';document.querySelectorAll('[data-e2t]').forEach(b=>b.disabled=false);return;}
+  const items=d.preguntas||[],intento=d.intento,tecnicaNombre=tecnicasDe(MODO_E)[tec];
+  draw(`<div class=card><h2>${esc(tecnicaNombre)}</h2><p class=s>Responde las ${items.length} preguntas y pulsa Enviar.</p>${items.map((q,i)=>`<div class=card><b>${i+1}. ${esc(q.enunciado)}</b>${q.opciones.map((o,j)=>`<label style="display:block;margin:8px 0"><input style="width:auto;margin:0 8px 0 0" type=radio name="q${i}" value="${j}"> ${esc(o)}</label>`).join('')}</div>`).join('')}<p class=err id=m></p><button id=e2env>Enviar respuestas</button></div>`);
+  $('#e2env').onclick=async()=>{
+   const resp={};
+   for(let i=0;i<items.length;i++){const el=document.querySelector(`input[name="q${i}"]:checked`);if(!el)return $('#m').textContent='Responde la pregunta '+(i+1);resp[items[i].id]=items[i].opciones[Number(el.value)]}
+   $('#e2env').disabled=true;
+   const {data:r,error:ee}=await sb.rpc('cia14_enviar',{p_cedula:est.cedula,p_intento:intento,p_respuestas:resp});
+   if(ee){$('#m').textContent=ee.message;$('#e2env').disabled=false;return;}
+   const tipoE2=catalogo?MODO_E+':'+catalogo+':'+tec:MODO_E+':'+tec;
+   const marcaSincronizada=await registrarRealizadoServidor(tipoE2);
+   if(!marcaSincronizada){console.warn('La nota fue enviada, pero no se confirmó la marca de realizado.');}
+   draw(`<div class=card><h2>Resultado guardado</h2><p>Correctas: <b>${esc(r.aciertos)}</b> de <b>${esc(r.total)}</b></p><h3>Nota de práctica: ${esc(r.nota)} / 5.00</h3><p class=s>Esta calificación no corresponde a una evaluación oficial.</p>${marcaSincronizada?'':'<p role=alert class=s>La nota se guardó, pero no se pudo confirmar la marca de realizado. Vuelve a consultar el seguimiento.</p>'}<button id=e2otra>Hacer otra práctica</button><button class=sec id=e2menu>Volver al menú</button></div>`);
+   $('#e2otra').onclick=()=>practicaE2({catalogo,materia:materiaElegida});$('#e2menu').onclick=()=>menu();
+  };
+ }
+}
+
+const hash0=location.hash;
+if(/^#docente/.test(hash0))loginDoc();else if(/^#estudiante/.test(hash0))loginEst();else inicio();
+</script></body></html>
