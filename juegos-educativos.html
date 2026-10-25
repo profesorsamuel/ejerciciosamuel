@@ -99,9 +99,44 @@ function drawCatalog(){
  $('#catalog').innerHTML=GAMES.map(g=>`<div class="card"><div class="em">${g.em}</div><h3>${esc(g.name)}</h3>
  <span class="badge ${g.ready?'f':'p'}">${g.ready?'Etapa '+(GAMES.indexOf(g)+1)+' · Funcional':'Pendiente'}</span><p>${esc(g.desc)}</p>
  <div class="row"><button data-try="${g.id}" ${g.ready?'':'disabled'}>▶ Probar</button><button class="sec" data-cfg="${g.id}" ${g.ready?'':'disabled'}>⚙ Configurar</button>
+ <button class="sec" data-prompt="${g.id}">📋 Copiar prompt</button>
  <button class="sec" disabled title="La asignación a grupos se activará al conectar la base de datos (etapa siguiente)">📌 Asignar</button></div></div>`).join('');
  document.querySelectorAll('[data-try]').forEach(b=>b.onclick=()=>start(b.dataset.try,{modo:'practica',timed:false,secs:90,n:5,quien:'individual',cedulas:[],equipo:'',evalId:''}));
  document.querySelectorAll('[data-cfg]').forEach(b=>b.onclick=()=>config(b.dataset.cfg));
+ document.querySelectorAll('[data-prompt]').forEach(b=>b.onclick=()=>copyGamePrompt(b.dataset.prompt,b));
+}
+
+/* ---------- Prompts de los 20 juegos ---------- */
+const GAME_GUIDANCE={
+ globos:'Cada pregunta debe permitir identificar el globo con la respuesta correcta entre cuatro globos. Distractores breves y visualmente distinguibles.',
+ flechas:'Cada pregunta debe permitir apuntar al blanco con la respuesta correcta entre cuatro blancos. Evita opciones ambiguas.',
+ pacman:'Cada pregunta representa una puerta del laberinto que se abre con la respuesta correcta. Plantea retos breves de dificultad progresiva.',
+ ruleta:'Crea preguntas independientes y variadas para responder después de cada giro de ruleta; incluye niveles de dificultad.',
+ memoria:'Crea pares claros concepto-definición. En cada pregunta, el enunciado será el concepto y la respuesta correcta su definición; distractores serán otras definiciones plausibles.',
+ carrera:'Cada respuesta correcta permite avanzar en una carrera. Usa preguntas cortas, variadas y con dificultad progresiva.',
+ tesoro:'Formula retos que representen pistas para encontrar un tesoro; la opción correcta debe resolver la pista sin ambigüedad.',
+ concurso:'Crea rondas de concurso con preguntas variadas y una única respuesta correcta, equilibrando dificultad.',
+ rompe:'Crea preguntas para desbloquear piezas de un rompecabezas. Incluye relaciones entre conceptos que puedan expresarse sin imágenes obligatorias.',
+ bolos:'Cada acierto derriba bolos; plantea preguntas rápidas con cuatro respuestas cortas.',
+ espacial:'Organiza los retos como etapas de una misión por planetas; la respuesta correcta permite avanzar.',
+ salto:'Diseña preguntas de respuesta rápida que permitan saltar a la plataforma correcta.',
+ futbol:'Cada respuesta correcta equivale a un tiro a gol; incluye cuatro opciones inequívocas.',
+ basket:'Cada acierto permite encestar; formula preguntas breves con opciones equilibradas.',
+ invasion:'Cada pregunta representa una amenaza que se elimina seleccionando la respuesta correcta; evita depender de imágenes.',
+ encuentra:'Crea preguntas para localizar un concepto entre cuatro opciones; usa términos que aparezcan en el PDF.',
+ castillo:'Diseña retos por niveles para superar puertas y torres del castillo, con dificultad progresiva.',
+ dados:'Crea retos independientes que puedan elegirse aleatoriamente tras lanzar dados.',
+ serpiente:'Crea preguntas cortas para recoger la respuesta correcta y continuar el recorrido.',
+ torneo:'Diseña preguntas de torneo para partidas individuales o por equipos, equilibradas en dificultad y sin ambigüedades.'
+};
+function gamePrompt(gid){
+ const g=GAMES.find(x=>x.id===gid);
+ return `Actúa como docente experto en evaluación educativa y diseñador de juegos escolares. Analiza COMPLETAMENTE el PDF que adjuntaré y crea un banco de preguntas para el juego «${g.name}» de la plataforma Ciencias IA.\n\nDATOS DE LA ACTIVIDAD\n- Materia: [ESCRIBIR MATERIA]\n- Grado: [ESCRIBIR GRADO]\n- Tema: todos los temas del PDF\n- Juego: ${g.name}\n- Cantidad objetivo: 100 preguntas ÚNICAS (si el PDF no permite 100 válidas, genera solo las que admita).\n- Por partida se usarán 15 preguntas aleatorias, sin repeticiones dentro de esa partida.\n\nDISEÑO ESPECÍFICO DEL JUEGO\n${GAME_GUIDANCE[gid]}\n\nREGLAS\n1. Usa exclusivamente el contenido del PDF; no inventes hechos ni uses fuentes externas.\n2. Reparte las preguntas entre todos los temas del documento.\n3. Dificultad aproximada: 30 % fácil, 40 % media y 30 % difícil.\n4. Cuatro opciones por pregunta, exactamente una correcta. No repitas preguntas ni hagas variantes casi iguales.\n5. La respuesta correcta debe estar literalmente incluida como una cadena de texto en el campo correcta; las otras tres opciones van en distractores.\n6. Añade un id único, titulo descriptivo, dificultad y explicacion breve a cada pregunta. No incluyas datos personales.\n7. Devuelve SOLO JSON válido, sin bloques Markdown ni comentarios, con esta estructura:\n{\n  "juego": "${gid}",\n  "materia": "[MATERIA]",\n  "grado": "[GRADO]",\n  "tema": "[TEMA]",\n  "preguntas": [\n    {\n      "id": "${gid}_001",\n      "titulo": "[TÍTULO ÚNICO]",\n      "dificultad": "facil",\n      "enunciado": "[PREGUNTA]",\n      "correcta": "[RESPUESTA CORRECTA]",\n      "distractores": ["[INCORRECTA 1]", "[INCORRECTA 2]", "[INCORRECTA 3]"],\n      "explicacion": "[EXPLICACIÓN BREVE]"\n    }\n  ]\n}\n\nIMPORTANTE: El cargador actual de juegos acepta el arreglo preguntas y, por cada pregunta, los campos enunciado, correcta y distractores (tres textos). Los otros campos son metadatos adicionales. No inventes páginas del PDF. Si el juego aún está pendiente de desarrollo, este JSON prepara el banco pero NO lo habilita automáticamente.`;
+}
+async function copyGamePrompt(gid,button){
+ const value=gamePrompt(gid);
+ try{await navigator.clipboard.writeText(value);const old=button.textContent;button.textContent='✓ Prompt copiado';setTimeout(()=>button.textContent=old,2000)}
+ catch(e){const t=document.createElement('textarea');t.value=value;t.style.cssText='position:fixed;top:10%;left:10%;width:80%;height:70%;z-index:9999;background:white;color:black;padding:15px';document.body.append(t);t.select();try{document.execCommand('copy')}catch(_){}alert('Prompt seleccionado. Cópielo con Ctrl+C y cierre el cuadro.');t.onblur=()=>t.remove()}
 }
 
 /* ---------- Preguntas ---------- */
