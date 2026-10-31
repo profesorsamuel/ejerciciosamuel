@@ -225,7 +225,15 @@ function config(gid){
  <label id="fcl">Cédula del estudiante</label><textarea id="fc" placeholder="Una cédula por línea (en modo grupal, una por integrante)"></textarea>
  <p class="muted">Sin cédula, la partida de práctica no se guarda. La evaluación exige cédula(s). Práctica y evaluación se guardan en tablas distintas y nunca modifican las notas oficiales de Ciencias IA.</p>
  <label>Evaluación asignada (opcional, identificador)</label><input id="fe">
+ <div class="panel" style="margin:16px 0;padding:14px;border:1px solid #cbded8"><h3>📚 Herramientas de este juego</h3><p>Prepara las preguntas, publica el banco y asigna el enlace desde aquí.</p>
+ <p><button class="sec" id="fPrompt">📋 Copiar prompt</button> <button class="sec" id="fBank">📚 Banco de preguntas</button> <button class="sec" id="fAssign">📌 Asignar / Publicar</button></p>
+ <div id="fTools" class="hide" style="margin-top:12px"></div></div>
  <p><button id="fgo">▶ Jugar</button> <button class="sec" id="fback">Cancelar</button></p><p id="ferr" style="color:var(--bad);font-weight:700"></p>`;
+ const tool=$('#fTools');
+ $('#fPrompt').onclick=()=>{tool.classList.remove('hide');tool.innerHTML='<h3>📋 Prompt · '+esc(g.name)+'</h3><textarea id="fPromptText" rows="12" readonly style="width:100%;box-sizing:border-box;padding:10px"></textarea><p><button id="fCopyPrompt">Copiar prompt</button></p><p id="fCopyStatus" role="status"></p>';$('#fPromptText').value=gamePrompt(gid);$('#fCopyPrompt').onclick=async()=>{try{await navigator.clipboard.writeText($('#fPromptText').value);$('#fCopyStatus').textContent='✓ Prompt copiado'}catch(e){$('#fPromptText').select();$('#fCopyStatus').textContent='Selecciona el texto y cópialo con Ctrl+C'}};tool.scrollIntoView({behavior:'smooth',block:'nearest'})};
+ const openInlineBank=()=>{bankEditor(gid);const bank=$('#vBank');tool.classList.remove('hide');tool.innerHTML='';tool.append(...Array.from(bank.childNodes));show('vCfg');tool.scrollIntoView({behavior:'smooth',block:'nearest'})};
+ $('#fBank').onclick=openInlineBank;
+ $('#fAssign').onclick=()=>{openInlineBank();const note=document.createElement('p');note.innerHTML='<strong>📌 Asignar:</strong> Inicia sesión como docente, importa el JSON y usa «Publicar» para obtener el enlace que compartirás con tus estudiantes.';tool.prepend(note)};
  const sync=()=>{const gr=$('#fq').value==='grupal';$('#fgrp').classList.toggle('hide',!gr);$('#fc').style.minHeight=gr?'110px':'';};$('#fq').onchange=sync;
  $('#fback').onclick=()=>show('vCat');
  $('#fgo').onclick=()=>{const ced=$('#fc').value.split(/\n|,/).map(s=>s.trim()).filter(Boolean),modo=$('#fm').value,quien=$('#fq').value;
