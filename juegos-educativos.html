@@ -106,8 +106,7 @@ function drawCatalog(){
  $('#catalog').innerHTML=GAMES.map(g=>`<div class="card"><div class="em">${g.em}</div><h3>${esc(g.name)}</h3>
  <span class="badge ${g.ready?'f':'p'}">${g.ready?'Etapa '+(GAMES.indexOf(g)+1)+' · Funcional':'Pendiente'}</span><p>${esc(g.desc)}</p>
  <div class="row"><button data-try="${g.id}" ${g.ready?'':'disabled'}>▶ Probar</button><button class="sec" data-cfg="${g.id}" ${g.ready?'':'disabled'}>⚙ Configurar</button>
- <button class="sec" data-bank="${g.id}">📚 Banco de preguntas</button><button class="sec" data-prompt="${g.id}">📋 Copiar prompt</button>
- <button class="sec" disabled title="La asignación a grupos se activará al conectar la base de datos (etapa siguiente)">📌 Asignar</button></div></div>`).join('');
+ </div></div>`).join('');
  document.querySelectorAll('[data-try]').forEach(b=>b.onclick=()=>start(b.dataset.try,{modo:'practica',timed:false,secs:90,n:5,quien:'individual',cedulas:[],equipo:'',evalId:''}));
  document.querySelectorAll('[data-cfg]').forEach(b=>b.onclick=()=>config(b.dataset.cfg));
  document.querySelectorAll('[data-bank]').forEach(b=>b.onclick=()=>bankEditor(b.dataset.bank));
